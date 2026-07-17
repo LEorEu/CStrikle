@@ -45,6 +45,17 @@ class PlayerDatabaseTests(unittest.TestCase):
             if p.primary_role == "Coach":
                 self.assertTrue(p.team, p.page)
 
+    def test_primary_role_respects_liquipedia_order_for_awp_vs_rifle(self):
+        # Liquipedia 的 roles 按主次排序:兼职过狙的步枪手(狙标签在后)应判步枪,
+        # 而不是被固定的 AWP 优先级误判成狙击手。
+        for nick in ("coldzera", "pashaBiceps", "SmithZz", "autimatic", "k0nfig"):
+            self.assertEqual(self.db.lookup(nick).primary_role, "Rifler", nick)
+        # 真正的纯狙(狙标签在前或独占)不受影响
+        for nick in ("ZywOo", "dev1ce", "markeloff", "GuardiaN"):
+            self.assertEqual(self.db.lookup(nick).primary_role, "AWPer", nick)
+        # 指挥优先级不动:igl 标签在场即判指挥
+        self.assertEqual(self.db.lookup("Jame").primary_role, "IGL")
+
     def test_every_answer_has_comparable_attributes(self):
         self.assertGreater(len(self.db.answer_players), 0)
         for player in self.db.answer_players:

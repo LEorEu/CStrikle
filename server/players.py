@@ -86,10 +86,13 @@ class Player:
             return "Coach"
         if "igl" in self.roles:
             return "IGL"
-        if any(ROLE_LABEL.get(r) == "AWPer" for r in self.roles):
-            return "AWPer"
-        if any(ROLE_LABEL.get(r) == "Rifler" for r in self.roles):
-            return "Rifler"
+        # 狙 vs 步枪:Liquipedia 的 roles 是按主次排列的,取第一个打法标签即可。
+        # 不能固定把 AWP 提到步枪前面——否则老一辈步枪手(coldzera、pashaBiceps、
+        # SmithZz 等)生涯里兼职过狙,就会被误判成狙击手。
+        for r in self.roles:
+            lab = ROLE_LABEL.get(r)
+            if lab in ("AWPer", "Rifler"):
+                return lab
         if any(ROLE_LABEL.get(r) == "Analyst" for r in self.roles):
             return "Analyst"
         return "?"
@@ -110,10 +113,11 @@ class Player:
         """选手时期的打法位置(忽略教练/经理等职务角色)。"""
         if "igl" in self.roles:
             return "IGL"
-        if any(ROLE_LABEL.get(r) == "AWPer" for r in self.roles):
-            return "AWPer"
-        if any(ROLE_LABEL.get(r) == "Rifler" for r in self.roles):
-            return "Rifler"
+        # 同 primary_role:按 Liquipedia 原始顺序取第一个打法标签,不硬提 AWP
+        for r in self.roles:
+            lab = ROLE_LABEL.get(r)
+            if lab in ("AWPer", "Rifler"):
+                return lab
         return ""
 
     @property
