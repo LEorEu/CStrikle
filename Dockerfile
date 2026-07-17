@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && useradd --system --gid app --home-dir /app --no-create-home app
 
 COPY --chown=app:app server ./server
+COPY --chown=app:app scripts ./scripts
 COPY --chown=app:app static ./static
 COPY --chown=app:app data ./data
 

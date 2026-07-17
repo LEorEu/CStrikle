@@ -1,0 +1,15 @@
+{
+  "AdreN (Kazakh player)": {
+    "game_role": "Rifler",
+    "team": "",
+    "reason": "Current manager role must not erase his historical playing role."
+  },
+  "Olofmeister": {
+    "team": "",
+    "reason": "FaZe affiliation is as a streamer, not as a player."
+  },
+  "S1mple": {
+    "game_role": "AWPer",
+    "reason": "Primary current playing role is AWPer despite mixed Liquipedia role order."
+  }
+}

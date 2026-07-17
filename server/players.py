@@ -5,6 +5,8 @@ import unicodedata
 from datetime import date
 from pathlib import Path
 
+from .rankings import TeamRanking
+
 
 def _fold(s: str) -> str:
     """小写 + 去变音符号(Kovač -> kovac),让本名匹配不挑输入法。"""
@@ -13,12 +15,19 @@ def _fold(s: str) -> str:
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "players.json"
 IMAGES_PATH = Path(__file__).resolve().parent.parent / "data" / "images.json"
+OVERRIDES_PATH = Path(__file__).resolve().parent.parent / "data" / "player_overrides.json"
 
 ROLE_LABEL = {
-    "igl": "IGL", "awp": "AWPer", "rifle": "Rifler", "rifler": "Rifler",
-    "lurker": "Rifler", "entry": "Rifler", "support": "Rifler",
-    "coach": "Coach", "analyst": "Analyst",
+    "igl": "IGL",
+    "awp": "AWPer", "awper": "AWPer",
+    "rifle": "Rifler", "rifler": "Rifler", "lurker": "Rifler",
+    "lurk": "Rifler", "entry": "Rifler", "entryfragger": "Rifler",
+    "support": "Rifler",
+    "coach": "Coach", "assistant coach": "Coach",
+    "analyst": "Analyst", "broadcast analyst": "Analyst",
 }
+ANSWER_ROLES = {"IGL", "AWPer", "Rifler", "Coach"}
+COACH_ROLES = {"coach", "assistant coach"}
 
 REGIONS = ["Europe", "CIS", "North America", "South America", "Asia",
            "Oceania", "Middle East & Africa", "Other"]
@@ -43,7 +52,8 @@ def _age(birth_date: str, today: date) -> int | None:
 class Player:
     _FIELDS = ("page", "nickname", "real_name", "country", "region",
                "birth_date", "team", "status", "roles", "majors_count",
-               "first_major_year", "last_major_year", "majors", "in_blast_pool")
+               "first_major_year", "last_major_year", "majors", "in_blast_pool",
+               "game_role")
     __slots__ = _FIELDS + ("photo", "team_logo", "flag")
 
     def __init__(self, rec: dict):
@@ -54,17 +64,55 @@ class Player:
 
     @property
     def primary_role(self) -> str:
-        # IGL 优先(队内唯一性最强),其余按 infobox 顺序取第一个
+        if self.game_role in ANSWER_ROLES:
+            return self.game_role
+        # 当前明确是教练时保留 Coach；其余按 IGL、AWP、步枪优先级归一化。
+        if any(r in COACH_ROLES for r in self.roles):
+            return "Coach"
         if "igl" in self.roles:
-            return ROLE_LABEL["igl"]
-        for r in self.roles:
-            if r in ROLE_LABEL:
-                return ROLE_LABEL[r]
+            return "IGL"
+        if any(ROLE_LABEL.get(r) == "AWPer" for r in self.roles):
+            return "AWPer"
+        if any(ROLE_LABEL.get(r) == "Rifler" for r in self.roles):
+            return "Rifler"
+        if any(ROLE_LABEL.get(r) == "Analyst" for r in self.roles):
+            return "Analyst"
         return "?"
 
     @property
     def role_set(self) -> set:
-        return {ROLE_LABEL.get(r) for r in self.roles if r in ROLE_LABEL}
+        roles = {ROLE_LABEL[r] for r in self.roles if r in ROLE_LABEL}
+        if self.game_role:
+            roles.add(self.game_role)
+        return roles
+
+    @property
+    def is_coach(self) -> bool:
+        return any(r in COACH_ROLES for r in self.roles)
+
+    @property
+    def is_searchable(self) -> bool:
+        """Reject all-empty unresolved nickname stubs, but keep real profiles."""
+        return bool(
+            self.nickname
+            and (
+                self.real_name
+                or self.country
+                or self.birth_date
+                or self.roles
+                or self.majors_count
+            )
+        )
+
+    @property
+    def is_game_ready(self) -> bool:
+        """Minimum attribute completeness required for becoming a puzzle answer."""
+        return bool(
+            self.nickname
+            and self.country
+            and self.birth_date
+            and self.primary_role in ANSWER_ROLES
+        )
 
     def age(self, today: date | None = None) -> int | None:
         return _age(self.birth_date, today or date.today())
@@ -110,6 +158,12 @@ class PlayerDB:
     def __init__(self, path: Path = DATA_PATH):
         raw = json.loads(path.read_text(encoding="utf-8"))
         self.generated_at = raw.get("generated_at", "")
+        self.ranking = TeamRanking()
+        if OVERRIDES_PATH.exists():
+            override_raw = json.loads(OVERRIDES_PATH.read_text(encoding="utf-8"))
+            overrides = {k.casefold(): v for k, v in override_raw.items()}
+        else:
+            overrides = {}
         if IMAGES_PATH.exists():
             img = json.loads(IMAGES_PATH.read_text(encoding="utf-8"))
         else:
@@ -117,7 +171,22 @@ class PlayerDB:
         self.photo_map = img.get("players", {})
         self.team_logo_map = img.get("teams", {})
         self.flag_map = img.get("flags", {})
-        self.players = [Player(r) for r in raw["players"]]
+        self.excluded_stubs = 0
+        self.players = []
+        for rec in raw["players"]:
+            merged = dict(rec)
+            override = overrides.get(str(rec.get("page", "")).casefold(), {})
+            for key in ("team", "status", "game_role"):
+                if key in override:
+                    merged[key] = override[key]
+            p = Player(merged)
+            if p.is_coach and p.team and not self.ranking.contains(p.team):
+                p.team = ""
+            if not p.is_searchable:
+                self.excluded_stubs += 1
+                continue
+            self.players.append(p)
+        self.answer_players = [p for p in self.players if p.is_game_ready]
         for p in self.players:
             p.photo = _img(self.photo_map.get(p.page))
             p.team_logo = _img(self.team_logo_map.get(p.team or ""))
@@ -129,7 +198,7 @@ class PlayerDB:
 
     @staticmethod
     def _fame(p) -> tuple:
-        return (p.majors_count or 0, p.in_blast_pool)
+        return (p.is_game_ready, p.majors_count or 0, p.in_blast_pool)
 
     def lookup(self, name: str) -> Player | None:
         """Resolve a guess string (page id or nickname) to a player.
@@ -165,13 +234,13 @@ class PlayerDB:
     # ------------------------------------------------------------- pools
     def difficulty_pool(self, difficulty: str) -> list:
         if difficulty == "easy":
-            return [p for p in self.players
+            return [p for p in self.answer_players
                     if (p.majors_count or 0) >= 4
                     or (p.in_blast_pool and (p.majors_count or 0) >= 2)]
         if difficulty == "medium":
-            return [p for p in self.players
+            return [p for p in self.answer_players
                     if (p.majors_count or 0) >= 2 or p.in_blast_pool]
-        return list(self.players)
+        return list(self.answer_players)
 
     def filter_pool(self, settings: dict) -> list:
         pool = self.difficulty_pool(settings.get("difficulty", "medium"))

@@ -10,7 +10,12 @@ AI_BASE_URL = os.getenv("AI_BASE_URL", "")
 AI_API_KEY = os.getenv("AI_API_KEY", "")
 AI_MODEL = os.getenv("AI_MODEL", "gpt-4o-mini")
 AI_SEARCH_ENABLED = os.getenv("AI_SEARCH_ENABLED", "1") not in ("0", "false", "")
-AI_MAX_STEPS = int(os.getenv("AI_MAX_STEPS", "4"))
+AI_MAX_STEPS = int(os.getenv("AI_MAX_STEPS", "2"))
+AI_TIMEOUT_SECONDS = max(10, int(os.getenv("AI_TIMEOUT_SECONDS", "35")))
+AI_EXACT_THRESHOLD = max(2, int(os.getenv("AI_EXACT_THRESHOLD", "10")))
+AI_SEARCH_CACHE_TTL_SECONDS = max(
+    60, int(os.getenv("AI_SEARCH_CACHE_TTL_SECONDS", "3600"))
+)
 # native = OpenAI function calling;text = 模型在正文里输出 JSON 指令
 # (给不支持 tools 的接口用,比如 grok.com 逆向类);auto = 先试 native,
 # 第一轮就发现不支持时自动降级 text

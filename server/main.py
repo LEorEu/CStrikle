@@ -59,6 +59,9 @@ def meta():
     return {
         "db_generated_at": db.generated_at,
         "player_count": len(db.players),
+        "answer_player_count": len(db.answer_players),
+        "excluded_stubs": db.excluded_stubs,
+        "team_ranking_date": db.ranking.generated_at,
         "regions": REGIONS[:-1],
         "pool_sizes": {d: len(db.difficulty_pool(d))
                        for d in ("easy", "medium", "hard")},

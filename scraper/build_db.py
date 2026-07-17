@@ -7,8 +7,8 @@ Sources:
      attended a CS:GO/CS2 Major, with nationality + per-Major entries.
   2. Liquipedia player infoboxes (batched, 50/req) -> birth_date, country,
      team, roles, status.
-  3. blast.tv counterstrikle players.json (390 active pros) -> marks the
-     "currently relevant" pool; players not already in the Major pool are
+  3. blast.tv Counter-Strikle players.json (identity/search pool) -> marks the
+     original puzzle pool; players not already in the Major pool are
      resolved to Liquipedia pages and added with majors_count=0.
 
 Complies with Liquipedia API terms: descriptive UA, gzip, >=2.2s between
@@ -246,8 +246,11 @@ def fetch_infoboxes(client: httpx.Client, titles: list) -> dict:
                 result[req] = None
                 continue
             ib = parse_infobox(content)
-            ib["_final_title"] = page["title"]
-            result[req] = ib or None
+            if ib:
+                ib["_final_title"] = page["title"]
+                result[req] = ib
+            else:
+                result[req] = None
         done = min(i + BATCH, len(titles))
         print(f"  infobox batch {done}/{len(titles)}")
     return result
@@ -258,6 +261,22 @@ def opensearch(client: httpx.Client, term: str):
                          "namespace": "0"})
     hits = d[1] if isinstance(d, list) and len(d) > 1 else []
     return hits[0] if hits else None
+
+
+def unresolved_blast_titles(pool: dict, blast: list[dict]) -> list[str]:
+    """Return BLAST nicknames that are not already represented by a Major player."""
+    known_titles = {title.casefold() for title in pool}
+    known_nicks = {
+        str(entry.get("nickname", "")).casefold()
+        for entry in pool.values()
+        if entry.get("nickname")
+    }
+    return [
+        player["nickname"]
+        for player in blast
+        if player["nickname"].casefold() not in known_titles
+        and player["nickname"].casefold() not in known_nicks
+    ]
 
 
 # ------------------------------------------------------------------ main
@@ -275,21 +294,15 @@ def build(include_blast: bool = True):
 
         blast = []
         if include_blast:
-            print("[2/4] fetching blast.tv active player list ...")
+            print("[2/4] fetching blast.tv Counter-Strikle identity list ...")
             r = client.get(BLAST_PLAYERS_URL)
             r.raise_for_status()
             blast = r.json()
-            print(f"  {len(blast)} active players from blast.tv")
+            print(f"  {len(blast)} puzzle identities from blast.tv")
         blast_nicks = {p["nickname"] for p in blast}
 
         # blast players not in the Major pool -> resolve their liquipedia page
-        known_lower = {k.lower(): k for k in pool}
-        extra_titles = []
-        for p in blast:
-            nick = p["nickname"]
-            if nick.lower() in known_lower:
-                continue
-            extra_titles.append(nick)
+        extra_titles = unresolved_blast_titles(pool, blast)
 
         print("[3/4] fetching infoboxes ...")
         all_titles = list(pool.keys()) + extra_titles
@@ -369,7 +382,7 @@ def build(include_blast: bool = True):
 
     out = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "source": "liquipedia.net (CC-BY-SA 3.0) + blast.tv active list",
+        "source": "liquipedia.net (CC-BY-SA 3.0) + blast.tv puzzle identity list",
         "count": len(players),
         "players": players,
     }

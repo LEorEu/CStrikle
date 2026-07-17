@@ -42,6 +42,7 @@ class Room:
         if len(pool) < 2:
             raise ValueError("筛选条件下候选选手不足(<2),请放宽范围")
         self.pool_size = len(pool)
+        self.answer_pool = list(pool)
         self.answer = random.choice(pool)
         self.code = _code()
         self.vs_ai = vs_ai
@@ -223,8 +224,14 @@ class Room:
                 await self._send(s, {"type": "ai_status", "state": state,
                                      "detail": detail})
 
-        self.ai = AIPlayer(self.db, self.pool_desc(), on_say=say,
-                           on_status=status)
+        self.ai = AIPlayer(
+            self.db,
+            self.answer_pool,
+            self.pool_desc(),
+            max_guesses=self.settings["max_guesses"],
+            on_say=say,
+            on_status=status,
+        )
         self.ai_task = asyncio.create_task(self._ai_loop())
 
     async def _ai_loop(self):
@@ -248,15 +255,15 @@ class Room:
                     await self._send(s, {"type": "ai_status", "state": "idle",
                                          "detail": None})
                 if turn.guess_name is None:
-                    # agent失败兜底:随机猜一个没猜过的候选
-                    pool = [p for p in self.db.filter_pool(self.settings)
-                            if p.page not in guessed]
-                    if not pool:
+                    # 模型失败时使用同一求解器指定落子，不再随机浪费回合。
+                    if not turn.fallback_guess:
                         break
-                    pick = random.choice(pool)
+                    pick = self.db.by_page.get(turn.fallback_guess)
+                    if pick is None:
+                        break
                     self.ai.transcript[-1]["events"].append(
                         {"type": "forced_guess", "name": pick.nickname,
-                         "reason": "agent 未能提交,系统代猜"})
+                         "reason": "模型未能提交,使用确定性求解器指定落子"})
                     turn.guess_name = pick.page
                 if self.status != "playing":
                     break
