@@ -1,0 +1,20 @@
+services:
+  cstrikle:
+    build: .
+    container_name: cstrikle
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - rag-net
+
+networks:
+  rag-net:
+    external: true
+    name: rag-stack_rag-net

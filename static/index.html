@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CStrikle — 猜 CS 职业哥</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1 onclick="go('home')">CStrikle<span class="sub">猜 CS 职业哥</span></h1>
+  <div id="meta-info" class="meta"></div>
+</header>
+
+<main>
+  <!-- ==================== 首页 ==================== -->
+  <section id="view-home" class="view">
+    <div class="mode-cards">
+      <div class="card" data-eyebrow="DAILY // 每日一题" onclick="startDaily()">
+        <h2>每日挑战</h2>
+        <p>全球同一谜底,每天一题,常规难度。猜完复制战绩去嘲讽朋友。</p>
+      </div>
+      <div class="card" data-eyebrow="FREEPLAY // 自定义" onclick="showUnlimitedSetup()">
+        <h2>无限模式</h2>
+        <p>自定难度、赛区、年代,想玩几局玩几局。</p>
+      </div>
+      <div class="card" data-eyebrow="VERSUS // 1V1" onclick="go('versus-lobby')">
+        <h2>对战模式</h2>
+        <p>开房间跟朋友对枪,或者跟会上网查资料、会喷垃圾话的 AI 打。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 无限模式设置 ==================== -->
+  <section id="view-unlimited-setup" class="view hidden">
+    <h2>无限模式 · 赛前设置</h2>
+    <div id="settings-unlimited"></div>
+    <button class="primary" onclick="startUnlimited()">开始</button>
+    <button onclick="go('home')">返回</button>
+  </section>
+
+  <!-- ==================== 单人对局 ==================== -->
+  <section id="view-game" class="view hidden">
+    <div class="game-head">
+      <span id="game-mode-label"></span>
+      <span id="game-remaining"></span>
+      <span id="game-pool"></span>
+    </div>
+    <div class="guess-box">
+      <input id="guess-input" placeholder="输入选手 ID,比如 s1mple…" autocomplete="off">
+      <div id="suggest" class="suggest hidden"></div>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="game-result" class="result hidden"></div>
+    <div class="row-btns">
+      <button id="btn-again" class="primary hidden" onclick="startUnlimited()">再来一局</button>
+      <button onclick="go('home')">回首页</button>
+    </div>
+  </section>
+
+  <!-- ==================== 对战大厅 ==================== -->
+  <section id="view-versus-lobby" class="view hidden">
+    <h2>对战模式</h2>
+    <div class="lobby-grid">
+      <div class="panel">
+        <h3>创建房间</h3>
+        <label>你的昵称 <input id="host-name" value="" maxlength="20" placeholder="玩家1"></label>
+        <label class="chk"><input type="checkbox" id="vs-ai"> 和 AI 打(它会上网查资料还会喷你)</label>
+        <label id="ai-speed-row" class="hidden">AI 出手节奏
+          <select id="ai-speed">
+            <option value="fast">快(压迫感)</option>
+            <option value="normal" selected>中</option>
+            <option value="slow">慢(悠着点)</option>
+          </select>
+        </label>
+        <div id="settings-room"></div>
+        <button class="primary" onclick="createRoom()">创建</button>
+      </div>
+      <div class="panel">
+        <h3>加入房间</h3>
+        <label>你的昵称 <input id="join-name" value="" maxlength="20" placeholder="玩家2"></label>
+        <label>房间码 <input id="join-code" maxlength="4" placeholder="ABCD" style="text-transform:uppercase"></label>
+        <button class="primary" onclick="joinRoom()">加入</button>
+      </div>
+    </div>
+    <button onclick="go('home')">返回</button>
+  </section>
+
+  <!-- ==================== 对战房间 ==================== -->
+  <section id="view-room" class="view hidden">
+    <div class="game-head">
+      <span>房间 <b id="room-code"></b></span>
+      <span id="room-status"></span>
+      <span id="room-remaining"></span>
+      <span id="turn-timer" class="turn-timer hidden"></span>
+    </div>
+    <div class="room-layout">
+      <div class="room-main">
+        <div class="guess-box">
+          <input id="room-guess-input" placeholder="输入选手 ID…" autocomplete="off">
+          <div id="room-suggest" class="suggest hidden"></div>
+        </div>
+        <div id="room-grid" class="grid"></div>
+        <div id="room-result" class="result hidden"></div>
+        <div id="opp-reveal-main"></div>
+        <div class="row-btns">
+          <button id="btn-transcript" class="primary hidden" onclick="showTranscript()">🧠 看 AI 的思考回放</button>
+          <button onclick="leaveRoom()">离开房间</button>
+        </div>
+      </div>
+      <div class="room-side">
+        <div class="panel opp-panel">
+          <h3 id="opp-name">等待对手…</h3>
+          <div id="ai-status" class="ai-status hidden"></div>
+          <div id="opp-grid" class="mini-grid"></div>
+          <div id="opp-remaining" class="dim"></div>
+        </div>
+        <div class="panel chat-panel">
+          <h3>全体聊天 · ALL CHAT</h3>
+          <div id="chat-log" class="chat-log"></div>
+          <div class="chat-input">
+            <input id="chat-text" placeholder="说点什么…" maxlength="200">
+            <button onclick="sendChat()">发送</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- AI 思考回放弹窗 -->
+<div id="modal" class="modal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-body">
+    <div class="modal-head">
+      <h2>🧠 AI 思考回放 <span id="transcript-model" class="dim"></span></h2>
+      <button onclick="document.getElementById('modal').classList.add('hidden')">✕</button>
+    </div>
+    <div id="transcript-body"></div>
+  </div>
+</div>
+
+<!-- 胜负结算弹窗 -->
+<div id="end-overlay" class="end-overlay hidden">
+  <div class="end-stage">
+    <div id="end-verdict" class="end-verdict"></div>
+    <div id="end-sub" class="end-sub"></div>
+    <div id="end-card" class="end-card"></div>
+    <div id="end-btns" class="end-btns"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
