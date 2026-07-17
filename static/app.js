@@ -238,8 +238,9 @@ function attachSuggest(inputEl, boxEl, onPick) {
     const vis = !boxEl.classList.contains("hidden");
     if (e.key === "Enter") {
       e.preventDefault();
-      if (vis && sel >= 0) { close(); onPick(items[sel]); }
-      else if (vis && items.length) { close(); onPick(items[0]); }
+      // 先把选中项取出来再 close():close() 会把 sel 重置成 -1
+      const picked = vis && sel >= 0 ? items[sel] : vis && items.length ? items[0] : null;
+      if (picked) { close(); onPick(picked); }
       else if (inputEl.value.trim()) onPick({ nickname: inputEl.value.trim() });
     } else if (e.key === "ArrowDown" && vis) {
       e.preventDefault(); sel = Math.min(sel + 1, items.length - 1); mark();
