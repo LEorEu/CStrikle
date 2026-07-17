@@ -29,10 +29,20 @@ class PlayerDatabaseTests(unittest.TestCase):
     def test_coach_team_uses_hltv_top100_snapshot(self):
         friberg = self.db.lookup("friberg")
         neo = self.db.lookup("NEO")
-        self.assertEqual(friberg.primary_role, "Coach")
+        # 无上榜战队的教练回退到选手时期位置;有上榜战队的教练保持 Coach
+        self.assertEqual(friberg.primary_role, "Rifler")
         self.assertEqual(friberg.team, "")
         self.assertEqual(neo.primary_role, "Coach")
         self.assertEqual(neo.team, "Astralis")
+
+    def test_teamless_coach_falls_back_to_playing_role(self):
+        self.assertEqual(self.db.lookup("GuardiaN").primary_role, "AWPer")
+        self.assertEqual(self.db.lookup("Golden").primary_role, "IGL")
+        self.assertEqual(self.db.lookup("kRYSTAL").primary_role, "IGL")
+        # 全库不再存在"Free Agent + Coach"的自相矛盾组合
+        for p in self.db.players:
+            if p.primary_role == "Coach":
+                self.assertTrue(p.team, p.page)
 
     def test_every_answer_has_comparable_attributes(self):
         self.assertGreater(len(self.db.answer_players), 0)

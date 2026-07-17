@@ -91,6 +91,17 @@ class Player:
         return any(r in COACH_ROLES for r in self.roles)
 
     @property
+    def played_role(self) -> str:
+        """选手时期的打法位置(忽略教练/经理等职务角色)。"""
+        if "igl" in self.roles:
+            return "IGL"
+        if any(ROLE_LABEL.get(r) == "AWPer" for r in self.roles):
+            return "AWPer"
+        if any(ROLE_LABEL.get(r) == "Rifler" for r in self.roles):
+            return "Rifler"
+        return ""
+
+    @property
     def is_searchable(self) -> bool:
         """Reject all-empty unresolved nickname stubs, but keep real profiles."""
         return bool(
@@ -182,6 +193,11 @@ class PlayerDB:
             p = Player(merged)
             if p.is_coach and p.team and not self.ranking.contains(p.team):
                 p.team = ""
+            if p.is_coach and not p.team and p.game_role not in ANSWER_ROLES:
+                # 没有(上榜)战队的教练不算 Coach,回退到选手时期的打法位置
+                fallback = override.get("played_role") or p.played_role
+                if fallback:
+                    p.game_role = fallback
             if not p.is_searchable:
                 self.excluded_stubs += 1
                 continue

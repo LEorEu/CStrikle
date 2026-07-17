@@ -1,15 +1,187 @@
 {
-  "AdreN (Kazakh player)": {
-    "game_role": "Rifler",
-    "team": "",
-    "reason": "Current manager role must not erase his historical playing role."
-  },
-  "Olofmeister": {
-    "team": "",
-    "reason": "FaZe affiliation is as a streamer, not as a player."
-  },
-  "S1mple": {
-    "game_role": "AWPer",
-    "reason": "Primary current playing role is AWPer despite mixed Liquipedia role order."
-  }
+ "AdreN (Kazakh player)": {
+  "game_role": "Rifler",
+  "team": "",
+  "reason": "Current manager role must not erase his historical playing role."
+ },
+ "Olofmeister": {
+  "team": "",
+  "reason": "FaZe affiliation is as a streamer, not as a player."
+ },
+ "S1mple": {
+  "game_role": "AWPer",
+  "reason": "Primary current playing role is AWPer despite mixed Liquipedia role order."
+ },
+ "Tonyblack": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2019-05-08; teamless coaches fall back to it."
+ },
+ "Hooch": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2016-05-28; teamless coaches fall back to it."
+ },
+ "WaterfaLLZ": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2018-06-22; teamless coaches fall back to it."
+ },
+ "Svyat": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2019-06-15; teamless coaches fall back to it."
+ },
+ "FeTiSh": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2014-11-28; teamless coaches fall back to it."
+ },
+ "Tenzki": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2016-06-28; teamless coaches fall back to it."
+ },
+ "Aizy": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2019-06-09; teamless coaches fall back to it."
+ },
+ "Gade": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2021-04-08; teamless coaches fall back to it."
+ },
+ "Devilwalk": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2015-12-08; teamless coaches fall back to it."
+ },
+ "Golden": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2019-06-26; teamless coaches fall back to it."
+ },
+ "Friberg": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2016-06-22; teamless coaches fall back to it."
+ },
+ "MaLeK": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2019-08-23; teamless coaches fall back to it."
+ },
+ "Shara": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2016-06-13; teamless coaches fall back to it."
+ },
+ "SZPERO": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2015-12-11; teamless coaches fall back to it."
+ },
+ "Furlan": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2015-11-24; teamless coaches fall back to it."
+ },
+ "Snatchie": {
+  "played_role": "AWPer",
+  "reason": "Playing-era role from Liquipedia revision 2018-06-10; teamless coaches fall back to it."
+ },
+ "Gob b": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2019-06-14; teamless coaches fall back to it."
+ },
+ "Spiidi": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2018-05-19; teamless coaches fall back to it."
+ },
+ "Allu": {
+  "played_role": "AWPer",
+  "reason": "Playing-era role from Liquipedia revision 2019-06-07; teamless coaches fall back to it."
+ },
+ "XartE": {
+  "played_role": "AWPer",
+  "reason": "Playing-era role from Liquipedia revision 2015-06-29; teamless coaches fall back to it."
+ },
+ "Polly": {
+  "played_role": "AWPer",
+  "reason": "Playing-era role from Liquipedia revision 2015-06-16; teamless coaches fall back to it."
+ },
+ "Thomas": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2023-05-01; teamless coaches fall back to it."
+ },
+ "GuardiaN": {
+  "played_role": "AWPer",
+  "reason": "Playing-era role from Liquipedia revision 2019-05-02; teamless coaches fall back to it."
+ },
+ "Oskar": {
+  "played_role": "AWPer",
+  "reason": "Playing-era role from Liquipedia revision 2019-04-28; teamless coaches fall back to it."
+ },
+ "Swag": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2015-11-30; teamless coaches fall back to it."
+ },
+ "AdreN (American player)": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2016-06-30; teamless coaches fall back to it."
+ },
+ "AbE": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2016-06-18; teamless coaches fall back to it."
+ },
+ "Yel": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2019-05-22; teamless coaches fall back to it."
+ },
+ "DAVEY": {
+  "played_role": "AWPer",
+  "reason": "Playing-era role from Liquipedia revision 2016-04-29; teamless coaches fall back to it."
+ },
+ "Yam": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2016-09-07; teamless coaches fall back to it."
+ },
+ "Karsa": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2018-06-30; teamless coaches fall back to it."
+ },
+ "AumaN": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2020-12-06; teamless coaches fall back to it."
+ },
+ "SANJI": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2019-06-16; teamless coaches fall back to it."
+ },
+ "Marek": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2025-06-20; teamless coaches fall back to it."
+ },
+ "MODDII": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2016-06-30; teamless coaches fall back to it."
+ },
+ "Starix": {
+  "played_role": "IGL",
+  "reason": "Playing-era role from Liquipedia revision 2017-06-09; teamless coaches fall back to it."
+ },
+ "LEGIJA": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2017-05-15; teamless coaches fall back to it."
+ },
+ "Zews": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2017-06-24; teamless coaches fall back to it."
+ },
+ "Jnt": {
+  "played_role": "Rifler",
+  "reason": "Playing-era role from Liquipedia revision 2017-04-29; teamless coaches fall back to it."
+ },
+ "HaRts": {
+  "played_role": "IGL",
+  "reason": "HLTV: founding in-game leader of Clan-Mystik"
+ },
+ "Hardstyle": {
+  "played_role": "Rifler",
+  "reason": "Career coach; only Major appearance was as emergency stand-in (FACEIT London 2018)"
+ },
+ "Ryu": {
+  "played_role": "Rifler",
+  "reason": "Career coach (Steve Rattacasa); Major appearance was as stand-in"
+ },
+ "T.c": {
+  "played_role": "Rifler",
+  "reason": "Former Bravado player until 2016; no recorded specialist role"
+ }
 }
