@@ -265,3 +265,53 @@
   - `git diff --check` 通过。
 - Next steps:
   - 按用户要求未提交、未推送、未部署；如后续确认，再与工作区其他未提交功能一起处理。
+
+## 2026-07-18 — 角色/战队/状态口径终稿与落地
+
+- Request:
+  - 确定角色真值口径（生涯代表角色 vs 当前职务/近期数据）、Coach 收紧标准、混合角色黄色规则，以及退役/未签约/下放状态是否合并。
+- 口径终稿（用户已确认）:
+  - 角色真值 = 生涯代表角色；现役用当前角色，退役/转岗用选手期角色。
+  - Coach 只给"以教练身份被记住"的人：停赛 ≥3 年且持续执教保留 Coach；刚退役转教练组回退选手期角色 + 自由身（AskUserQuestion 确认）。
+  - role_set 黄色白名单：{IGL} {AWPer} {Rifler} {Coach} {IGL,AWPer} {AWPer,Rifler}；IGL 剔除步枪标签，IGL vs Rifler 不再黄。
+  - 无战队统一"自由身"并互相判绿（AskUserQuestion 确认）；下放在编算原队（nota=PARIVISION）；status 退出对局反馈，只留题库过滤。
+- Changes:
+  - `server/players.py`：role_set 白名单重写；team_label 统一"自由身"；删除 is_retired_like 与 STAFF_ROLES。
+  - `server/game.py`：team_cat 二值化（原"退役"/"未签约"两类灰判改为无队互绿）。
+  - `server/ai_player.py` 提示词与 `static/app.js` 文案同步。
+  - `data/player_overrides.json` 新增 9 条：刚退役转岗回退 6 人（Attacker/gla1ve/NBK-/AZR/tiziaN/mou）、erkaSt 过时战队修正（2025-08 已离开 FlyQuest，接任者 AZR）、SmithZz=AWPer、Stewie2K=IGL；Maka 无需覆盖（igl 标签天然优先）。
+  - 25 名"教练+上榜战队"逐人取证分类（WebSearch；Liquipedia API 并发触发临时限流后改用搜索索引），18 人保留 Coach。
+  - 新增 3 项回归测试（白名单组合、自由身合并判绿、刚退役保留选手身份），总测试 30 项。
+  - 生成终审文档 `REVIEW_ROLE_TEAM_FINAL.md`，边界案例标注 ⚠（Xyp9x 按规则保留 Coach 但选手记忆极强；mou 停赛 2.75 年贴线回退；erkaSt 角色低置信）。
+- Verification:
+  - compileall、30 项单元测试、`git diff --check` 全部通过。
+  - 抽样验证 gla1ve/NBK-/Attacker/AZR/mou/tiziaN/erkaSt=选手角色+自由身，zhokiNg/NEO/Xyp9x=Coach+战队，Maka/Jame={IGL,AWPer}，SmithZz/s1mple/ZywOo={AWPer,Rifler}，Stewie2K={IGL}，nota=PARIVISION。
+  - 答案池 644 人（较上次生产 607 的增量来自本周已合入的 played_role 批量覆盖，非本轮改动）。
+- Next steps:
+  - 用户过目 REVIEW_ROLE_TEAM_FINAL.md，尤其三个 ⚠ 条目；确认后此事封盘，转向游戏性优化。
+  - 未提交、未推送、未部署；生产仍运行旧语义。
+
+## 2026-07-18 — 本地 HLTV 角色同步与人工审核工具
+
+- Request:
+  - 增加可在本地运行的 HLTV 同步工具，把 HLTV 选手与项目数据库稳定匹配。
+  - 核对 Stewie2K（用户简称 2k）、Maka 的 IGL 证据及 SmithZz 的 AWP/步枪证据。
+- Changes:
+  - 新增 `scripts/sync_hltv_roles.py`，使用普通可见 Chrome/Playwright 低速访问 HLTV 搜索和选手主页；生产服务与 Docker 依赖不变。
+  - 新增昵称+真实姓名严格匹配、同名分差门槛、人工稳定映射、Jake/Jacky 等受控真名别名和 `2k -> Stewie2K` 显式别名。
+  - 角色推断分开保存 IGL 与武器角色证据：近期地图足够时才用 Sniping 高/低阈值建议 AWPer/Rifler；退役、无近期地图、混合区和 403 一律人工复核。
+  - 缓存位于 `.cache/hltv/`，默认 8 秒限速，连续两次 403 熔断；默认仅生成 `role_review.json`，只有人工填写 `decision` 并执行 `apply --write` 才会写覆盖文件，已有覆盖默认受保护。
+  - 新增 `requirements-maintenance.txt`、`data/hltv_player_map.json`、9 项离线测试及 README 使用说明。
+- Sample findings:
+  - Stewie2K：HLTV 生涯专题有明确 IGL 语境；建议 IGL/high。
+  - Maka：HLTV 明确称其兼任 IGL/AWP；真实采集为近三个月 23 maps、Sniping 79/100，主角色建议 IGL，同时记录 AWPer 武器信号。
+  - SmithZz：HLTV 历史个人统计为步枪 9464、狙击 5434，属于混合证据；主页采集 403，因此保持人工复核，不自动定性。
+  - ZywOo 未预置映射样例通过站内搜索以 0.95 分正确匹配 HLTV ID 11893，验证自动匹配路径；主页 403 后安全降级。
+- Verification:
+  - Python compileall 通过。
+  - 全项目 27 项单元测试通过。
+  - `git diff --check` 和两个 CLI 子命令帮助检查通过。
+  - `apply` 预览为 0 项更新，`data/player_overrides.json` 未修改。
+- Next steps:
+  - 后续可按队伍或争议名单分批采集，在 `.cache/hltv/role_review.json` 人工确认 `decision` 后预览并显式写入。
+  - 本轮未提交、未推送、未部署；用户侧并行图片/国旗改动保持原样。

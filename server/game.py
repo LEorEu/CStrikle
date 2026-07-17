@@ -58,9 +58,9 @@ def compare(guess: Player, answer: Player, today: date | None = None) -> list:
     cells.append({"key": "nationality", "value": guess.display_country or "?",
                   "extra": guess.region, "state": st})
 
-    # team: exact match; 无战队时"退役"和"未签约"算两种不同状态
+    # team: exact match; 无战队的人(退役/未签约/玩票)统一算"自由身"互相判绿
     def team_cat(p):
-        return (p.team or "").lower() or ("retired" if p.is_retired_like else "unsigned")
+        return (p.team or "").lower()
     st = GREEN if team_cat(guess) == team_cat(answer) else GRAY
     cells.append({"key": "team", "value": guess.team_label, "state": st})
 

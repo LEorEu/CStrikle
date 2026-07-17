@@ -73,7 +73,7 @@ SYSTEM_PROMPT = """你是一名 CS 电竞圈老油条,正在和一个人类玩�
 - 双方猜同一个神秘职业选手,谁先猜中谁赢。你每轮提交一个猜测。
 - 每次猜测后会得到逐属性反馈:
   - 国籍:✔=同一国家;≈=同一赛区(欧洲/独联体/北美/南美/亚洲/大洋洲等);✘=都不沾边
-  - 战队:✔=当前战队相同(无战队时"退役"和"未签约"算两种不同状态)
+  - 战队:✔=当前战队相同(无战队的人统一算"自由身",互相判✔)
   - 年龄:✔=相同;≈=相差2岁以内;并提示答案比你猜的更大还是更小
   - 位置:✔=主位置相同(IGL/AWPer/Rifler/Coach);≈=位置有重叠
   - Major次数:✔=相同;≈=相差1;并提示答案更多还是更少
@@ -194,7 +194,7 @@ class AIPlayer:
             lines.append("## 你已有的猜测和反馈")
             for i, row in enumerate(my_rows, 1):
                 lines.append(f"{i}. 猜了 {row['player']['nickname']}"
-                             f"({row['player']['country']},{row['player']['team'] or '无战队'})"
+                             f"({row['player']['country']},{row['player']['team'] or '自由身'})"
                              f" -> {feedback_text(row['cells'])}")
         else:
             lines.append("## 这是你的第一轮猜测,还没有任何反馈。")

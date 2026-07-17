@@ -82,8 +82,9 @@ docker compose ps
 - 数据源:Liquipedia `Majors/Player Database`(所有打过 Major 的选手
   + 每届参赛记录)+ 各选手 infobox(生日/国籍/战队/位置/状态)
   + blast.tv 官方 Counter-Strikle 的 390 现役选手名单
-- 位置(Rifler/AWPer/IGL)照搬 Liquipedia infobox 当前标注,
-  和你的印象可能有出入(比如 s1mple 去 BC.Game 后官方标的是 Rifler)
+- 位置先按 Liquipedia infobox 的角色顺序归一化，再由
+  `data/player_overrides.json` 保存人工确认的历史/争议结论；IGL 与
+  AWPer/Rifler 的武器角色会分开取证，不能仅凭标签或一个统计值硬覆盖
 - 难度分层:简单=Major≥4 次或现役常客;常规=Major≥2 或 blast 现役名单;
   困难=全部
 
@@ -98,13 +99,44 @@ docker compose ps
 挑适合深色底的 icon/darkmode 变体。数据与图片署名:Liquipedia
 (CC-BY-SA 3.0),国旗来自 flagcdn。
 
+### HLTV 角色审核（本地维护）
+
+HLTV 没有供本项目使用的稳定公开 API，普通 HTTP 访问也可能被
+Cloudflare 拒绝。维护工具使用本机普通 Chrome 低速访问公开选手页，
+只生成缓存和审核文件，不参与线上请求，也不会默认修改正式数据。
+
+```powershell
+.\.venv\Scripts\pip install -r requirements-maintenance.txt
+
+# “2k” 通过人工映射明确指 Stewie2K，不会误配 Woro2k
+.\.venv\Scripts\python -X utf8 scripts\sync_hltv_roles.py collect `
+  --players 2k Maka SmithZz --with-igl-news
+
+# 查看并编辑 .cache/hltv/role_review.json：
+# 只有人工确认后才给对应条目填写 decision，例如 "IGL" 或 "Rifler"
+
+# 第一次仅预览；确认无误后才实际写入 player_overrides.json
+.\.venv\Scripts\python -X utf8 scripts\sync_hltv_roles.py apply
+.\.venv\Scripts\python -X utf8 scripts\sync_hltv_roles.py apply --write
+```
+
+默认打开可见 Chrome、页面间隔至少 8 秒并缓存 7 天。`--all` 必须显式
+指定，以防误扫全库；同名、低置信度、无近期地图、退役选手和 Sniping
+混合区都会进入人工复核。已有 `game_role` 覆盖默认受保护，只有显式使用
+`--replace-existing` 才能替换。连续两页收到 403 时工具会主动熔断；
+建议先按队伍或争议名单分批传给 `--players`，稍后重跑会复用成功缓存。
+若本机没有 Chrome，可执行 `python -m playwright install chromium`，并
+传入 `--browser-channel bundled`。
+
 ## 结构
 
 ```
 scraper/build_db.py       选手数据爬虫(可重跑)
 scraper/fetch_images.py   照片/队标/国旗爬虫(可重跑)
 scraper/iso.py            国名 -> ISO 代码(国旗用)
+scripts/sync_hltv_roles.py 本地 HLTV 匹配/角色证据/人工审核
 data/players.json         选手库(生成物,约 650+ 人)
+data/hltv_player_map.json 已人工确认的本地 page -> HLTV ID 映射
 data/images.json          图片索引(生成物)
 data/img/                 照片/队标/国旗(生成物)
 server/players.py         选手库加载/筛选/名字解析

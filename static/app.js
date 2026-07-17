@@ -338,7 +338,7 @@ function answerCard(a) {
       <div class="a-facts">
         <span>${esc(cnCountry(a.country))} · ${REGION_CN[a.region] || a.region}</span>
         <span><b>${a.age ?? "?"}</b> 岁</span>
-        <span>${tlogo}${esc(a.team_label || a.team || "未签约")}</span>
+        <span>${tlogo}${esc(a.team_label || a.team || "自由身")}</span>
         <span>${esc(cnRole(a.role))}</span>
         <span><b>${a.majors_count}</b> 次 Major</span>
         <span><b>${a.majors_won ?? 0}</b> 冠</span>

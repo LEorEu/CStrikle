@@ -84,6 +84,43 @@ class PlayerDatabaseTests(unittest.TestCase):
             self.assertGreaterEqual(len(pool), 2)
             self.assertTrue(all(player.is_game_ready for player in pool))
 
+    def test_role_set_whitelist_combinations(self):
+        # 黄色重叠只允许白名单组合;指挥默认持步枪,IGL 不与 Rifler 构成混合
+        def role_set_of(roles, game_role=None):
+            return Player({"roles": roles, "game_role": game_role}).role_set
+
+        self.assertEqual(role_set_of(["igl", "entry"]), {"IGL"})
+        self.assertEqual(role_set_of(["igl", "awp"]), {"IGL", "AWPer"})
+        self.assertEqual(role_set_of(["awp", "rifle"]), {"AWPer", "Rifler"})
+        self.assertEqual(role_set_of(["support", "awp"]), {"Rifler", "AWPer"})
+        self.assertEqual(role_set_of(["coach"]), {"Coach"})
+        self.assertEqual(role_set_of(["broadcast analyst"]), set())
+        # 覆盖 game_role 后按覆盖值参与白名单
+        self.assertEqual(role_set_of(["support", "awp"], game_role="AWPer"),
+                         {"AWPer", "Rifler"})
+
+    def test_teamless_players_share_free_agent_category(self):
+        # 退役/未签约/玩票不再是不同状态:无战队的人统一"自由身"互相判绿
+        fer = self.db.lookup("fer")          # 实质退役
+        degster = self.db.lookup("degster")  # 未签约现役
+        self.assertEqual(fer.team or "", "")
+        self.assertEqual(degster.team or "", "")
+        self.assertEqual(fer.team_label, "自由身")
+        team_cell = next(c for c in compare(fer, degster) if c["key"] == "team")
+        self.assertEqual(team_cell["state"], GREEN)
+
+    def test_recently_retired_staff_keep_playing_identity(self):
+        # 刚退役转教练组的人保留选手身份+自由身;职业教练保留 Coach+上榜战队
+        attacker = self.db.lookup("Attacker")
+        zhoking = self.db.lookup("zhokiNg")
+        gla1ve = self.db.lookup("gla1ve")
+        self.assertEqual(attacker.primary_role, "Rifler")
+        self.assertEqual(attacker.team or "", "")
+        self.assertEqual(gla1ve.primary_role, "IGL")
+        self.assertEqual(gla1ve.team or "", "")
+        self.assertEqual(zhoking.primary_role, "Coach")
+        self.assertEqual(zhoking.team, "TYLOO")
+
     def test_china_regions_share_nationality_and_flag(self):
         mainland = self.db.lookup("Attacker")
         hong_kong = self.db.lookup("Freeman")

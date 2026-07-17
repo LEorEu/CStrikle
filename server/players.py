@@ -28,9 +28,6 @@ ROLE_LABEL = {
 }
 ANSWER_ROLES = {"IGL", "AWPer", "Rifler", "Coach"}
 COACH_ROLES = {"coach", "assistant coach"}
-# 非选手职务:干这些的(且没有现役战队)视为已退出选手身份
-STAFF_ROLES = COACH_ROLES | {"manager", "analyst", "broadcast analyst",
-                             "caster", "interviewer", "host", "observer"}
 
 REGIONS = ["Europe", "CIS", "North America", "South America", "Asia",
            "Oceania", "Middle East & Africa", "Other"]
@@ -99,9 +96,18 @@ class Player:
 
     @property
     def role_set(self) -> set:
-        roles = {ROLE_LABEL[r] for r in self.roles if r in ROLE_LABEL}
-        if self.game_role:
-            roles.add(self.game_role)
+        """反馈黄色用的角色集合,只允许白名单组合:
+        {IGL} {AWPer} {Rifler} {Coach} {IGL,AWPer} {AWPer,Rifler}。
+        指挥默认持步枪,所以 IGL 不与 Rifler 构成混合;教练不参与混合。"""
+        primary = self.primary_role
+        if primary not in ANSWER_ROLES:
+            return set()
+        roles = {primary}
+        labels = {ROLE_LABEL[r] for r in self.roles if r in ROLE_LABEL}
+        if primary in ("IGL", "Rifler") and "AWPer" in labels:
+            roles.add("AWPer")
+        elif primary == "AWPer" and "Rifler" in labels:
+            roles.add("Rifler")
         return roles
 
     @property
@@ -152,17 +158,10 @@ class Player:
         return self.in_blast_pool or (self.status or "").lower() == "active"
 
     @property
-    def is_retired_like(self) -> bool:
-        """已退出选手身份:官方标退役/不活跃,或当前干的是教练/经理/解说等职务。
-        像 degster 那种还能打但没队要的现役选手才算"未签约"。"""
-        if (self.status or "").lower() in ("retired", "inactive"):
-            return True
-        return any(r in STAFF_ROLES for r in self.roles)
-
-    @property
     def team_label(self) -> str:
-        """无战队时区分"退役"和"未签约/已下放"。"""
-        return self.team or ("退役" if self.is_retired_like else "未签约")
+        """无战队统一显示"自由身":退役/未签约/玩票的界线无法可靠维护,
+        也不该成为对局反馈维度(在编与否才是可查证的事实)。"""
+        return self.team or "自由身"
 
     @property
     def display_country(self) -> str:

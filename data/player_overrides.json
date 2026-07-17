@@ -343,5 +343,48 @@
  "Racno": {
   "played_role": "Rifler",
   "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+ },
+ "Gla1ve": {
+  "game_role": "IGL",
+  "team": "",
+  "reason": "Recently retired star player (played Majors through 2024); 100T coach job must not erase his playing identity as legendary IGL."
+ },
+ "NBK-": {
+  "game_role": "Rifler",
+  "team": "",
+  "reason": "Played competitively until 2026; 3DMAX assistant coach since 2026-02 is his first coaching job. Remembered as a player (Rifler)."
+ },
+ "TiziaN": {
+  "game_role": "Rifler",
+  "team": "",
+  "reason": "Played for BIG until 2023, recently moved to assistant coach; remembered as a support Rifler."
+ },
+ "Mou": {
+  "game_role": "AWPer",
+  "team": "",
+  "reason": "Played until 2023-10 (K23); HOTU coach only since 2024-11. Remembered as AVANGAR Major-final AWPer."
+ },
+ "Attacker": {
+  "game_role": "Rifler",
+  "team": "",
+  "reason": "Retired 2025-12 and became TYLOO assistant coach; career TYLOO rifler with 6 Majors, not a career coach."
+ },
+ "AZR": {
+  "game_role": "IGL",
+  "team": "",
+  "reason": "Played until 2025-03 (Talon disband); FlyQuest coach only since 2025-10. Remembered as Renegades/100T IGL."
+ },
+ "ErkaSt": {
+  "team": "",
+  "played_role": "Rifler",
+  "reason": "Removed as FlyQuest coach 2025-08 (AZR is his successor); local team data stale. Playing era 2015-2019 as Rifler (low confidence)."
+ },
+ "SmithZz": {
+  "game_role": "AWPer",
+  "reason": "Remembered as Titan/G2 AWPer (career sniper kills 5434); user decision 2026-07-18, mixed rifle evidence keeps AWPer+Rifler yellow overlap."
+ },
+ "Stewie2K": {
+  "game_role": "IGL",
+  "reason": "Career IGL per HLTV legacy feature (Cloud9/EG); user decision 2026-07-18. Retired-like, recent stats irrelevant."
  }
 }

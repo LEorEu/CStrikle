@@ -1,6 +1,11 @@
 .venv/
+.cache/
 __pycache__/
 .env
+.claude/settings.local.json
+task_plan.md
+findings.md
+progress.md
 *.py[cod]
 *.log
 /*.png

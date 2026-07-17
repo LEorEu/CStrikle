@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "players": {
+    "Maka": {
+      "hltv_id": 13138,
+      "slug": "maka",
+      "nickname": "Maka",
+      "real_name": "Bryan Canda",
+      "aliases": [],
+      "role_evidence": [
+        {
+          "kind": "igl_awper",
+          "title": "Maka: I didn't manage to wear both hats, IGL and AWP",
+          "url": "https://www.hltv.org/news/40505/maka-a-lot-of-frustration-on-stage-i-didnt-manage-to-wear-both-hats-igl-and-awp"
+        }
+      ]
+    },
+    "SmithZz": {
+      "hltv_id": 7170,
+      "slug": "smithzz",
+      "nickname": "SmithZz",
+      "real_name": "Edouard Dubourdeaux",
+      "aliases": [],
+      "role_evidence": [
+        {
+          "kind": "historical_weapon_stats",
+          "title": "HLTV individual stats: Rifle kills 9464, Sniper kills 5434",
+          "url": "https://www.hltv.org/stats/players/individual/7170/smithzz"
+        }
+      ]
+    },
+    "Stewie2K": {
+      "hltv_id": 8797,
+      "slug": "stewie2k",
+      "nickname": "Stewie2K",
+      "real_name": "Jacky Yip",
+      "hltv_real_names": [
+        "Jake Yip"
+      ],
+      "aliases": [
+        "2k"
+      ],
+      "role_evidence": [
+        {
+          "kind": "igl",
+          "title": "Triumph and tragedy: The legacy of Stewie2K",
+          "url": "https://www.hltv.org/news/34618/triumph-and-tragedy-the-legacy-of-stewie2k"
+        }
+      ]
+    }
+  }
+}
