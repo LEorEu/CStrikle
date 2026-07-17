@@ -315,3 +315,23 @@
 - Next steps:
   - 后续可按队伍或争议名单分批采集，在 `.cache/hltv/role_review.json` 人工确认 `decision` 后预览并显式写入。
   - 本轮未提交、未推送、未部署；用户侧并行图片/国旗改动保持原样。
+
+## 2026-07-18 — 角色终稿、HLTV 工具发布与春川部署
+
+- Request:
+  - 审查用户补充的角色/战队语义改动，将当前代码推送到私有 GitHub，并部署到春川 ARM 的 `cs2.estia.moe`。
+  - 盘点项目名/网站标题入口；用户考虑另取中文社区梗名，但尚未拍板。
+- Changes and release:
+  - 审核并发布无战队统一“自由身”、角色黄色白名单、9 条人工覆盖、HLTV 本地审核工具、终审报告和回归测试。
+  - `.gitignore` 排除 `.claude/settings.local.json`、HLTV 缓存及本地规划文件，避免发布本机权限和会话状态。
+  - 发布提交 `9e5305e` 已推送到 `origin/main`。
+  - 从该提交生成精确 Git 归档，SHA-256 为 `c56faba66dc39cab5862217b69a153070c75d5aecb12950a31d4614633000c81`；春川覆盖前备份旧源码并保留 `.env`。
+  - 在 `/home/ubuntu/docker/cstrikle` 重新构建并启动容器；Caddy 已有 `cs2.estia.moe -> cstrikle:8620`，无需修改 DNS/Caddy。
+  - 网站展示名暂时保持 `CStrikle — 猜 CS 职业哥`；未来只替换 title/H1/分享文本，不改 localStorage 键、每日题哈希 seed 或 CPA metadata。
+- Verification:
+  - 本地 30 项 unittest、Python compileall、JavaScript 语法、diff check 和秘密模式扫描通过。
+  - 生产容器 healthy、FailingStreak=0，公开首页 GET 200，`/api/meta` 返回 649/644 与 easy/medium/hard=351/502/644。
+  - 生产关键映射通过：SmithZz=AWPer+Rifler、Stewie2K=IGL、Maka=IGL+AWPer、gla1ve/Attacker 为选手角色+自由身。
+  - 生产 AI 保持 `grok-4.5-cstrikle`、DDGS 开启、2 steps、35 秒、medium。
+- Next steps:
+  - 后续单独确定中文品牌名和副标题；可考虑保留 CStrikle 作为技术名，使用“弗一把”作为中文展示品牌，避免迁移内部兼容键。
