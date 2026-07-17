@@ -744,7 +744,12 @@
   "Wildcard": "teams/Wildcard_lm.png",
   "K27": "teams/K27_am.png",
   "INFINITE": "teams/INFINITE_am.png",
-  "Marsborne": "teams/Marsborne_am.png"
+  "Marsborne": "teams/Marsborne_am.png",
+  "OG": "teams/OG_am.png",
+  "BC.Game": "teams/BC_Game_am.png",
+  "bc.game": "teams/BC_Game_am.png",
+  "Clutchain": "teams/Clutchain_am.png",
+  "ASTRAL Esports": "teams/ASTRAL_Esports_lm.png"
  },
  "flags": {
   "Argentina": "flags/ar.png",
