@@ -65,14 +65,8 @@
       <div class="panel">
         <h3>创建房间</h3>
         <label>你的昵称 <input id="host-name" value="" maxlength="20" placeholder="玩家1"></label>
-        <label class="chk"><input type="checkbox" id="vs-ai"> 和 AI 打(它会上网查资料还会喷你)</label>
-        <label id="ai-speed-row" class="hidden">AI 出手节奏
-          <select id="ai-speed">
-            <option value="fast">快(压迫感)</option>
-            <option value="normal" selected>中</option>
-            <option value="slow">慢(悠着点)</option>
-          </select>
-        </label>
+        <label class="chk"><input type="checkbox" id="vs-ai"> 和 AI 打(它会上网查资料还会喷你)
+          <span id="vs-ai-note" class="dim hidden">(自定义难度不可用 AI)</span></label>
         <label id="ai-level-row" class="hidden">AI 强度
           <select id="ai-level">
             <option value="easy">下饭(候选内随机猜)</option>
@@ -99,8 +93,8 @@
       <span>房间 <b id="room-code"></b></span>
       <span id="room-status"></span>
       <span id="room-remaining"></span>
-      <span id="turn-timer" class="turn-timer hidden"></span>
     </div>
+    <div id="turn-timer" class="turn-timer hidden"></div>
     <div class="room-layout">
       <div class="room-main">
         <div class="guess-box">
@@ -111,6 +105,7 @@
         <div id="room-result" class="result hidden"></div>
         <div id="opp-reveal-main"></div>
         <div class="row-btns">
+          <button id="btn-rematch" class="primary hidden" onclick="roomRematch()">🔁 再来一局</button>
           <button id="btn-transcript" class="primary hidden" onclick="showTranscript()">🧠 看 AI 的思考回放</button>
           <button onclick="leaveRoom()">离开房间</button>
         </div>

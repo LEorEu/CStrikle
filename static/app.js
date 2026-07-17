@@ -96,11 +96,19 @@ async function api(path, opts = {}) {
 function go(view) {
   document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
   $("view-" + view).classList.remove("hidden");
-  if (view !== "room" && room.ws) { room.ws.close(); room.ws = null; }
+  if (view !== "room" && room.ws) {
+    // 离开房间视图 = 明确弃局:先告诉服务端,AI/计时立即停
+    const ws = room.ws; room.ws = null;
+    if (ws.readyState === WebSocket.OPEN) {
+      try { ws.send(JSON.stringify({ type: "leave" })); } catch {}
+    }
+    ws.close();
+  }
 }
 
 /* ---------------- settings widget ---------------- */
-function renderSettings(container, { withGuesses = true, withTimer = false } = {}) {
+function renderSettings(container, { withGuesses = true, withTimer = false,
+                                     onDifficulty = null } = {}) {
   const el = typeof container === "string" ? $(container) : container;
   const regions = META ? META.regions : [];
   el.innerHTML = `
@@ -110,46 +118,60 @@ function renderSettings(container, { withGuesses = true, withTimer = false } = {
         <button data-v="easy">简单·热门</button>
         <button data-v="medium" class="on">常规</button>
         <button data-v="hard">困难·全部</button>
+        <button data-v="custom">自定义</button>
       </span>
       <span class="dim pool-hint"></span>
     </div>
-    <div class="srow"><b>赛区</b>
-      <span class="regions">${regions.map(r =>
-        `<span class="tag" data-r="${r}">${REGION_CN[r] || r}</span>`).join(" ")}</span>
-      <span class="dim">(不选=全部)</span>
+    <div class="srow std-hint"><b></b><span class="dim">标准难度固定:8 次猜测${
+      withTimer ? " · 整局限时 1 分钟" : ""};选「自定义」可改筛选和规则</span></div>
+    <div class="custom-rows hidden">
+      <div class="srow"><b>赛区</b>
+        <span class="regions">${regions.map(r =>
+          `<span class="tag" data-r="${r}">${REGION_CN[r] || r}</span>`).join(" ")}</span>
+        <span class="dim">(不选=全部)</span>
+      </div>
+      <div class="srow"><b>范围</b>
+        <label class="chk" style="margin:0"><input type="checkbox" class="active-only">仅现役</label>
+        <span>Major年代
+          <select class="yr-from"><option value="">2013</option>${range(2014, 2026).map(y => `<option>${y}</option>`).join("")}</select>
+          —
+          <select class="yr-to">${range(2013, 2025).map(y => `<option>${y}</option>`).join("")}<option value="" selected>至今</option></select>
+        </span>
+      </div>
+      ${withGuesses ? `<div class="srow"><b>猜测次数</b>
+        <select class="max-guesses"><option>6</option><option selected>8</option><option>10</option><option>12</option></select>
+      </div>` : ""}
+      ${withTimer ? `<div class="srow"><b>整局限时</b>
+        <select class="game-seconds">
+          <option value="" selected>不限时</option>
+          <option value="60">1 分钟</option>
+          <option value="120">2 分钟</option>
+          <option value="180">3 分钟</option>
+          <option value="300">5 分钟</option>
+        </select>
+        <span class="dim">时间到还没人猜中就算平局</span>
+      </div>` : ""}
     </div>
-    <div class="srow"><b>范围</b>
-      <label class="chk" style="margin:0"><input type="checkbox" class="active-only">仅现役</label>
-      <span>Major年代
-        <select class="yr-from"><option value="">2013</option>${range(2014, 2026).map(y => `<option>${y}</option>`).join("")}</select>
-        —
-        <select class="yr-to">${range(2013, 2025).map(y => `<option>${y}</option>`).join("")}<option value="" selected>至今</option></select>
-      </span>
-    </div>
-    ${withGuesses ? `<div class="srow"><b>猜测次数</b>
-      <select class="max-guesses"><option>6</option><option selected>8</option><option>10</option><option>12</option></select>
-    </div>` : ""}
-    ${withTimer ? `<div class="srow"><b>整局限时</b>
-      <select class="game-seconds">
-        <option value="" selected>不限时</option>
-        <option value="60">1 分钟</option>
-        <option value="120">2 分钟</option>
-        <option value="180">3 分钟</option>
-      </select>
-      <span class="dim">时间到还没人猜中就算平局</span>
-    </div>` : ""}
   </div>`;
   const seg = el.querySelector(".seg");
   const hint = el.querySelector(".pool-hint");
-  const collect = () => ({
-    difficulty: seg.querySelector(".on").dataset.v,
-    regions: [...el.querySelectorAll(".tag.on")].map(t => t.dataset.r),
-    active_only: el.querySelector(".active-only").checked,
-    year_from: +el.querySelector(".yr-from").value || null,
-    year_to: +el.querySelector(".yr-to").value || null,
-    max_guesses: withGuesses ? +el.querySelector(".max-guesses").value : 8,
-    game_seconds: withTimer ? (+el.querySelector(".game-seconds").value || null) : null,
-  });
+  const collect = () => {
+    const difficulty = seg.querySelector(".on").dataset.v;
+    if (difficulty !== "custom")
+      // 标准难度用固定规则:8 次猜测,对战整局限时 1 分钟
+      return { difficulty, regions: [], active_only: false,
+               year_from: null, year_to: null, max_guesses: 8,
+               game_seconds: withTimer ? 60 : null };
+    return {
+      difficulty,
+      regions: [...el.querySelectorAll(".tag.on")].map(t => t.dataset.r),
+      active_only: el.querySelector(".active-only").checked,
+      year_from: +el.querySelector(".yr-from").value || null,
+      year_to: +el.querySelector(".yr-to").value || null,
+      max_guesses: withGuesses ? +el.querySelector(".max-guesses").value : 8,
+      game_seconds: withTimer ? (+el.querySelector(".game-seconds").value || null) : null,
+    };
+  };
   // 任何筛选条件变化都实时刷新候选人数(轻防抖)
   let hintTimer = null;
   const updHint = () => {
@@ -166,7 +188,12 @@ function renderSettings(container, { withGuesses = true, withTimer = false } = {
   };
   seg.querySelectorAll("button").forEach(b => b.onclick = () => {
     seg.querySelectorAll("button").forEach(x => x.classList.remove("on"));
-    b.classList.add("on"); updHint();
+    b.classList.add("on");
+    const custom = b.dataset.v === "custom";
+    el.querySelector(".custom-rows").classList.toggle("hidden", !custom);
+    el.querySelector(".std-hint").classList.toggle("hidden", custom);
+    if (onDifficulty) onDifficulty(b.dataset.v);
+    updHint();
   });
   el.querySelectorAll(".tag").forEach(t => t.onclick = () => {
     t.classList.toggle("on"); updHint();
@@ -284,6 +311,14 @@ function rowHtml(row) {
 function renderGrid(el, rows) {
   el.innerHTML = `<div class="grow header">${HEAD.map(h => `<div>${h}</div>`).join("")}</div>`
     + rows.map(rowHtml).join("");
+}
+function syncGrid(el, rows) {
+  // 只增量追加新行:整格重绘会让头像重载、翻转动画重播,
+  // 对手每次行动广播状态时画面就"闪一下"
+  const rendered = el.childElementCount ? el.childElementCount - 1 : 0;
+  if (!el.childElementCount || rendered > rows.length) { renderGrid(el, rows); return; }
+  for (let i = rendered; i < rows.length; i++)
+    el.insertAdjacentHTML("beforeend", rowHtml(rows[i]));
 }
 function pipsHtml(used, total) {
   let h = '<span class="pips">';
@@ -418,8 +453,7 @@ async function createRoom() {
   try {
     const r = await api("/api/room", { method: "POST", body: {
       name: $("host-name").value.trim() || "玩家1",
-      settings, vs_ai: vsAi, ai_speed: $("ai-speed").value,
-      ai_level: $("ai-level").value,
+      settings, vs_ai: vsAi, ai_level: $("ai-level").value,
     }});
     localStorage.setItem("cstrikle_name", $("host-name").value.trim());
     enterRoom(r.code, r.token, vsAi);
@@ -443,7 +477,9 @@ function enterRoom(code, token, vsAi) {
   $("room-code").textContent = code;
   $("room-guess-input").value = "";
   $("chat-log").innerHTML = "";
+  $("room-grid").innerHTML = "";      // 清掉上一局残留,增量渲染按空网格起步
   $("btn-transcript").classList.add("hidden");
+  $("btn-rematch").classList.add("hidden");
   $("room-result").classList.add("hidden");
   $("room-result").dataset.spoiler = "";
   $("opp-reveal-main").innerHTML = "";
@@ -498,7 +534,7 @@ function renderRoom() {
   $("room-status").textContent = s.status === "waiting" ? "等待对手加入…"
     : s.status === "playing" ? "对局进行中" : "对局结束";
   $("room-remaining").innerHTML = pipsHtml(you.rows.length, s.settings.max_guesses);
-  renderGrid($("room-grid"), you.rows);
+  syncGrid($("room-grid"), you.rows);
   $("room-guess-input").disabled = s.status !== "playing" || you.status !== "playing";
 
   // opponent panel
@@ -532,6 +568,7 @@ function renderRoom() {
         : iWon ? "VICTORY — 你先猜中了" : `DEFEAT — ${esc(s.winner)} 先猜中了`}</div>`
       + answerCard(s.answer);
     if (opp && opp.is_ai) $("btn-transcript").classList.remove("hidden");
+    $("btn-rematch").classList.remove("hidden");
     const rev = $("opp-reveal-main");
     if (s.opponent_rows && s.opponent_rows.length) {
       rev.innerHTML = `<h3 class="reveal-title">对手 ${esc(opp ? opp.name : "")} 的猜测</h3>`;
@@ -547,8 +584,9 @@ function renderRoom() {
       const title = iWon ? "VICTORY" : s.winner === "draw" ? "DRAW" : "DEFEAT";
       const sub = iWon ? "你先猜中了" : s.winner === "draw" ? "谁都没猜出来"
         : `${s.winner} 先猜中了`;
-      const btns = (opp && opp.is_ai
-        ? `<button class="primary" onclick="overlayTranscript()">🧠 看 AI 的思考回放</button>` : "")
+      const btns = `<button class="primary" onclick="roomRematch()">🔁 再来一局</button>`
+        + (opp && opp.is_ai
+        ? `<button onclick="overlayTranscript()">🧠 看 AI 的思考回放</button>` : "")
         + `<button onclick="closeEndOverlay()">关闭</button>`;
       setTimeout(() => showEndOverlay(kind, title, sub, s.answer, btns), 700);
     }
@@ -566,6 +604,8 @@ function renderRoom() {
       }
     } else { res.classList.add("hidden"); res.dataset.spoiler = ""; }
     $("opp-reveal-main").innerHTML = "";
+    $("btn-transcript").classList.add("hidden");
+    $("btn-rematch").classList.add("hidden");
   }
 }
 function addChat(m) {
@@ -598,8 +638,16 @@ function roomGuess(p) {
 }
 function leaveRoom() {
   clearInterval(turnTimerInt);
-  if (room.ws) { room.ws.close(); room.ws = null; }
-  go("versus-lobby");
+  go("versus-lobby");        // go() 里会发 leave 并断开
+}
+async function roomRematch() {
+  try {
+    await api(`/api/room/${room.code}/rematch`, {
+      method: "POST", headers: { "X-Room-Token": room.token },
+    });
+    closeEndOverlay();
+    if (!room.ws || room.ws.readyState !== WebSocket.OPEN) connectWs();
+  } catch (e) { toast(e.message); }
 }
 async function showTranscript() {
   try {
@@ -647,11 +695,21 @@ async function init() {
       + (META.ai_enabled ? ` · AI: ${META.ai_model}` : " · AI 未配置");
     if (!META.ai_enabled) $("vs-ai").disabled = true;
   } catch (e) { toast("加载选手库失败: " + e.message); }
-  getRoomSettings = renderSettings("settings-room", { withGuesses: true, withTimer: true });
+  getRoomSettings = renderSettings("settings-room", {
+    withGuesses: true, withTimer: true,
+    // 自定义难度不设上限,禁止配 AI(防止无限烧模型)
+    onDifficulty: (d) => {
+      const custom = d === "custom";
+      const ai = $("vs-ai");
+      if (custom) ai.checked = false;
+      ai.disabled = custom || !(META && META.ai_enabled);
+      $("vs-ai-note").classList.toggle("hidden", !custom);
+      $("ai-level-row").classList.toggle("hidden", !ai.checked);
+    },
+  });
   attachSuggest($("guess-input"), $("suggest"), soloGuess);
   attachSuggest($("room-guess-input"), $("room-suggest"), roomGuess);
   $("vs-ai").addEventListener("change", () => {
-    $("ai-speed-row").classList.toggle("hidden", !$("vs-ai").checked);
     $("ai-level-row").classList.toggle("hidden", !$("vs-ai").checked);
   });
   $("chat-text").addEventListener("keydown", e => { if (e.key === "Enter") sendChat(); });

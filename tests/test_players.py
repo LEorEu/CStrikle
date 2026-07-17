@@ -1,5 +1,6 @@
 import unittest
 
+from server.game import GREEN, compare
 from server.players import ANSWER_ROLES, PlayerDB
 
 
@@ -57,6 +58,23 @@ class PlayerDatabaseTests(unittest.TestCase):
             pool = self.db.difficulty_pool(difficulty)
             self.assertGreaterEqual(len(pool), 2)
             self.assertTrue(all(player.is_game_ready for player in pool))
+
+    def test_china_regions_share_nationality_and_flag(self):
+        mainland = self.db.lookup("Attacker")
+        hong_kong = self.db.lookup("Freeman")
+        taiwan = self.db.lookup("Marek")
+
+        self.assertEqual(mainland.brief()["country"], "中国")
+        self.assertEqual(hong_kong.brief()["country"], "中国香港")
+        self.assertEqual(taiwan.full()["country"], "中国台湾")
+        self.assertEqual(mainland.flag, "/img/flags/cn.png")
+        self.assertEqual(hong_kong.flag, mainland.flag)
+        self.assertEqual(taiwan.flag, mainland.flag)
+
+        self.assertEqual(compare(hong_kong, mainland)[0]["state"], GREEN)
+        taiwan_cell = compare(taiwan, mainland)[0]
+        self.assertEqual(taiwan_cell["state"], GREEN)
+        self.assertEqual(taiwan_cell["value"], "中国台湾")
 
 
 if __name__ == "__main__":

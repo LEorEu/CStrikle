@@ -133,7 +133,6 @@ class NewRoom(BaseModel):
     name: str = "玩家1"
     settings: dict | None = None
     vs_ai: bool = False
-    ai_speed: str = "normal"
     ai_level: str = "normal"     # easy | normal | hard
 
 
@@ -150,14 +149,38 @@ async def create_room(body: NewRoom, request: Request):
         _consume_ai_room_quota(client_ip)
     try:
         room = rooms.create(body.settings, body.name.strip()[:20], body.vs_ai,
-                            body.ai_speed, body.ai_level)
+                            body.ai_level)
     except ValueError as e:
         raise HTTPException(400, str(e))
     if body.vs_ai:
         room.start_ai()
         room.start_clock()
-        room.arm_abandon()   # 创建后 1 分钟内没人连上 ws 就终止,防止 AI 空转烧模型
+        room.arm_abandon()   # 创建后一直没人连上 ws 就终止,防止 AI 空转烧模型
     return {"code": room.code, "token": room.host.token, "vs_ai": room.vs_ai}
+
+
+@app.post("/api/room/{code}/rematch")
+async def rematch_room(
+    code: str,
+    request: Request,
+    room_token: str = Header(default="", alias="X-Room-Token"),
+):
+    room = rooms.get(code)
+    if room is None:
+        raise HTTPException(404, "房间不存在")
+    seat = room.seat_by_token(room_token)
+    if seat is None:
+        raise HTTPException(403, "你不在这个房间里")
+    if room.vs_ai:
+        client_ip = request.client.host if request.client else "unknown"
+        _consume_ai_room_quota(client_ip)
+    try:
+        room.rematch()
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    await room.post_chat("系统", f"{seat.name} 开了新的一局,谜底已更换")
+    await room.broadcast_state()
+    return {"ok": True}
 
 
 @app.post("/api/room/{code}/join")
@@ -223,12 +246,16 @@ async def room_ws(ws: WebSocket, code: str, token: str = ""):
                     await ws.send_json({"type": "error", "message": str(e)})
             elif t == "chat":
                 await room.post_chat(seat.name, msg.get("text", ""))
+            elif t == "leave":
+                # 点「离开房间」= 明确弃局,立即终结(对手在打则判对手胜)
+                await room.end_by_leave(seat)
+                break
     except WebSocketDisconnect:
         pass
     finally:
         if seat.ws is ws:
             seat.ws = None
-        # 所有人类都断线时,1 分钟内没人回来就终止对局(AI 停手,不再烧模型)
+        # 所有人类都断线(刷新/关页)时,只留几秒重连窗口,然后立即终局
         if room.status == "playing" and not room.humans_connected():
             room.arm_abandon()
 

@@ -133,15 +133,17 @@ label.chk { display: flex; align-items: center; gap: 8px; color: var(--fg); }
   background: var(--t); box-shadow: 0 0 6px rgba(222,149,64,.35);
 }
 .pip.used { background: var(--gray); box-shadow: none; }
+/* 整局倒计时:独立一行居中放大,像 CS HUD 的炸弹计时,加压迫感 */
 .turn-timer {
-  font-family: var(--disp); font-size: 16px; font-weight: 700;
-  color: var(--ct); letter-spacing: 1px;
-  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--disp); font-size: 30px; font-weight: 700;
+  color: var(--ct); letter-spacing: 2px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin: -6px 0 14px;
 }
 /* C4 计时器图标:平时只有指示灯慢闪;urgent 时爆闪光线亮起,
    整个计时器(图标+数字)恢复老版的一秒一闪 */
 .turn-timer.urgent { color: var(--red); animation: blink 1s infinite; }
-.turn-timer .c4 { width: 17px; height: 19px; flex: none; }
+.turn-timer .c4 { width: 30px; height: 33px; flex: none; }
 .turn-timer .c4-rays { opacity: 0; }
 .turn-timer .c4-led { animation: c4-led 2s steps(1) infinite; }
 .turn-timer.urgent .c4-rays { opacity: 1; animation: none; }

@@ -35,9 +35,15 @@ class Seat:
 
 class Room:
     def __init__(self, db: PlayerDB, raw_settings: dict, host_name: str,
-                 vs_ai: bool, ai_speed: str = "normal", ai_level: str = "normal"):
+                 vs_ai: bool, ai_level: str = "normal"):
         self.db = db
         self.settings = normalize_settings(raw_settings)
+        if vs_ai:
+            # AI 对局必须有界:禁自定义难度,且整局限时兜底 1 分钟,防止无限烧模型
+            if self.settings["difficulty"] == "custom":
+                raise ValueError("自定义难度不支持 AI 对手,请选标准难度")
+            if not self.settings["game_seconds"]:
+                self.settings["game_seconds"] = 60
         pool = db.filter_pool(self.settings)
         if len(pool) < 2:
             raise ValueError("筛选条件下候选选手不足(<2),请放宽范围")
@@ -46,7 +52,6 @@ class Room:
         self.answer = random.choice(pool)
         self.code = _code()
         self.vs_ai = vs_ai
-        self.ai_speed = ai_speed if ai_speed in config.AI_SPEED_PRESETS else "normal"
         self.ai_level = ai_level if ai_level in ("easy", "normal", "hard") else "normal"
         self.host = Seat(host_name or "玩家1", secrets.token_urlsafe(12))
         self.guest = (Seat(AI_NAME, secrets.token_urlsafe(12), is_ai=True)
@@ -79,7 +84,8 @@ class Room:
         s = self.settings
         diff = {"easy": "热门选手(Major常客或现役强队)",
                 "medium": "常规(打过至少2次Major或现役职业哥)",
-                "hard": "全部打过Major的选手(含冷门老哥)"}[s["difficulty"]]
+                "hard": "全部打过Major的选手(含冷门老哥)",
+                "custom": "自定义(全部选手起筛)"}[s["difficulty"]]
         parts = [diff]
         if s["regions"]:
             parts.append("赛区限定: " + "/".join(s["regions"]))
@@ -102,8 +108,34 @@ class Room:
     def humans_connected(self) -> bool:
         return any(not s.is_ai and s.ws is not None for s in self.seats())
 
-    def arm_abandon(self, delay: int = 60):
-        """所有人类都断线时启动弃局倒计时;刷新页面重连可取消。"""
+    async def finish(self, sys_msg: str, winner_seat: Seat | None = None):
+        """立即终局:定胜负、停 AI/计时任务并广播。"""
+        if self.status == "over":
+            return
+        self.status = "over"
+        self.winner = winner_seat.name if winner_seat else "draw"
+        for s in self.seats():
+            if s.status == "playing":
+                s.status = "won" if s is winner_seat else "lost"
+        if self.ai_task:
+            self.ai_task.cancel()
+        if self.timer_task:
+            self.timer_task.cancel()
+        self.cancel_abandon()
+        await self.post_chat("系统", sys_msg)
+        await self.broadcast_state()
+
+    async def end_by_leave(self, seat: Seat):
+        """玩家点「离开房间」:对手还在打就判对手获胜,否则直接终止。"""
+        other = self.opponent(seat)
+        if (self.status == "playing" and other and not other.is_ai
+                and other.status == "playing" and other.ws is not None):
+            await self.finish(f"{seat.name} 离开了房间,{other.name} 获胜", other)
+        else:
+            await self.finish(f"{seat.name} 离开了房间,对局终止")
+
+    def arm_abandon(self, delay: int = 15):
+        """所有人类都断线时短暂等待重连(网络抖动),否则直接终局。"""
         if self.status != "playing" or self.abandon_task is not None:
             return
         self.abandon_task = asyncio.create_task(self._abandon_after(delay))
@@ -116,17 +148,11 @@ class Room:
     async def _abandon_after(self, delay: int):
         try:
             await asyncio.sleep(delay)
-            if self.status == "playing" and not self.humans_connected():
-                self.status = "over"
-                self.winner = "draw"
-                await self.post_chat("系统", "玩家离线超过 1 分钟,对局已终止")
-                if self.ai_task:
-                    self.ai_task.cancel()
-                if self.timer_task:
-                    self.timer_task.cancel()
-                await self.broadcast_state()
         except asyncio.CancelledError:
-            pass
+            return
+        self.abandon_task = None
+        if self.status == "playing" and not self.humans_connected():
+            await self.finish("玩家已离线,对局终止")
 
     # ------------------------------------------------------------ clock
     def start_clock(self):
@@ -205,6 +231,27 @@ class Room:
         for s in self.seats():
             await self._send(s, {"type": "chat", **msg})
 
+    # ---------------------------------------------------------- rematch
+    def rematch(self):
+        """同一房间、同一规则再来一局(换新谜底,AI 换新记录)。"""
+        if self.status != "over":
+            raise ValueError("对局还没结束,不能重开")
+        self.answer = random.choice(self.answer_pool)
+        for s in self.seats():
+            s.rows = []
+            s.status = "playing"
+        self.status = "playing"
+        self.winner = None
+        self.deadline = None
+        self.timer_task = None
+        self.ai_task = None
+        self.created = time.time()   # 连着打就续命,别被超龄清理
+        if self.vs_ai:
+            self.start_ai()
+        self.start_clock()
+        if not self.humans_connected():
+            self.arm_abandon()
+
     # ------------------------------------------------------------ game
     async def make_guess(self, seat: Seat, name: str):
         async with self.lock:
@@ -269,7 +316,7 @@ class Room:
 
     async def _ai_loop(self):
         seat = self.guest
-        delay = config.AI_SPEED_PRESETS[self.ai_speed]
+        delay = config.AI_GUESS_DELAY_SECONDS
         try:
             await asyncio.sleep(1.5)   # let the human breathe first
             while self.status == "playing" and seat.status == "playing":
@@ -314,10 +361,9 @@ class RoomStore:
         self.db = db
         self.rooms = {}
 
-    def create(self, raw_settings, host_name, vs_ai, ai_speed="normal",
-               ai_level="normal") -> Room:
+    def create(self, raw_settings, host_name, vs_ai, ai_level="normal") -> Room:
         self._cleanup()
-        room = Room(self.db, raw_settings, host_name, vs_ai, ai_speed, ai_level)
+        room = Room(self.db, raw_settings, host_name, vs_ai, ai_level)
         while room.code in self.rooms:
             room.code = _code()
         self.rooms[room.code] = room

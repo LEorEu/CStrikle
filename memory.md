@@ -246,3 +246,22 @@
   - Standalone report: `REPORT_PLAYER_DATA_AND_AI_SOLVER.md`.
 - Remaining risk:
   - Grok/xAI still shows long-tail timeouts and at least one exhausted free account. The deterministic fallback protects game progress, but account-pool health remains an upstream operations concern.
+
+## 2026-07-18 — 中国大陆、香港、澳门、台湾国籍本地化
+
+- Request:
+  - 国籍文字分别显示为“中国”“中国香港”“中国澳门”“中国台湾”。
+  - 四者在猜测反馈中按同一中国国籍判定为绿色，并统一使用中国国旗。
+  - 只修改本地项目，不提交、不推送、不部署。
+- Changes:
+  - 保留 `players.json` 的上游原始国籍值，新增公开显示名称、游戏国籍判定键和旗帜来源三个派生属性。
+  - 中国大陆、香港、澳门、台湾及兼容来源值 `Macao`/`Chinese Taipei` 的国籍判定键统一为 `China`。
+  - 搜索列表、完整资料与猜测格显示本地化文字；四者的旗帜统一映射到 `flags/cn.png`。
+  - 添加中国香港、中国台湾与中国大陆互猜为绿色且共用中国国旗的回归测试。
+- Verification:
+  - Python compileall 通过。
+  - 全部 16 项单元测试通过。
+  - 手工烟测确认 Attacker、Freeman、Marek 分别显示“中国”“中国香港”“中国台湾”，均使用 `/img/flags/cn.png`，港/台对中国大陆的国籍反馈均为绿色。
+  - `git diff --check` 通过。
+- Next steps:
+  - 按用户要求未提交、未推送、未部署；如后续确认，再与工作区其他未提交功能一起处理。

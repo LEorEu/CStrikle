@@ -10,7 +10,7 @@ from .players import Player, PlayerDB
 GREEN, YELLOW, GRAY = "green", "yellow", "gray"
 
 DEFAULT_SETTINGS = {
-    "difficulty": "medium",      # easy | medium | hard
+    "difficulty": "medium",      # easy | medium | hard | custom
     "regions": [],               # empty = all
     "active_only": False,
     "year_from": None,           # Major-era window, e.g. 2013..2026
@@ -26,7 +26,7 @@ def normalize_settings(raw: dict | None) -> dict:
         for k in s:
             if k in raw and raw[k] is not None:
                 s[k] = raw[k]
-    if s["difficulty"] not in ("easy", "medium", "hard"):
+    if s["difficulty"] not in ("easy", "medium", "hard", "custom"):
         s["difficulty"] = "medium"
     s["max_guesses"] = max(4, min(15, int(s["max_guesses"] or 8)))
     if s["regions"] and not isinstance(s["regions"], list):
@@ -48,14 +48,14 @@ def compare(guess: Player, answer: Player, today: date | None = None) -> list:
     today = today or date.today()
     cells = []
 
-    # nationality: green same country, yellow same region
-    if guess.country and guess.country == answer.country:
+    # nationality: 中国大陆、香港、澳门、台湾统一为中国；其他同国绿色、同区黄色
+    if guess.nationality_key and guess.nationality_key == answer.nationality_key:
         st = GREEN
     elif guess.region != "Other" and guess.region == answer.region:
         st = YELLOW
     else:
         st = GRAY
-    cells.append({"key": "nationality", "value": guess.country or "?",
+    cells.append({"key": "nationality", "value": guess.display_country or "?",
                   "extra": guess.region, "state": st})
 
     # team: exact match; 无战队时"退役"和"未签约"算两种不同状态

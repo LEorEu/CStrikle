@@ -22,8 +22,8 @@ AI_SEARCH_CACHE_TTL_SECONDS = max(
 AI_TOOLS_MODE = os.getenv("AI_TOOLS_MODE", "auto").lower()
 # 兼容 OpenAI 风格 reasoning_effort；留空时不发送该参数。
 AI_REASONING_EFFORT = os.getenv("AI_REASONING_EFFORT", "").strip().lower()
-# seconds between AI guesses: fast / normal / slow presets picked per room
-AI_SPEED_PRESETS = {"fast": 1, "normal": 3, "slow": 6}
+# AI 落子后的最短间隔(原 fast/normal/slow 档已砍掉,固定按最快节奏来)
+AI_GUESS_DELAY_SECONDS = 1.0
 # Per-client protection for the public AI-room creation endpoint.
 AI_ROOM_RATE_LIMIT = max(1, int(os.getenv("AI_ROOM_RATE_LIMIT", "3")))
 AI_ROOM_RATE_WINDOW_SECONDS = max(

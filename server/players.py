@@ -37,6 +37,16 @@ REGIONS = ["Europe", "CIS", "North America", "South America", "Asia",
 
 DIFFICULTIES = ("easy", "medium", "hard")
 
+# 保留上游原始国籍值用于数据追踪，对外按中国大陆版本显示。
+CHINA_COUNTRY_LABELS = {
+    "China": "中国",
+    "Hong Kong": "中国香港",
+    "Macau": "中国澳门",
+    "Macao": "中国澳门",
+    "Taiwan": "中国台湾",
+    "Chinese Taipei": "中国台湾",
+}
+
 
 def _img(rel: str | None) -> str | None:
     return f"/img/{rel}" if rel else None
@@ -150,13 +160,31 @@ class Player:
         """无战队时区分"退役"和"未签约/已下放"。"""
         return self.team or ("退役" if self.is_retired_like else "未签约")
 
+    @property
+    def display_country(self) -> str:
+        return CHINA_COUNTRY_LABELS.get(self.country, self.country or "")
+
+    @property
+    def nationality_key(self) -> str:
+        """用于游戏判定的国籍；港澳台与中国大陆统一判定为中国。"""
+        if self.country in CHINA_COUNTRY_LABELS:
+            return "China"
+        return self.country or ""
+
+    @property
+    def flag_country(self) -> str:
+        """国籍栏使用国旗；中国大陆、香港、澳门、台湾统一使用中国国旗。"""
+        if self.country in CHINA_COUNTRY_LABELS:
+            return "China"
+        return self.country or ""
+
     def brief(self) -> dict:
         """What the autocomplete list needs."""
         return {
             "page": self.page,
             "nickname": self.nickname,
             "real_name": self.real_name,
-            "country": self.country,
+            "country": self.display_country,
             "team": self.team,
             "majors_count": self.majors_count or 0,
             "majors_won": self.majors_won,
@@ -170,7 +198,7 @@ class Player:
             "page": self.page,
             "nickname": self.nickname,
             "real_name": self.real_name,
-            "country": self.country,
+            "country": self.display_country,
             "region": self.region,
             "age": self.age(today),
             "team": self.team or "",
@@ -230,7 +258,7 @@ class PlayerDB:
         for p in self.players:
             p.photo = _img(self.photo_map.get(p.page))
             p.team_logo = _img(self.team_logo_map.get(p.team or ""))
-            p.flag = _img(self.flag_map.get(p.country or ""))
+            p.flag = _img(self.flag_map.get(p.flag_country))
         self.by_page = {p.page: p for p in self.players}
         self.by_nick: dict[str, list] = {}
         for p in self.players:
