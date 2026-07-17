@@ -15,7 +15,7 @@
 - **无限模式**:赛前自定难度、赛区、现役、Major 年代、猜测次数
 - **对战模式**:房间码邀请朋友,或勾选"和 AI 打";双方猜同一谜底,
   先猜中者胜;只能看到对方的反馈色块,看不到具体猜了谁
-  - **整局限时**(可选 3/5/10 分钟):时间到还没人猜中就算平局
+  - **整局限时**(可选 1/2/3 分钟):时间到还没人猜中就算平局
   - 先出局的一方可以立刻"偷看谜底",不用干等对手打完
   - 结束弹出胜负结算 + 选手大图揭晓卡
 
@@ -39,6 +39,8 @@ AI_API_KEY=sk-xxx
 AI_MODEL=gpt-5.5
 AI_SEARCH_ENABLED=1   # 允许 AI 用 DuckDuckGo 搜索
 AI_TOOLS_MODE=auto    # native | text | auto(见下)
+AI_MAX_STEPS=4        # 单回合最多调用模型 4 次
+AI_REASONING_EFFORT=low # 支持该参数的推理模型可降低延迟
 AI_ROOM_RATE_LIMIT=3
 AI_ROOM_RATE_WINDOW_SECONDS=600
 ```

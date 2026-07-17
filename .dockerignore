@@ -7,3 +7,4 @@ __pycache__
 scraper
 memory.md
 *.png
+!static/cs2-bg.png

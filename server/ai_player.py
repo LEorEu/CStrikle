@@ -9,13 +9,17 @@ match.
 """
 import asyncio
 import json
+import logging
 import re
+import time
 
 from openai import AsyncOpenAI
 
 from . import config
 from .game import feedback_text
 from .players import PlayerDB
+
+logger = logging.getLogger("uvicorn.error")
 
 TOOLS = [
     {
@@ -76,9 +80,9 @@ SYSTEM_PROMPT = """你是一名 CS 电竞圈老油条,正在和一个人类玩�
 
 ## 你的做法
 1. 先在回复正文里用中文写出你的推理:根据已有反馈,排除了谁、锁定了什么范围、下一步为什么这么猜。
-2. 拿不准冷门信息时用 web_search 查证(选手的国籍、年龄、现役战队、Major 次数等),搜索关键词自己斟酌,中英文都行。
-3. 你性格嚣张嘴臭但有真本事,适度用 say 对人类对手输出垃圾话/心理战(中文,别刷屏,一轮最多一两句)。对手进度领先时可以急,领先时可以狂。
-4. 最后必须调用 submit_guess 提交一个猜测。昵称必须是真实职业选手的游戏 ID;如果提示选手不在库里,换一个再试。
+2. 只有反馈不足以判断、且确实需要核对冷门资料时才用 web_search;第一轮不要搜索,每轮最多搜索一次。
+3. 你性格嚣张嘴臭但有真本事,可以用 say 对人类输出一句垃圾话/心理战(中文),但别刷屏。信息足够时,say 和 submit_guess 必须放在同一次回复里。
+4. 每轮必须尽快调用 submit_guess 提交一个猜测,不要只聊天或只写推理。昵称必须是真实职业选手的游戏 ID;如果提示选手不在库里,换一个再试。
 
 注意:你看不到对手猜了谁,只能看到对手已用的猜测次数和反馈颜色。"""
 
@@ -196,17 +200,41 @@ class AIPlayer:
         tools = [t for t in TOOLS
                  if config.AI_SEARCH_ENABLED or t["function"]["name"] != "web_search"]
 
-        for _ in range(config.AI_MAX_STEPS):
+        for step in range(config.AI_MAX_STEPS):
             if self.on_status:
                 await self.on_status("thinking", None)
+            started = time.perf_counter()
             try:
                 if self.tools_mode == "native":
-                    resp = await self.client.chat.completions.create(
-                        model=config.AI_MODEL, messages=messages, tools=tools)
+                    request = {
+                        "model": config.AI_MODEL,
+                        "messages": messages,
+                        "tools": tools,
+                    }
+                    if config.AI_REASONING_EFFORT:
+                        request["reasoning_effort"] = config.AI_REASONING_EFFORT
+                    # 第一次没有完成猜测时，后续步骤只允许提交猜测，
+                    # 避免模型连续聊天/搜索导致一个回合调用三四次。
+                    if step > 0:
+                        request["tool_choice"] = {
+                            "type": "function",
+                            "function": {"name": "submit_guess"},
+                        }
+                    resp = await self.client.chat.completions.create(**request)
                 else:
-                    resp = await self.client.chat.completions.create(
-                        model=config.AI_MODEL, messages=messages)
+                    request = {
+                        "model": config.AI_MODEL,
+                        "messages": messages,
+                    }
+                    if config.AI_REASONING_EFFORT:
+                        request["reasoning_effort"] = config.AI_REASONING_EFFORT
+                    resp = await self.client.chat.completions.create(**request)
             except Exception as e:
+                elapsed = time.perf_counter() - started
+                logger.warning(
+                    "AI model call failed model=%s turn=%s step=%s elapsed=%.2fs: %s",
+                    config.AI_MODEL, turn_no, step + 1, elapsed, e,
+                )
                 # auto 模式下接口报不认识 tools -> 降级文本协议重来
                 if (self.tools_mode == "native" and config.AI_TOOLS_MODE == "auto"
                         and any(w in str(e).lower() for w in ("tool", "function"))):
@@ -216,6 +244,11 @@ class AIPlayer:
                                        "reason": "接口不支持工具调用,已切换文本指令模式"})
                     continue
                 raise
+            elapsed = time.perf_counter() - started
+            logger.info(
+                "AI model call model=%s turn=%s step=%s elapsed=%.2fs",
+                config.AI_MODEL, turn_no, step + 1, elapsed,
+            )
             msg = resp.choices[0].message
             reasoning = getattr(msg, "reasoning_content", None)
             if reasoning:

@@ -129,9 +129,9 @@ function renderSettings(container, { withGuesses = true, withTimer = false } = {
     ${withTimer ? `<div class="srow"><b>整局限时</b>
       <select class="game-seconds">
         <option value="" selected>不限时</option>
+        <option value="60">1 分钟</option>
+        <option value="120">2 分钟</option>
         <option value="180">3 分钟</option>
-        <option value="300">5 分钟</option>
-        <option value="600">10 分钟</option>
       </select>
       <span class="dim">时间到还没人猜中就算平局</span>
     </div>` : ""}

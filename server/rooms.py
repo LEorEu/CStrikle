@@ -231,7 +231,7 @@ class Room:
         seat = self.guest
         delay = config.AI_SPEED_PRESETS[self.ai_speed]
         try:
-            await asyncio.sleep(3)   # let the human breathe first
+            await asyncio.sleep(1.5)   # let the human breathe first
             while self.status == "playing" and seat.status == "playing":
                 opp = self.host
                 opp_info = (f"对手已猜 {len(opp.rows)}/{self.settings['max_guesses']} 次,"
@@ -242,7 +242,7 @@ class Room:
                     turn = await self.ai.take_turn(seat.rows, opp_info, guessed)
                 except Exception as e:
                     await self.post_chat("系统", f"AI 接口出错了: {type(e).__name__}: {e}")
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(3)
                     continue
                 for s in self.seats():
                     await self._send(s, {"type": "ai_status", "state": "idle",

@@ -89,3 +89,37 @@
   - Initial commit `afef9ee` (`Initial CStrikle release`) was pushed successfully to `origin/main`, and the local `main` branch now tracks it.
 - Next steps:
   - No required deployment or publication work remains. A future hardening option is a global concurrent-AI-room cap if public traffic grows beyond what per-IP limiting handles.
+
+## 2026-07-17 — Shorter matches, stage background, and Grok latency
+
+- Request:
+  - Replace the 3/5/10-minute versus limits with 1/2/3 minutes because a match has only eight guesses.
+  - Use the supplied CS character image as the page background instead of leaving the UI visually empty.
+  - Diagnose why CPA-routed `grok-4.5` feels much slower than `gpt-5.5`, then improve it.
+- Latency diagnosis:
+  - A real game turn in CPA logs made three sequential model requests taking 57.085, 58.835, and 26.929 seconds. The next request failed after 4.927 seconds.
+  - The project then added a separate 20–30-second “normal” delay after every AI guess, so model latency and artificial pacing stacked.
+  - CPA globally injects Grok-native `web_search`/`x_search`, enlarging Grok's request context. A minimal controlled request was still fast (`grok-4.5` 3.054 seconds versus `gpt-5.5` 3.712 seconds), showing the base route/model was not the main cause.
+  - The real prompt could return only `say` without `submit_guess`, causing the app agent loop to call the model repeatedly.
+  - The failed CPA request retried three different xAI accounts before returning `context canceled`; unhealthy account retries remain a source of tail-latency variance.
+- Changes:
+  - Versus time options are now unlimited or 1/2/3 minutes (60/120/180 seconds).
+  - Moved the supplied image to `static/cs2-bg.png`, allowed it through `.dockerignore`, and integrated it as a fixed stage background.
+  - Added central dark overlays, translucent/blurred HUD cards and panels, and a mobile-specific crop so the image adds atmosphere without reducing text readability.
+  - Reduced AI pacing presets from 8/20/40 seconds to 1/3/6 seconds, initial AI wait from 3 to 1.5 seconds, and error retry wait from 10 to 3 seconds.
+  - Added optional `AI_REASONING_EFFORT`; production uses `low`.
+  - Reduced the default and production `AI_MAX_STEPS` from 10 to 4.
+  - Tightened the system prompt: no first-round search, at most one search per round, and `say` plus `submit_guess` should be sent together.
+  - If the first native-tool response does not produce a valid guess, later steps force the `submit_guess` tool, preventing repeated chat/search-only calls.
+  - Added per-model-call elapsed-time logging for future diagnosis.
+  - No global CPA configuration or retry policy was changed because those settings affect other CPA clients.
+- Deployment and verification:
+  - Python compile, JavaScript syntax, and `git diff --check` passed.
+  - Rebuilt and redeployed the container at `/home/ubuntu/docker/cstrikle`; it is healthy.
+  - Public `https://cs2.estia.moe` loaded the background with HTTP 200 and showed the new 1/2/3-minute options.
+  - Desktop and 390px mobile screenshots were visually inspected; the CS2 HUD remains readable and responsive.
+  - The live runtime reports `AI_MAX_STEPS=4`, `AI_REASONING_EFFORT=low`, and speed presets `1/3/6`.
+  - One controlled real Grok game turn completed in 17.53 seconds and returned `reasoning + say + guess` in one response, successfully selecting s1mple. This removes the previous three-request runaway and the 20–30-second artificial delay, though CPA/Grok upstream latency can still vary.
+- Next steps:
+  - Observe the new timing logs during normal play. If occasional long tails remain, clean up failing xAI accounts or reduce `request-retry` in a route-specific CPA configuration rather than changing the global policy.
+  - If consistently lower latency matters more than Grok-native search, compare or switch this app alone to `gpt-5.5`; no model switch was made in this session.
