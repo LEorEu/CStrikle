@@ -35,7 +35,7 @@ class Seat:
 
 class Room:
     def __init__(self, db: PlayerDB, raw_settings: dict, host_name: str,
-                 vs_ai: bool, ai_speed: str = "normal"):
+                 vs_ai: bool, ai_speed: str = "normal", ai_level: str = "normal"):
         self.db = db
         self.settings = normalize_settings(raw_settings)
         pool = db.filter_pool(self.settings)
@@ -47,6 +47,7 @@ class Room:
         self.code = _code()
         self.vs_ai = vs_ai
         self.ai_speed = ai_speed if ai_speed in config.AI_SPEED_PRESETS else "normal"
+        self.ai_level = ai_level if ai_level in ("easy", "normal", "hard") else "normal"
         self.host = Seat(host_name or "玩家1", secrets.token_urlsafe(12))
         self.guest = (Seat(AI_NAME, secrets.token_urlsafe(12), is_ai=True)
                       if vs_ai else None)
@@ -57,6 +58,7 @@ class Room:
         self.ai = None
         self.ai_task = None
         self.timer_task = None
+        self.abandon_task = None  # 玩家全员离线后的弃局倒计时
         self.deadline = None     # 整局限时的截止时间戳
         self.lock = asyncio.Lock()
 
@@ -95,6 +97,36 @@ class Room:
         self.guest = Seat(name or "玩家2", secrets.token_urlsafe(12))
         self.status = "playing"
         return self.guest
+
+    # ---------------------------------------------------------- abandon
+    def humans_connected(self) -> bool:
+        return any(not s.is_ai and s.ws is not None for s in self.seats())
+
+    def arm_abandon(self, delay: int = 60):
+        """所有人类都断线时启动弃局倒计时;刷新页面重连可取消。"""
+        if self.status != "playing" or self.abandon_task is not None:
+            return
+        self.abandon_task = asyncio.create_task(self._abandon_after(delay))
+
+    def cancel_abandon(self):
+        if self.abandon_task is not None:
+            self.abandon_task.cancel()
+            self.abandon_task = None
+
+    async def _abandon_after(self, delay: int):
+        try:
+            await asyncio.sleep(delay)
+            if self.status == "playing" and not self.humans_connected():
+                self.status = "over"
+                self.winner = "draw"
+                await self.post_chat("系统", "玩家离线超过 1 分钟,对局已终止")
+                if self.ai_task:
+                    self.ai_task.cancel()
+                if self.timer_task:
+                    self.timer_task.cancel()
+                await self.broadcast_state()
+        except asyncio.CancelledError:
+            pass
 
     # ------------------------------------------------------------ clock
     def start_clock(self):
@@ -231,6 +263,7 @@ class Room:
             max_guesses=self.settings["max_guesses"],
             on_say=say,
             on_status=status,
+            ai_level=self.ai_level,
         )
         self.ai_task = asyncio.create_task(self._ai_loop())
 
@@ -281,9 +314,10 @@ class RoomStore:
         self.db = db
         self.rooms = {}
 
-    def create(self, raw_settings, host_name, vs_ai, ai_speed="normal") -> Room:
+    def create(self, raw_settings, host_name, vs_ai, ai_speed="normal",
+               ai_level="normal") -> Room:
         self._cleanup()
-        room = Room(self.db, raw_settings, host_name, vs_ai, ai_speed)
+        room = Room(self.db, raw_settings, host_name, vs_ai, ai_speed, ai_level)
         while room.code in self.rooms:
             room.code = _code()
         self.rooms[room.code] = room
@@ -297,7 +331,6 @@ class RoomStore:
         for code in [c for c, r in self.rooms.items()
                      if now - r.created > max_age]:
             r = self.rooms.pop(code)
-            if r.ai_task:
-                r.ai_task.cancel()
-            if r.timer_task:
-                r.timer_task.cancel()
+            for task in (r.ai_task, r.timer_task, r.abandon_task):
+                if task:
+                    task.cancel()

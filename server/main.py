@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config
-from .game import Game
+from .game import Game, normalize_settings
 from .players import REGIONS, PlayerDB
 from .rooms import RoomStore
 
@@ -75,6 +75,16 @@ def players():
     return [p.brief() for p in db.players]
 
 
+class PoolQuery(BaseModel):
+    settings: dict | None = None
+
+
+@app.post("/api/pool_count")
+def pool_count(body: PoolQuery):
+    """设置面板实时显示当前筛选条件下的候选人数。"""
+    return {"count": len(db.filter_pool(normalize_settings(body.settings)))}
+
+
 # ------------------------------------------------------------------ solo
 class NewGame(BaseModel):
     mode: str = "unlimited"          # daily | unlimited
@@ -124,6 +134,7 @@ class NewRoom(BaseModel):
     settings: dict | None = None
     vs_ai: bool = False
     ai_speed: str = "normal"
+    ai_level: str = "normal"     # easy | normal | hard
 
 
 class JoinRoom(BaseModel):
@@ -139,12 +150,13 @@ async def create_room(body: NewRoom, request: Request):
         _consume_ai_room_quota(client_ip)
     try:
         room = rooms.create(body.settings, body.name.strip()[:20], body.vs_ai,
-                            body.ai_speed)
+                            body.ai_speed, body.ai_level)
     except ValueError as e:
         raise HTTPException(400, str(e))
     if body.vs_ai:
         room.start_ai()
         room.start_clock()
+        room.arm_abandon()   # 创建后 1 分钟内没人连上 ws 就终止,防止 AI 空转烧模型
     return {"code": room.code, "token": room.host.token, "vs_ai": room.vs_ai}
 
 
@@ -198,6 +210,7 @@ async def room_ws(ws: WebSocket, code: str, token: str = ""):
         return
     await ws.accept()
     seat.ws = ws
+    room.cancel_abandon()          # 断线重连回来了,取消弃局倒计时
     await room.broadcast_state()
     try:
         while True:
@@ -215,6 +228,9 @@ async def room_ws(ws: WebSocket, code: str, token: str = ""):
     finally:
         if seat.ws is ws:
             seat.ws = None
+        # 所有人类都断线时,1 分钟内没人回来就终止对局(AI 停手,不再烧模型)
+        if room.status == "playing" and not room.humans_connected():
+            room.arm_abandon()
 
 
 # ---------------------------------------------------------------- static

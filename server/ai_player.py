@@ -128,6 +128,7 @@ class AIPlayer:
         on_say=None,
         on_status=None,
         reasoning_effort: str | None = None,
+        ai_level: str = "normal",
     ):
         self.db = db
         self.solver = PlayerSolver(
@@ -137,6 +138,7 @@ class AIPlayer:
         )
         self.pool_desc = pool_desc
         self.max_guesses = max_guesses
+        self.ai_level = ai_level if ai_level in ("easy", "normal", "hard") else "normal"
         self.on_say = on_say          # async fn(message)
         self.on_status = on_status    # async fn(status, detail)
         self.reasoning_effort = (
@@ -263,6 +265,7 @@ class AIPlayer:
             max(1, self.max_guesses - len(my_rows)),
             guessed_pages,
         )
+        analysis = self.solver.relax(analysis, self.ai_level, guessed_pages)
         self._required_guess = analysis.recommended
         res.fallback_guess = analysis.recommended.page
         res.events.append({

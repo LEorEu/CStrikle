@@ -28,6 +28,9 @@ ROLE_LABEL = {
 }
 ANSWER_ROLES = {"IGL", "AWPer", "Rifler", "Coach"}
 COACH_ROLES = {"coach", "assistant coach"}
+# 非选手职务:干这些的(且没有现役战队)视为已退出选手身份
+STAFF_ROLES = COACH_ROLES | {"manager", "analyst", "broadcast analyst",
+                             "caster", "interviewer", "host", "observer"}
 
 REGIONS = ["Europe", "CIS", "North America", "South America", "Asia",
            "Oceania", "Middle East & Africa", "Other"]
@@ -135,13 +138,17 @@ class Player:
         return self.in_blast_pool or (self.status or "").lower() == "active"
 
     @property
-    def is_retired(self) -> bool:
-        return (self.status or "").lower() == "retired"
+    def is_retired_like(self) -> bool:
+        """已退出选手身份:官方标退役/不活跃,或当前干的是教练/经理/解说等职务。
+        像 degster 那种还能打但没队要的现役选手才算"未签约"。"""
+        if (self.status or "").lower() in ("retired", "inactive"):
+            return True
+        return any(r in STAFF_ROLES for r in self.roles)
 
     @property
     def team_label(self) -> str:
         """无战队时区分"退役"和"未签约/已下放"。"""
-        return self.team or ("退役" if self.is_retired else "未签约")
+        return self.team or ("退役" if self.is_retired_like else "未签约")
 
     def brief(self) -> dict:
         """What the autocomplete list needs."""
@@ -207,8 +214,11 @@ class PlayerDB:
             p = Player(merged)
             if p.is_coach and p.team and not self.ranking.contains(p.team):
                 p.team = ""
-            if p.is_coach and not p.team and p.game_role not in ANSWER_ROLES:
-                # 没有(上榜)战队的教练不算 Coach,回退到选手时期的打法位置
+            if (p.game_role not in ANSWER_ROLES
+                    and p.primary_role not in ("IGL", "AWPer", "Rifler")
+                    and not (p.is_coach and p.team)):
+                # 除了带上榜战队的现任教练,其余职务人员(教练/分析师/经理/解说)
+                # 和空角色老选手都回退到选手时期的打法位置
                 fallback = override.get("played_role") or p.played_role
                 if fallback:
                     p.game_role = fallback

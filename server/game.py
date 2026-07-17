@@ -60,7 +60,7 @@ def compare(guess: Player, answer: Player, today: date | None = None) -> list:
 
     # team: exact match; 无战队时"退役"和"未签约"算两种不同状态
     def team_cat(p):
-        return (p.team or "").lower() or ("retired" if p.is_retired else "unsigned")
+        return (p.team or "").lower() or ("retired" if p.is_retired_like else "unsigned")
     st = GREEN if team_cat(guess) == team_cat(answer) else GRAY
     cells.append({"key": "team", "value": guess.team_label, "state": st})
 

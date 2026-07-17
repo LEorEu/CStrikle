@@ -49,7 +49,7 @@ header h1 .sub {
 }
 .meta { color: var(--faint); font-size: 12px; letter-spacing: .5px; }
 
-main { max-width: 1120px; margin: 0 auto; padding: 26px 22px 60px; }
+main { max-width: 1320px; margin: 0 auto; padding: 26px 22px 60px; }
 .hidden { display: none !important; }
 .dim { color: var(--dim); font-size: 12px; }
 h2 { font-family: var(--disp); letter-spacing: 1.5px; font-size: 21px; margin-bottom: 16px; }
@@ -138,15 +138,15 @@ label.chk { display: flex; align-items: center; gap: 8px; color: var(--fg); }
   color: var(--ct); letter-spacing: 1px;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.turn-timer.urgent { color: var(--red); }
-/* C4 计时器图标:指示灯平时慢闪,urgent 时快闪且外圈爆闪光线亮起 */
+/* C4 计时器图标:平时只有指示灯慢闪;urgent 时爆闪光线亮起,
+   整个计时器(图标+数字)恢复老版的一秒一闪 */
+.turn-timer.urgent { color: var(--red); animation: blink 1s infinite; }
 .turn-timer .c4 { width: 17px; height: 19px; flex: none; }
 .turn-timer .c4-rays { opacity: 0; }
 .turn-timer .c4-led { animation: c4-led 2s steps(1) infinite; }
-.turn-timer.urgent .c4-led { animation-duration: .4s; }
-.turn-timer.urgent .c4-rays { animation: c4-burst .4s steps(2, jump-none) infinite; }
+.turn-timer.urgent .c4-rays { opacity: 1; animation: none; }
+.turn-timer.urgent .c4-led { opacity: 1; animation: none; }
 @keyframes c4-led { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .2; } }
-@keyframes c4-burst { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 .result details summary { cursor: pointer; color: var(--dim); font-size: 14px; padding: 4px 0; }
 .result details summary:hover { color: var(--fg); }
 
@@ -269,7 +269,7 @@ label.chk { display: flex; align-items: center; gap: 8px; color: var(--fg); }
   clip-path: var(--chamfer); padding: 16px 20px;
   backdrop-filter: blur(8px);
 }
-.room-layout { display: grid; grid-template-columns: 1fr 330px; gap: 18px; }
+.room-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; }
 @media (max-width: 920px) { .room-layout { grid-template-columns: 1fr; } }
 .room-side { display: flex; flex-direction: column; gap: 16px; }
 .opp-panel { border-top: 2px solid var(--t); }

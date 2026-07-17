@@ -2,6 +2,8 @@
 """Deterministic Counter-Strikle candidate filtering and move selection."""
 from __future__ import annotations
 
+import random
+
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
@@ -298,4 +300,32 @@ class PlayerSolver:
             recommended=recommended,
             mode=mode,
             exact_solve_probability=probability,
+        )
+
+    def relax(
+        self,
+        analysis: SolverAnalysis,
+        level: str,
+        guessed_pages: set[str] | None = None,
+        rng: random.Random | None = None,
+    ) -> SolverAnalysis:
+        """按 AI 难度弱化落子:hard=最优;normal=信息增益前5随机;easy=严格候选内随机。
+        所有档位都仍然遵守历史反馈(不会猜已被排除的人),只是不再追求最优。"""
+        if level == "hard":
+            return analysis
+        pick_from = rng or random
+        guessed_pages = guessed_pages or set()
+        if level == "normal":
+            recommended = pick_from.choice(list(analysis.moves)).player
+            mode = "普通难度:信息增益前5内随机落子"
+        else:
+            pool = [p for p in analysis.candidates if p.page not in guessed_pages]
+            recommended = pick_from.choice(pool) if pool else analysis.recommended
+            mode = "简单难度:严格候选内随机落子"
+        return SolverAnalysis(
+            candidates=analysis.candidates,
+            moves=analysis.moves,
+            recommended=recommended,
+            mode=mode,
+            exact_solve_probability=None,
         )

@@ -73,6 +73,13 @@
             <option value="slow">慢(悠着点)</option>
           </select>
         </label>
+        <label id="ai-level-row" class="hidden">AI 强度
+          <select id="ai-level">
+            <option value="easy">下饭(候选内随机猜)</option>
+            <option value="normal" selected>普通(次优落子)</option>
+            <option value="hard">最强(最优信息增益)</option>
+          </select>
+        </label>
         <div id="settings-room"></div>
         <button class="primary" onclick="createRoom()">创建</button>
       </div>

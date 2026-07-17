@@ -141,18 +141,7 @@ function renderSettings(container, { withGuesses = true, withTimer = false } = {
   </div>`;
   const seg = el.querySelector(".seg");
   const hint = el.querySelector(".pool-hint");
-  const updHint = () => {
-    if (!META) return;
-    const d = seg.querySelector(".on").dataset.v;
-    hint.textContent = `候选约 ${META.pool_sizes[d]} 人`;
-  };
-  seg.querySelectorAll("button").forEach(b => b.onclick = () => {
-    seg.querySelectorAll("button").forEach(x => x.classList.remove("on"));
-    b.classList.add("on"); updHint();
-  });
-  el.querySelectorAll(".tag").forEach(t => t.onclick = () => t.classList.toggle("on"));
-  updHint();
-  return () => ({
+  const collect = () => ({
     difficulty: seg.querySelector(".on").dataset.v,
     regions: [...el.querySelectorAll(".tag.on")].map(t => t.dataset.r),
     active_only: el.querySelector(".active-only").checked,
@@ -161,6 +150,31 @@ function renderSettings(container, { withGuesses = true, withTimer = false } = {
     max_guesses: withGuesses ? +el.querySelector(".max-guesses").value : 8,
     game_seconds: withTimer ? (+el.querySelector(".game-seconds").value || null) : null,
   });
+  // 任何筛选条件变化都实时刷新候选人数(轻防抖)
+  let hintTimer = null;
+  const updHint = () => {
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(async () => {
+      try {
+        const d = await api("/api/pool_count", {
+          method: "POST",
+          body: { settings: collect() },
+        });
+        hint.textContent = `候选 ${d.count} 人`;
+      } catch { /* 网络抖动就先不更新 */ }
+    }, 150);
+  };
+  seg.querySelectorAll("button").forEach(b => b.onclick = () => {
+    seg.querySelectorAll("button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on"); updHint();
+  });
+  el.querySelectorAll(".tag").forEach(t => t.onclick = () => {
+    t.classList.toggle("on"); updHint();
+  });
+  el.querySelector(".active-only").addEventListener("change", updHint);
+  el.querySelectorAll("select").forEach(s => s.addEventListener("change", updHint));
+  updHint();
+  return collect;
 }
 function range(a, b) { return Array.from({length: b - a + 1}, (_, i) => a + i); }
 
@@ -405,6 +419,7 @@ async function createRoom() {
     const r = await api("/api/room", { method: "POST", body: {
       name: $("host-name").value.trim() || "玩家1",
       settings, vs_ai: vsAi, ai_speed: $("ai-speed").value,
+      ai_level: $("ai-level").value,
     }});
     localStorage.setItem("cstrikle_name", $("host-name").value.trim());
     enterRoom(r.code, r.token, vsAi);
@@ -602,6 +617,15 @@ async function showTranscript() {
 }
 function evHtml(e) {
   switch (e.type) {
+    case "solver": {
+      const prob = e.exact_solve_probability != null
+        ? ` · 剩余回合解出率 ${(e.exact_solve_probability * 100).toFixed(1)}%` : "";
+      const moves = (e.moves || []).map((m, i) =>
+        `${i + 1}. ${esc(m.nickname)}${m.in_candidates ? "" : "(探针)"} — 期望剩余 ${m.expected_remaining} · 最坏 ${m.worst_case} · 熵 ${m.entropy}`
+      ).join("\n");
+      return `<div class="ev ev-solver">🧮 求解器:候选剩 <b>${e.candidate_count}</b> 人 · ${esc(e.mode)}${prob}<br>→ 指定落子 <b>${esc(e.recommended)}</b>
+        <details><summary>信息增益排名</summary><pre>${moves}</pre></details></div>`;
+    }
     case "reasoning": return `<div class="ev"><details><summary>内部推理(reasoning)</summary><pre>${esc(e.text)}</pre></details></div>`;
     case "thinking": return `<div class="ev ev-thinking">${esc(e.text)}</div>`;
     case "search": return `<div class="ev ev-search">🔍 搜索:「${esc(e.query)}」</div>`;
@@ -626,8 +650,10 @@ async function init() {
   getRoomSettings = renderSettings("settings-room", { withGuesses: true, withTimer: true });
   attachSuggest($("guess-input"), $("suggest"), soloGuess);
   attachSuggest($("room-guess-input"), $("room-suggest"), roomGuess);
-  $("vs-ai").addEventListener("change", () =>
-    $("ai-speed-row").classList.toggle("hidden", !$("vs-ai").checked));
+  $("vs-ai").addEventListener("change", () => {
+    $("ai-speed-row").classList.toggle("hidden", !$("vs-ai").checked);
+    $("ai-level-row").classList.toggle("hidden", !$("vs-ai").checked);
+  });
   $("chat-text").addEventListener("keydown", e => { if (e.key === "Enter") sendChat(); });
   const saved = localStorage.getItem("cstrikle_name") || "";
   $("host-name").value = saved; $("join-name").value = saved;
