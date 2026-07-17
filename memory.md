@@ -82,5 +82,10 @@
   - Public verification on `https://cs2.estia.moe` confirmed the updated frontend sends `X-Room-Token`.
   - The live container reports `AI_ROOM_RATE_LIMIT=3` and `AI_ROOM_RATE_WINDOW_SECONDS=600` via application defaults.
   - A public non-AI room test returned 403 without a token and the expected game-state 403 with its valid token; no model request was triggered.
+- Git publication result:
+  - Final pre-commit audit covered 813 files / approximately 41.5 MB; 789 files are localized game image assets.
+  - Hard-coded secret scan found no matches; `.env`, logs, root attachment PNGs, and deployment archives were not tracked.
+  - The remote repository was confirmed empty before publication.
+  - Initial commit `afef9ee` (`Initial CStrikle release`) was pushed successfully to `origin/main`, and the local `main` branch now tracks it.
 - Next steps:
-  - Stage and audit the repository contents for secrets, create the initial commit, and push `main` to the configured private origin.
+  - No required deployment or publication work remains. A future hardening option is a global concurrent-AI-room cap if public traffic grows beyond what per-IP limiting handles.
