@@ -58,10 +58,11 @@ def compare(guess: Player, answer: Player, today: date | None = None) -> list:
     cells.append({"key": "nationality", "value": guess.country or "?",
                   "extra": guess.region, "state": st})
 
-    # team: exact match only
-    gt, at = (guess.team or "").lower(), (answer.team or "").lower()
-    st = GREEN if gt and gt == at else (GREEN if not gt and not at else GRAY)
-    cells.append({"key": "team", "value": guess.team or "无战队", "state": st})
+    # team: exact match; 无战队时"退役"和"未签约"算两种不同状态
+    def team_cat(p):
+        return (p.team or "").lower() or ("retired" if p.is_retired else "unsigned")
+    st = GREEN if team_cat(guess) == team_cat(answer) else GRAY
+    cells.append({"key": "team", "value": guess.team_label, "state": st})
 
     # age: green exact, yellow within 2, arrow = answer older/younger
     ga, aa = guess.age(today), answer.age(today)
@@ -89,13 +90,19 @@ def compare(guess: Player, answer: Player, today: date | None = None) -> list:
     d = None if gm == am else ("up" if am > gm else "down")
     cells.append({"key": "majors", "value": gm, "state": st, "dir": d})
 
+    # majors won: green exact, yellow within 1, arrow
+    gw, aw = guess.majors_won, answer.majors_won
+    st = GREEN if gw == aw else (YELLOW if abs(gw - aw) <= 1 else GRAY)
+    d = None if gw == aw else ("up" if aw > gw else "down")
+    cells.append({"key": "majors_won", "value": gw, "state": st, "dir": d})
+
     return cells
 
 
 def feedback_text(cells: list) -> str:
     """Human/LLM readable summary of one guess row."""
     label = {"nationality": "国籍", "team": "战队", "age": "年龄",
-             "role": "位置", "majors": "Major次数"}
+             "role": "位置", "majors": "Major次数", "majors_won": "Major冠军数"}
     state = {"green": "✔正确", "yellow": "≈接近", "gray": "✘不对"}
     parts = []
     for c in cells:

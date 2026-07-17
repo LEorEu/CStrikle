@@ -54,13 +54,15 @@ class Player:
                "birth_date", "team", "status", "roles", "majors_count",
                "first_major_year", "last_major_year", "majors", "in_blast_pool",
                "game_role")
-    __slots__ = _FIELDS + ("photo", "team_logo", "flag")
+    __slots__ = _FIELDS + ("photo", "team_logo", "flag", "majors_won")
 
     def __init__(self, rec: dict):
         for k in self._FIELDS:
             setattr(self, k, rec.get(k))
         self.roles = self.roles or []
         self.photo = self.team_logo = self.flag = None
+        self.majors_won = sum(1 for m in (self.majors or [])
+                              if m.get("placement") == "1")
 
     @property
     def primary_role(self) -> str:
@@ -132,6 +134,15 @@ class Player:
     def is_active(self) -> bool:
         return self.in_blast_pool or (self.status or "").lower() == "active"
 
+    @property
+    def is_retired(self) -> bool:
+        return (self.status or "").lower() == "retired"
+
+    @property
+    def team_label(self) -> str:
+        """无战队时区分"退役"和"未签约/已下放"。"""
+        return self.team or ("退役" if self.is_retired else "未签约")
+
     def brief(self) -> dict:
         """What the autocomplete list needs."""
         return {
@@ -141,6 +152,7 @@ class Player:
             "country": self.country,
             "team": self.team,
             "majors_count": self.majors_count or 0,
+            "majors_won": self.majors_won,
             "photo": self.photo,
             "flag": self.flag,
             "team_logo": self.team_logo,
@@ -155,8 +167,10 @@ class Player:
             "region": self.region,
             "age": self.age(today),
             "team": self.team or "",
+            "team_label": self.team_label,
             "role": self.primary_role,
             "majors_count": self.majors_count or 0,
+            "majors_won": self.majors_won,
             "status": self.status,
             "active": self.is_active,
             "photo": self.photo,

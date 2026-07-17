@@ -136,8 +136,17 @@ label.chk { display: flex; align-items: center; gap: 8px; color: var(--fg); }
 .turn-timer {
   font-family: var(--disp); font-size: 16px; font-weight: 700;
   color: var(--ct); letter-spacing: 1px;
+  display: inline-flex; align-items: center; gap: 6px;
 }
-.turn-timer.urgent { color: var(--red); animation: blink 1s infinite; }
+.turn-timer.urgent { color: var(--red); }
+/* C4 计时器图标:指示灯平时慢闪,urgent 时快闪且外圈爆闪光线亮起 */
+.turn-timer .c4 { width: 17px; height: 19px; flex: none; }
+.turn-timer .c4-rays { opacity: 0; }
+.turn-timer .c4-led { animation: c4-led 2s steps(1) infinite; }
+.turn-timer.urgent .c4-led { animation-duration: .4s; }
+.turn-timer.urgent .c4-rays { animation: c4-burst .4s steps(2, jump-none) infinite; }
+@keyframes c4-led { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .2; } }
+@keyframes c4-burst { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 .result details summary { cursor: pointer; color: var(--dim); font-size: 14px; padding: 4px 0; }
 .result details summary:hover { color: var(--fg); }
 
@@ -176,7 +185,7 @@ label.chk { display: flex; align-items: center; gap: 8px; color: var(--fg); }
 /* ---------- 记分板网格 ---------- */
 .grid { display: flex; flex-direction: column; gap: 7px; overflow-x: auto; }
 .grow {
-  display: grid; grid-template-columns: 1.45fr 1.15fr 1.15fr .62fr .85fr .68fr;
+  display: grid; grid-template-columns: 1.45fr 1.1fr 1.1fr .58fr .8fr .6fr .6fr;
   gap: 7px; min-width: 620px;
 }
 .reveal-title { margin: 22px 0 10px; color: var(--t); letter-spacing: 1.5px; }
@@ -197,6 +206,7 @@ label.chk { display: flex; align-items: center; gap: 8px; color: var(--fg); }
 .cell .row1 { white-space: nowrap; }
 .grow .cell:nth-child(3) { animation-delay: .08s } .grow .cell:nth-child(4) { animation-delay: .16s }
 .grow .cell:nth-child(5) { animation-delay: .24s } .grow .cell:nth-child(6) { animation-delay: .32s }
+.grow .cell:nth-child(7) { animation-delay: .4s }
 @keyframes reveal { 0% { transform: rotateX(85deg); } 55% { transform: rotateX(85deg); } 100% { transform: none; } }
 .cell.green { background: var(--green); }
 .cell.yellow { background: var(--yellow); }

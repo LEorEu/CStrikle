@@ -70,6 +70,9 @@ const COUNTRY_CN = {
   "Nigeria":"尼日利亚","Kenya":"肯尼亚",
 };
 const cnCountry = (c) => COUNTRY_CN[c] || c || "?";
+const ROLE_CN = { "Rifler": "步枪手", "AWPer": "狙击手", "IGL": "指挥",
+                  "Coach": "教练", "Analyst": "分析师" };
+const cnRole = (r) => ROLE_CN[r] || r || "?";
 
 /* ---------------- infra ---------------- */
 function toast(msg, ms = 2600) {
@@ -214,7 +217,24 @@ function attachSuggest(inputEl, boxEl, onPick) {
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
 
 /* ---------------- grid rendering ---------------- */
-const HEAD = ["选手", "国籍", "战队", "年龄", "位置", "MAJOR"];
+const HEAD = ["选手", "国籍", "战队", "年龄", "位置", "MAJOR", "冠军"];
+function c4Html() {
+  // CS HUD 风格 C4:砖体+指示灯,urgent 时外圈爆闪光线亮起
+  return `<svg class="c4" viewBox="0 0 24 26" aria-hidden="true">
+    <g class="c4-rays" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+      <line x1="12" y1="3" x2="12" y2="0.8"/>
+      <line x1="6.2" y1="5.2" x2="4.4" y2="3.4"/>
+      <line x1="17.8" y1="5.2" x2="19.6" y2="3.4"/>
+      <line x1="3.6" y1="10.4" x2="1.2" y2="9.8"/>
+      <line x1="20.4" y1="10.4" x2="22.8" y2="9.8"/>
+    </g>
+    <rect x="4" y="8" width="16" height="15" rx="2" fill="currentColor" opacity=".18"/>
+    <rect x="4" y="8" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    <rect class="c4-led" x="7" y="11" width="10" height="4.5" rx="1" fill="currentColor"/>
+    <line x1="7" y1="19" x2="17" y2="19" stroke="currentColor" stroke-width="1.2" opacity=".5"/>
+    <line x1="7" y1="21" x2="13" y2="21" stroke="currentColor" stroke-width="1.2" opacity=".35"/>
+  </svg>`;
+}
 function flagHtml(country, flagPath) {
   if (flagPath) return `<img class="fl" src="${flagPath}" alt="${esc(country)}" title="${esc(country)}">`;
   const f = flag(country);
@@ -231,8 +251,8 @@ function rowHtml(row) {
   const arrow = (x) => x.dir === "up" ? ' <span class="arrow">▲</span>' :
                        x.dir === "down" ? ' <span class="arrow">▼</span>' : "";
   const n = byKey.nationality, t = byKey.team, a = byKey.age,
-        r = byKey.role, m = byKey.majors;
-  const tlogo = p.team_logo && t.value === (p.team || "无战队")
+        r = byKey.role, m = byKey.majors, w = byKey.majors_won;
+  const tlogo = p.team_logo && p.team
     ? `<img class="tlogo${p.team_logo.includes("_lm.") ? " chip" : ""}" src="${p.team_logo}" alt="" loading="lazy">` : "";
   return `<div class="grow">
     <div class="cell name">${avaHtml(p)}
@@ -242,8 +262,9 @@ function rowHtml(row) {
       <span class="small">${REGION_CN[n.extra] || ""}</span></div>
     <div class="cell ${t.state}"><span class="row1">${tlogo}<span>${esc(t.value)}</span></span></div>
     <div class="cell ${a.state}"><span class="num">${a.value}${arrow(a)}</span></div>
-    <div class="cell ${r.state}">${esc(r.value)}</div>
+    <div class="cell ${r.state}">${esc(cnRole(r.value))}</div>
     <div class="cell ${m.state}"><span class="num">${m.value}${arrow(m)}</span></div>
+    ${w ? `<div class="cell ${w.state}"><span class="num">${w.value}${arrow(w)}</span></div>` : '<div class="cell gray">-</div>'}
   </div>`;
 }
 function renderGrid(el, rows) {
@@ -267,9 +288,10 @@ function answerCard(a) {
       <div class="a-facts">
         <span>${esc(cnCountry(a.country))} · ${REGION_CN[a.region] || a.region}</span>
         <span><b>${a.age ?? "?"}</b> 岁</span>
-        <span>${tlogo}${esc(a.team || "无战队")}</span>
-        <span>${esc(a.role)}</span>
+        <span>${tlogo}${esc(a.team_label || a.team || "未签约")}</span>
+        <span>${esc(cnRole(a.role))}</span>
         <span><b>${a.majors_count}</b> 次 Major</span>
+        <span><b>${a.majors_won ?? 0}</b> 冠</span>
       </div>
     </div>
   </div>`;
@@ -451,7 +473,7 @@ function renderRoom() {
     const offset = (s.now || Date.now() / 1000) - Date.now() / 1000;
     const upd = () => {
       const left = Math.max(0, Math.round(s.deadline - offset - Date.now() / 1000));
-      tt.textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+      tt.innerHTML = `${c4Html()} ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
       tt.classList.toggle("urgent", left <= 30);
     };
     upd();
@@ -468,7 +490,8 @@ function renderRoom() {
   if (opp) {
     $("opp-name").textContent = `${opp.is_ai ? "🤖 " : "🧑 "}${opp.name}`;
     $("opp-remaining").textContent = `对手剩余次数 ${opp.remaining}`;
-    const MINI = { nationality: "国", team: "队", age: "龄", role: "位", majors: "M" };
+    const MINI = { nationality: "国", team: "队", age: "龄", role: "位",
+                   majors: "M", majors_won: "冠" };
     $("opp-grid").innerHTML = opp.colors.map((r, i) => {
       const hit = r.every(c => c.state === "green");
       return `<div class="mini-row${hit ? " hit" : ""}"><span class="mini-idx">${i + 1}</span>${r.map(c =>
