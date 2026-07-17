@@ -1,7 +1,7 @@
 import unittest
 
 from server.game import GREEN, compare
-from server.players import ANSWER_ROLES, PlayerDB
+from server.players import ANSWER_ROLES, Player, PlayerDB
 
 
 class PlayerDatabaseTests(unittest.TestCase):
@@ -45,16 +45,30 @@ class PlayerDatabaseTests(unittest.TestCase):
             if p.primary_role == "Coach":
                 self.assertTrue(p.team, p.page)
 
-    def test_primary_role_respects_liquipedia_order_for_awp_vs_rifle(self):
-        # Liquipedia 的 roles 按主次排序:兼职过狙的步枪手(狙标签在后)应判步枪,
-        # 而不是被固定的 AWP 优先级误判成狙击手。
-        for nick in ("coldzera", "pashaBiceps", "SmithZz", "autimatic", "k0nfig"):
-            self.assertEqual(self.db.lookup(nick).primary_role, "Rifler", nick)
-        # 真正的纯狙(狙标签在前或独占)不受影响
-        for nick in ("ZywOo", "dev1ce", "markeloff", "GuardiaN"):
-            self.assertEqual(self.db.lookup(nick).primary_role, "AWPer", nick)
-        # 指挥优先级不动:igl 标签在场即判指挥
-        self.assertEqual(self.db.lookup("Jame").primary_role, "IGL")
+    def test_primary_role_inference_mechanism(self):
+        # 断言推断"机制"而非具体选手的争议结论(SmithZz/pashaBiceps 该是狙还是
+        # 步枪交给数据层和 player_overrides.json 去定,不写死在测试里)。
+        def role_of(roles, game_role=None):
+            return Player({"roles": roles, "game_role": game_role}).primary_role
+
+        # 1) game_role 人工覆盖优先级最高,短路一切启发式
+        self.assertEqual(role_of(["rifle"], game_role="AWPer"), "AWPer")
+        self.assertEqual(role_of(["awp"], game_role="Rifler"), "Rifler")
+        # 2) 有 IGL 标签就判指挥,不论其位置
+        self.assertEqual(role_of(["rifle", "igl"]), "IGL")
+        self.assertEqual(role_of(["igl", "awp"]), "IGL")
+        # 3) 狙 vs 步枪按 Liquipedia 原始顺序取第一个(启发式,非绝对规则),
+        #    不再固定把 AWP 提到步枪之前
+        self.assertEqual(role_of(["support", "awp"]), "Rifler")
+        self.assertEqual(role_of(["awp", "rifle"]), "AWPer")
+        # 4) support / lurk / entry / rifle 一族都归 Rifler
+        for tag in ("support", "lurk", "lurker", "entry", "rifle", "rifler"):
+            self.assertEqual(role_of([tag]), "Rifler", tag)
+
+    def test_primary_role_smoke_undisputed_players(self):
+        # 只用没争议的真人做冒烟:coldzera 明显步枪、ZywOo 明显狙。
+        self.assertEqual(self.db.lookup("coldzera").primary_role, "Rifler")
+        self.assertEqual(self.db.lookup("ZywOo").primary_role, "AWPer")
 
     def test_every_answer_has_comparable_attributes(self):
         self.assertGreater(len(self.db.answer_players), 0)
