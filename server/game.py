@@ -6,6 +6,7 @@ import secrets
 from datetime import date
 
 from .players import Player, PlayerDB
+from .rankings import normalize_team_name
 
 GREEN, YELLOW, GRAY = "green", "yellow", "gray"
 
@@ -58,9 +59,9 @@ def compare(guess: Player, answer: Player, today: date | None = None) -> list:
     cells.append({"key": "nationality", "value": guess.display_country or "?",
                   "extra": guess.region, "state": st})
 
-    # team: exact match; 无战队的人(退役/未签约/玩票)统一算"自由身"互相判绿
+    # team: 归一化别名后比较;无战队的人统一算"自由身"互相判绿
     def team_cat(p):
-        return (p.team or "").lower()
+        return normalize_team_name(p.team or "")
     st = GREEN if team_cat(guess) == team_cat(answer) else GRAY
     cells.append({"key": "team", "value": guess.team_label, "state": st})
 

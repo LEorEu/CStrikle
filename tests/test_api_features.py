@@ -159,6 +159,44 @@ class ApiFeatureTests(unittest.TestCase):
                                 headers={"X-Room-Token": r["token"]})
         self.assertEqual(resp.status_code, 409)
 
+    def test_human_rematch_waits_for_both_players(self):
+        r, j, room = self._make_room()
+        with self.client.websocket_connect(
+                f"/ws/room/{r['code']}?token={r['token']}") as w1:
+            w1.receive_json()
+            with self.client.websocket_connect(
+                    f"/ws/room/{r['code']}?token={j['token']}") as w2:
+                w1.receive_json()
+                w2.receive_json()
+                room.status = "over"
+                room.winner = "draw"
+                room.host.status = room.guest.status = "lost"
+
+                first = self.client.post(
+                    f"/api/room/{r['code']}/rematch",
+                    headers={"X-Room-Token": r["token"]})
+                self.assertEqual(first.status_code, 200)
+                self.assertFalse(first.json()["started"])
+                self.assertEqual(room.status, "over")
+                self.assertTrue(room.host.rematch_ready)
+                self.assertFalse(room.guest.rematch_ready)
+                for ws in (w1, w2):
+                    self.assertEqual(ws.receive_json()["type"], "chat")
+                    state = ws.receive_json()
+                    self.assertEqual(state["status"], "over")
+
+                second = self.client.post(
+                    f"/api/room/{r['code']}/rematch",
+                    headers={"X-Room-Token": j["token"]})
+                self.assertEqual(second.status_code, 200)
+                self.assertTrue(second.json()["started"])
+                self.assertEqual(room.status, "playing")
+                self.assertTrue(all(not s.rematch_ready for s in room.seats()))
+                for ws in (w1, w2):
+                    self.assertEqual(ws.receive_json()["type"], "chat")
+                    state = ws.receive_json()
+                    self.assertEqual(state["status"], "playing")
+
 
 if __name__ == "__main__":
     unittest.main()

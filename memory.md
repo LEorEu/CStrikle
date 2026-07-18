@@ -365,3 +365,25 @@
   - 生产 AI 保持 `grok-4.5-cstrikle`、DDGS 开启、2 steps、35 秒、medium。
 - Next steps:
   - 后续单独确定中文品牌名和副标题；可考虑保留 CStrikle 作为技术名，使用“弗一把”作为中文展示品牌，避免迁移内部兼容键。
+
+## 2026-07-18 — 队伍别名、双方重赛与 2026 科隆 Major
+
+- Request:
+  - 修复 s1mple=`BC.Game Esports`、Senzu=`BC.Game` 导致同队不绿和界面上像两个队伍的问题。
+  - 真人对战结束后，“再来一局”必须双方都确认，不能单方点击立即开局。
+  - 核对 2026 科隆 Major 数据；Falcons 已夺冠，但 NiKo 仍显示 0 冠。
+- Root causes:
+  - 战队反馈直接比较原始字符串；全库另有 5 组类似的大小写/泛化后缀别名。
+  - `Room.rematch()` 没有准备状态，一次请求就直接清空双方并重置为 playing。
+  - 本地已有 IEM Cologne 2026 参赛记录；Liquipedia 当前 Major Player Database 也已列出该届选手，但整届 placement 尚未回填，因此 `majors_won` 无法计入。
+- Changes:
+  - 队伍反馈复用 `normalize_team_name()`；当前 Top100 队伍统一使用快照规范名，队标查找增加归一化回退。s1mple/Senzu 现在都显示 `BC.Game` 并共用同一队标。
+  - `Seat` 新增 `rematch_ready`；真人首人点击只进入等待，第二人确认后才换谜底并开局。AI 对局仍由真人单击立即重赛。
+  - websocket 状态公开双方 ready；页面内和结算弹窗两处按钮同步显示“已准备，等待对手”，新局开始时自动关闭结算层。
+  - 新增 `data/major_results.json` 与共享覆盖模块；以 HLTV 决赛结果为来源，把 IEM Cologne 2026 的 Falcons 五人（m0NESY、kyousuke、karrigan、TeSeS、NiKo）placement 设为 1。运行时和 `scraper/build_db.py` 都会应用，重建数据库不会丢失。
+- Verification:
+  - 全部 44 项 unittest 通过；Python compileall、`node --check static/app.js`、`git diff --check` 通过。
+  - 烟测确认 BC.Game 同队反馈为 green；NiKo 为 17 次 Major、1 冠；Falcons 五名冠军选手的 2026 科隆 placement 均为 1。
+  - 保留用户未跟踪文件 `新建 文本文档.txt`，未触碰。
+- Next steps:
+  - 按本轮约定仅完成本地修改，尚未提交、推送或部署；用户确认后再发布到 GitHub/春川 ARM。

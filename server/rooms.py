@@ -27,6 +27,7 @@ class Seat:
         self.left = False        # 明确离开(或终局后关页),不再回来
         self.rows = []           # full guess rows (own view)
         self.status = "playing"  # playing | won | lost
+        self.rematch_ready = False
 
     def colors(self) -> list:
         """Opponent-visible view: colors only."""
@@ -202,6 +203,7 @@ class Room:
             "vs_ai": self.vs_ai,
             "you": {"name": seat.name, "status": seat.status,
                     "rows": seat.rows,
+                    "rematch_ready": seat.rematch_ready,
                     "remaining": self.settings["max_guesses"] - len(seat.rows)},
             "deadline": self.deadline,
             "opponent": None,
@@ -212,6 +214,7 @@ class Room:
         if opp:
             d["opponent"] = {"name": opp.name, "status": opp.status,
                              "is_ai": opp.is_ai, "colors": opp.colors(),
+                             "rematch_ready": opp.rematch_ready,
                              "present": opp.is_ai or (not opp.left
                                                       and opp.ws is not None),
                              "remaining": self.settings["max_guesses"] - len(opp.rows)}
@@ -244,14 +247,25 @@ class Room:
             await self._send(s, {"type": "chat", **msg})
 
     # ---------------------------------------------------------- rematch
-    def rematch(self):
-        """同一房间、同一规则再来一局(换新谜底,AI 换新记录)。"""
+    def request_rematch(self, seat: Seat) -> bool:
+        """登记重赛准备；真人双方都确认后才开局，AI 对局立即开局。"""
         if self.status != "over":
             raise ValueError("对局还没结束,不能重开")
+        if seat not in self.seats() or seat.is_ai:
+            raise ValueError("无效的重赛请求")
+        seat.rematch_ready = True
+        if self.vs_ai or all(s.is_ai or s.rematch_ready for s in self.seats()):
+            self._start_rematch()
+            return True
+        return False
+
+    def _start_rematch(self):
+        """同一房间、同一规则开始新一局(换谜底并清空双方状态)。"""
         self.answer = random.choice(self.answer_pool)
         for s in self.seats():
             s.rows = []
             s.status = "playing"
+            s.rematch_ready = False
         self.status = "playing"
         self.winner = None
         self.deadline = None

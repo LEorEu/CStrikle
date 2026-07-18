@@ -109,6 +109,26 @@ class PlayerDatabaseTests(unittest.TestCase):
         team_cell = next(c for c in compare(fer, degster) if c["key"] == "team")
         self.assertEqual(team_cell["state"], GREEN)
 
+    def test_team_aliases_use_one_identity_and_canonical_label(self):
+        s1mple = self.db.lookup("s1mple")
+        senzu = self.db.lookup("Senzu")
+        self.assertEqual(s1mple.team, "BC.Game")
+        self.assertEqual(senzu.team, "BC.Game")
+        self.assertEqual(s1mple.team_logo, senzu.team_logo)
+        team_cell = next(
+            c for c in compare(s1mple, senzu) if c["key"] == "team")
+        self.assertEqual(team_cell["state"], GREEN)
+
+    def test_cologne_2026_falcons_players_receive_champion_placement(self):
+        nicknames = ("m0NESY", "kyousuke", "karrigan", "TeSeS", "NiKo")
+        for nickname in nicknames:
+            player = self.db.lookup(nickname)
+            cologne = next(
+                m for m in player.majors
+                if m["page"] == "Intel_Extreme_Masters/2026/Cologne")
+            self.assertEqual(cologne["placement"], "1", nickname)
+        self.assertEqual(self.db.lookup("NiKo").majors_won, 1)
+
     def test_recently_retired_staff_keep_playing_identity(self):
         # 刚退役转教练组的人保留选手身份+自由身;职业教练保留 Coach+上榜战队
         attacker = self.db.lookup("Attacker")

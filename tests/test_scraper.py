@@ -1,6 +1,7 @@
 import unittest
 
 from scraper.build_db import parse_infobox, unresolved_blast_titles
+from server.major_results import apply_major_results
 
 
 class ScraperTests(unittest.TestCase):
@@ -24,6 +25,21 @@ class ScraperTests(unittest.TestCase):
             {"nickname": "newPlayer"},
         ]
         self.assertEqual(unresolved_blast_titles(pool, blast), ["newPlayer"])
+
+    def test_verified_major_result_fills_missing_upstream_placement(self):
+        majors = [
+            {"page": "Event/2026", "team": "Falcons", "placement": ""},
+            {"page": "Event/2026", "team": "FURIA", "placement": ""},
+        ]
+        events = {
+            "Event/2026": {
+                "placements": {"falcons": "1"},
+            }
+        }
+        corrected = apply_major_results(majors, events)
+        self.assertEqual(corrected[0]["placement"], "1")
+        self.assertEqual(corrected[1]["placement"], "")
+        self.assertEqual(majors[0]["placement"], "")  # 不原地污染解析结果
 
 
 if __name__ == "__main__":

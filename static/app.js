@@ -632,8 +632,11 @@ let turnTimerInt = null;
 function renderRoom() {
   const s = room.state;
   const you = s.you, opp = s.opponent;
-  const justEnded = s.status === "over" && room.lastStatus === "playing";
+  const previousStatus = room.lastStatus;
+  const justEnded = s.status === "over" && previousStatus === "playing";
+  const justRematched = s.status === "playing" && previousStatus === "over";
   room.lastStatus = s.status;
+  if (justRematched) closeEndOverlay();
 
   // 整局限时倒计时
   clearInterval(turnTimerInt);
@@ -650,7 +653,8 @@ function renderRoom() {
     tt.classList.remove("hidden");
   } else tt.classList.add("hidden");
   $("room-status").textContent = s.status === "waiting" ? "等待对手加入…"
-    : s.status === "playing" ? "对局进行中" : "对局结束";
+    : s.status === "playing" ? "对局进行中"
+    : opp && opp.rematch_ready ? "对手已准备再来一局" : "对局结束";
   $("room-remaining").innerHTML = pipsHtml(you.rows.length, s.settings.max_guesses);
   syncGrid($("room-grid"), you.rows);
   $("room-guess-input").disabled = s.status !== "playing" || you.status !== "playing";
@@ -688,8 +692,18 @@ function renderRoom() {
       + answerCard(s.answer);
     if (opp && opp.is_ai) $("btn-transcript").classList.remove("hidden");
     // 对手已经跑了就没有「再来一局」可言
-    $("btn-rematch").classList.toggle("hidden",
-      !!(opp && !opp.is_ai && opp.present === false));
+    const rematchGone = !!(opp && !opp.is_ai && opp.present === false);
+    const rematchReady = !!you.rematch_ready;
+    const rematchBtn = $("btn-rematch");
+    rematchBtn.classList.toggle("hidden", rematchGone);
+    rematchBtn.disabled = rematchReady;
+    rematchBtn.textContent = rematchReady ? "✓ 已准备，等待对手" : "🔁 再来一局";
+    const overlayRematch = $("btn-rematch-overlay");
+    if (overlayRematch) {
+      overlayRematch.disabled = rematchReady;
+      overlayRematch.textContent = rematchReady
+        ? "✓ 已准备，等待对手" : "🔁 再来一局";
+    }
     const rev = $("opp-reveal-main");
     if (s.opponent_rows && s.opponent_rows.length) {
       rev.innerHTML = `<h3 class="reveal-title">对手 ${esc(opp ? opp.name : "")} 的猜测</h3>`;
@@ -707,11 +721,22 @@ function renderRoom() {
         : `${s.winner} 先猜中了`;
       const oppGone = opp && !opp.is_ai && opp.present === false;
       const btns = (oppGone ? ""
-        : `<button class="primary" onclick="roomRematch()">🔁 再来一局</button>`)
+        : `<button id="btn-rematch-overlay" class="primary" onclick="roomRematch()"
+             ${rematchReady ? "disabled" : ""}>${rematchReady
+               ? "✓ 已准备，等待对手" : "🔁 再来一局"}</button>`)
         + (opp && opp.is_ai
         ? `<button onclick="overlayTranscript()">🧠 看 AI 的思考回放</button>` : "")
         + `<button onclick="closeEndOverlay()">关闭</button>`;
-      setTimeout(() => showEndOverlay(kind, title, sub, s.answer, btns), 700);
+      setTimeout(() => {
+        showEndOverlay(kind, title, sub, s.answer, btns);
+        // 结算动画延迟期间可能已经点过页面内按钮，避免弹出旧的可点击状态。
+        const liveRematch = $("btn-rematch-overlay");
+        const liveReady = !!(room.state && room.state.you.rematch_ready);
+        if (liveRematch && liveReady) {
+          liveRematch.disabled = true;
+          liveRematch.textContent = "✓ 已准备，等待对手";
+        }
+      }, 700);
     }
   } else {
     if (s.answer_spoiler) {
@@ -765,10 +790,11 @@ function leaveRoom() {
 }
 async function roomRematch() {
   try {
-    await api(`/api/room/${room.code}/rematch`, {
+    const r = await api(`/api/room/${room.code}/rematch`, {
       method: "POST", headers: { "X-Room-Token": room.token },
     });
-    closeEndOverlay();
+    if (r.started) closeEndOverlay();
+    else toast("已准备，等待对手确认");
     if (!room.ws || room.ws.readyState !== WebSocket.OPEN) connectWs();
   } catch (e) {
     toast(e.message);

@@ -311,12 +311,17 @@ async def rematch_room(
     if other and not other.is_ai and (other.left or other.ws is None):
         raise HTTPException(409, "对手已经离开了房间")
     try:
-        room.rematch()
+        started = room.request_rematch(seat)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    await room.post_chat("系统", f"{seat.name} 开了新的一局,谜底已更换")
+    if started:
+        text = ("新一局开始,谜底已更换" if room.vs_ai
+                else "双方已确认,新一局开始")
+    else:
+        text = f"{seat.name} 已准备再来一局,等待对手确认"
+    await room.post_chat("系统", text)
     await room.broadcast_state()
-    return {"ok": True}
+    return {"ok": True, "started": started}
 
 
 @app.post("/api/room/{code}/join")

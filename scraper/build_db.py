@@ -35,6 +35,10 @@ BATCH = 50
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from server.major_results import apply_major_results, load_major_results
 
 _last_req = 0.0
 
@@ -290,6 +294,9 @@ def build(include_blast: bool = True):
                              "rvslots": "main"})
         wikitext = d["query"]["pages"][0]["revisions"][0]["slots"]["main"]["content"]
         pool = parse_major_db(wikitext)
+        major_results = load_major_results()
+        for entry in pool.values():
+            entry["majors"] = apply_major_results(entry["majors"], major_results)
         print(f"  parsed {len(pool)} Major players")
 
         blast = []

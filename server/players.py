@@ -5,7 +5,8 @@ import unicodedata
 from datetime import date
 from pathlib import Path
 
-from .rankings import TeamRanking
+from .major_results import apply_major_results, load_major_results
+from .rankings import TeamRanking, normalize_team_name
 
 
 def _fold(s: str) -> str:
@@ -226,6 +227,7 @@ class PlayerDB:
         raw = json.loads(path.read_text(encoding="utf-8"))
         self.generated_at = raw.get("generated_at", "")
         self.ranking = TeamRanking()
+        self.major_results = load_major_results()
         if OVERRIDES_PATH.exists():
             override_raw = json.loads(OVERRIDES_PATH.read_text(encoding="utf-8"))
             overrides = {k.casefold(): v for k, v in override_raw.items()}
@@ -237,6 +239,10 @@ class PlayerDB:
             img = {}
         self.photo_map = img.get("players", {})
         self.team_logo_map = img.get("teams", {})
+        self.team_logo_by_key = {
+            normalize_team_name(team): logo
+            for team, logo in self.team_logo_map.items()
+        }
         self.flag_map = img.get("flags", {})
         self.excluded_stubs = 0
         self.players = []
@@ -246,9 +252,14 @@ class PlayerDB:
             for key in ("team", "status", "game_role"):
                 if key in override:
                     merged[key] = override[key]
+            merged["majors"] = apply_major_results(
+                merged.get("majors"), self.major_results)
             p = Player(merged)
             if p.is_coach and p.team and not self.ranking.contains(p.team):
                 p.team = ""
+            elif p.team:
+                # 榜单中的战队统一使用快照规范名，避免同队别名在界面上分裂。
+                p.team = self.ranking.canonical_name(p.team) or p.team
             if (p.game_role not in ANSWER_ROLES
                     and p.primary_role not in ("IGL", "AWPer", "Rifler")
                     and not (p.is_coach and p.team)):
@@ -264,7 +275,9 @@ class PlayerDB:
         self.answer_players = [p for p in self.players if p.is_game_ready]
         for p in self.players:
             p.photo = _img(self.photo_map.get(p.page))
-            p.team_logo = _img(self.team_logo_map.get(p.team or ""))
+            p.team_logo = _img(
+                self.team_logo_map.get(p.team or "")
+                or self.team_logo_by_key.get(normalize_team_name(p.team or "")))
             p.flag = _img(self.flag_map.get(p.flag_country))
         if HLTV_MAP_PATH.exists():
             hltv = json.loads(HLTV_MAP_PATH.read_text(encoding="utf-8"))

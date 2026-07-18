@@ -1,0 +1,13 @@
+{
+  "events": {
+    "Intel_Extreme_Masters/2026/Cologne": {
+      "event": "IEM Cologne Major 2026",
+      "placements": {
+        "falcons": "1"
+      },
+      "source": "https://www.hltv.org/news/44972/falcons-sweep-furia-to-win-iem-cologne-major",
+      "verified_at": "2026-07-18",
+      "note": "Liquipedia Major Player Database lists the attendees but had not filled placements when verified."
+    }
+  }
+}
