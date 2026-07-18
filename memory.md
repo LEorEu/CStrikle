@@ -515,3 +515,59 @@
   - 生产真实 AI 烟测房间创建成功，`gpt-5.5-cstrikle` 首次模型调用 4.17 秒完成，无模型错误或 solver 回退。
 - Next steps:
   - 观察实际玩家局面的 GPT-5.5 延迟和 token usage；若出现持续慢调用，可按回放中的 usage/solver 事件与 CPA 日志定位，不需要恢复原生搜索。
+
+## 2026-07-18 — 接入 FribergCS2 Favicon
+
+- Request:
+  - 用户新增网站图标并要求接入。
+- Changes:
+  - 保留用户提供的 `static/favicon.jpg`；图像为 360×360 JPEG、蓝橙底色的白色 CS 人物剪影。
+  - 在 `static/index.html` 的 `<head>` 中增加显式 `rel="icon"`、`type="image/jpeg"` 和 `/static/favicon.jpg` 路径。
+- Verification:
+  - 本地首页返回 200 且包含 favicon 声明。
+  - favicon 静态资源返回 200、`Content-Type: image/jpeg`、`Content-Length: 8337`。
+  - `git diff --check` 通过。
+- Next steps:
+  - 用户随后要求部署；生产部署结果见下方记录。
+
+## 2026-07-18 — FribergCS2 Favicon 生产部署
+
+- Request:
+  - 将已接入的 favicon 部署到春川 ARM 生产站。
+- Deployment:
+  - 发布范围仅为 `static/index.html` 与 `static/favicon.jpg`；没有创建 Git 提交或推送。
+  - 部署前完整回滚包为 `/home/ubuntu/cstrikle-pre-favicon-20260718-184807.tar.gz`，SHA-256 为 `7634db6047c4591b56405aa68bbc552149543019263d706daf7b207296e7a375`。
+  - 上传文件经 SHA-256 校验后写入 `/home/ubuntu/docker/cstrikle/static/`，随后重建并 recreate 容器。
+  - 临时上传文件已清理，完整回滚包保留。
+- Verification:
+  - 生产容器 healthy、RestartCount=0、FailingStreak=0。
+  - 公网首页与 favicon 均返回 200，HTML 声明存在；图片 MIME 为 `image/jpeg`、长度 8337 字节。
+  - 公网 favicon SHA-256 为 `030d9edec1d532f03a7512998efe0ac01a368f3f494b490fb82ff5cf0119357f`，与本地及服务器源文件一致。
+  - 生产 AI 配置保持 `gpt-5.5-cstrikle`、项目搜索开启、reasoning medium。
+- Next steps:
+  - favicon 当前已上线但尚未进入 Git；下一次从仓库做完整部署前应先提交并推送 `static/favicon.jpg`、`static/index.html` 与本次 `memory.md`。
+
+## 2026-07-18 — 临时增加 MachineWJQ 并部署
+
+- Request:
+  - 从 Liquipedia 的 `MachineWJQ` 页面核对资料，临时加入选手数据库并部署生产。
+- Source findings:
+  - Liquipedia API 页面源：ID `MachineWJQ`，姓名刘亦博 / `Liu Yibo`，中国，出生于 1996-01-11，状态 Active，选手年份 2017–2020，当前角色 Caster，曾效力 Team Zero。
+  - 页面主图为 `MachineWJQ at prohouse 2020.jpg`，Liquipedia Commons 原图 600×441 JPEG。
+  - HLTV ID 16149，当前无战队；仅 1 张记录地图、Sniping 0/100，因此临时游戏位置定为 Rifler。
+- Changes:
+  - `data/players.json` 增加完整记录：MachineWJQ / Liu Yibo / China / Asia / 1996-01-11 / 自由身 / Rifler / 0 Major。
+  - 保留当前 Caster 原始角色，并用 `game_role=Rifler` 区分解说身份和选手时期位置。
+  - 临时设为默认身份池成员，使其进入常规与困难题库，不进入简单或 Top20。
+  - `data/images.json` 与 `data/img/players/MachineWJQ.jpg` 增加 Liquipedia 主图映射；`data/hltv_player_map.json` 增加 ID 16149、6657/玩机器别名证据和 HLTV 直链。
+- Verification:
+  - 本地 PlayerDB/API：650 名可搜索选手、645 名可出题选手；常规 503、困难 645、简单仍 351。
+  - 46 项完整 unittest 全部通过；`git diff --check` 通过。
+  - 公网实际 hard 对局成功提交 MachineWJQ，反馈为中国、自由身、30 岁、Rifler、0 Major、0 冠；图片返回 200 且 SHA-256 与 Liquipedia 下载文件一致。
+- Deployment:
+  - 部署前完整回滚包：`/home/ubuntu/cstrikle-pre-machinewjq-20260718-185700.tar.gz`，SHA-256=`446ec21e001b286729697cd7640c0452e31dd518d8c66712d271feec7ae979ba`。
+  - 数据增量包 SHA-256=`fb2e78fd3f88c528ba22cdae1a6d0c00c55c85f0f54658b5cd4545a4b1a23377`，上传后哈希与四文件清单均通过。
+  - 容器重建后 healthy、RestartCount=0、FailingStreak=0；AI 配置仍为 `gpt-5.5-cstrikle`、项目搜索开启、medium。
+  - 临时增量包已从本地和服务器清理，完整回滚包保留。
+- Next steps:
+  - 本轮按用户要求只部署，尚未提交或推送；favicon 与 MachineWJQ 数据均需在下次完整仓库部署前一起提交，否则会被 Git 版本覆盖。

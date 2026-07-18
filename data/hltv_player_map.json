@@ -47,6 +47,23 @@
           "url": "https://www.hltv.org/news/34618/triumph-and-tragedy-the-legacy-of-stewie2k"
         }
       ]
+    },
+    "MachineWJQ": {
+      "hltv_id": 16149,
+      "slug": "machinewjq",
+      "nickname": "MachineWJQ",
+      "real_name": "Liu Yibo",
+      "aliases": [
+        "6657",
+        "玩机器"
+      ],
+      "role_evidence": [
+        {
+          "kind": "historical_weapon_stats",
+          "title": "HLTV career stats: Sniping 0/100 across one recorded map",
+          "url": "https://www.hltv.org/stats/players/16149/machinewjq"
+        }
+      ]
     }
   }
 }

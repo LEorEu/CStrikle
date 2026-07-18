@@ -197,7 +197,7 @@ label.chk { display: flex; align-items: center; gap: 8px; color: var(--fg); }
 }
 .grow.header div:first-child { text-align: left; padding-left: 4px; }
 .grow:not(.header) { animation: feed .3s ease both; }
-@keyframes feed { 0% { transform: translateX(18px); opacity: 0 } 100% { transform: none; opacity: 1 } }
+@keyframes feed { 0% { transform: scale(.98); opacity: 0 } 100% { transform: none; opacity: 1 } }
 .cell {
   background: var(--panel2); clip-path: var(--chamfer-sm);
   padding: 4px 8px; text-align: center; font-size: 14px;
