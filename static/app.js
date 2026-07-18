@@ -96,6 +96,9 @@ async function api(path, opts = {}) {
 function go(view) {
   document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
   $("view-" + view).classList.remove("hidden");
+  // 离开对战大厅(除进房间外)时退出匹配队列,不占等待位
+  if (view !== "versus-lobby" && view !== "room" &&
+      typeof match !== "undefined" && match.ticket) cancelMatch();
   if (view !== "room" && room.ws) {
     // 离开房间视图 = 明确弃局:先告诉服务端,AI/计时立即停
     const ws = room.ws; room.ws = null;
@@ -115,15 +118,22 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
   <div class="settings">
     <div class="srow"><b>难度</b>
       <span class="seg" data-k="difficulty">
-        <button data-v="easy">简单·热门</button>
+        <button data-v="easy">简单</button>
         <button data-v="medium" class="on">常规</button>
-        <button data-v="hard">困难·全部</button>
+        <button data-v="hard">困难</button>
+        <button data-v="top20">Top20</button>
         <button data-v="custom">自定义</button>
       </span>
       <span class="dim pool-hint"></span>
+      <span class="qtip" tabindex="0" title="属性判定规则">?</span>
     </div>
-    <div class="srow std-hint"><b></b><span class="dim">标准难度固定:8 次猜测${
-      withTimer ? " · 整局限时 1 分钟" : ""};选「自定义」可改筛选和规则</span></div>
+    <div class="srow diff-desc-row"><b></b><span class="dim diff-desc"></span></div>
+    <div class="rules-pop hidden"><b>属性判定规则</b>
+      · <b>位置</b>:指挥 / 狙击手 / 步枪手 / 教练。只有职业教练(zonic、B1ad3 这类)算「教练」;刚退役转教练组的(Attacker、gla1ve 等)仍按选手时期位置算。<br>
+      · <b>混合位置</b>:指挥狙(Jame、Maka)和狙枪双修(s1mple、SmithZz)在位置格给黄色「有重叠」;指挥默认持步枪,指挥 vs 步枪手不给黄。<br>
+      · <b>战队</b>:没有队伍的选手(退役 / 未签约 / 玩票)统一算「自由身」,互相判绿;被下放但仍在编制的算原队;教练只显示 HLTV Top100 的执教队,其余同样算自由身。<br>
+      · <b>国籍</b>:港澳台与大陆统一按中国判定为绿,同赛区给黄。
+    </div>
     <div class="custom-rows hidden">
       <div class="srow"><b>赛区</b>
         <span class="regions">${regions.map(r =>
@@ -158,7 +168,7 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
   const collect = () => {
     const difficulty = seg.querySelector(".on").dataset.v;
     if (difficulty !== "custom")
-      // 标准难度用固定规则:8 次猜测,对战整局限时 1 分钟
+      // 标准难度(含 Top20)用固定规则:8 次猜测,对战整局限时 1 分钟
       return { difficulty, regions: [], active_only: false,
                year_from: null, year_to: null, max_guesses: 8,
                game_seconds: withTimer ? 60 : null };
@@ -186,14 +196,34 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
       } catch { /* 网络抖动就先不更新 */ }
     }, 150);
   };
+  // 每档难度的说明文案(候选数取自 META)
+  const ps = (META && META.pool_sizes) || {};
+  const fixed = `固定 8 次猜测${withTimer ? " · 整局限时 1 分钟" : ""}`;
+  const DIFF_DESC = {
+    easy: `谜底为 Major 常客或现役强队明星 · ${fixed}`,
+    medium: `谜底为打过 2+ 次 Major 或现役职业哥 · ${fixed}`,
+    hard: `全部合格谜底,包括冷门老哥 · ${fixed}`,
+    top20: `谜底进过 HLTV 年度 Top20(2013–2025 全明星池,共 ${ps.top20 ?? "?"} 人),新手友好 · ${fixed}`,
+    custom: "自由配置筛选与规则",
+  };
+  const descEl = el.querySelector(".diff-desc");
+  const applyDesc = (v) => { descEl.textContent = DIFF_DESC[v] || ""; };
+  applyDesc("medium");
   seg.querySelectorAll("button").forEach(b => b.onclick = () => {
     seg.querySelectorAll("button").forEach(x => x.classList.remove("on"));
     b.classList.add("on");
     const custom = b.dataset.v === "custom";
     el.querySelector(".custom-rows").classList.toggle("hidden", !custom);
-    el.querySelector(".std-hint").classList.toggle("hidden", custom);
+    applyDesc(b.dataset.v);
     if (onDifficulty) onDifficulty(b.dataset.v);
     updHint();
+  });
+  // 规则说明:点「?」在设置面板内展开/收起(内嵌块,不会被面板裁剪)
+  const qtip = el.querySelector(".qtip");
+  const rules = el.querySelector(".rules-pop");
+  qtip.addEventListener("click", () => {
+    qtip.classList.toggle("open");
+    rules.classList.toggle("hidden");
   });
   el.querySelectorAll(".tag").forEach(t => t.onclick = () => {
     t.classList.toggle("on"); updHint();
@@ -327,10 +357,14 @@ function pipsHtml(used, total) {
     h += `<span class="pip${i < used ? " used" : ""}"></span>`;
   return h + "</span>";
 }
+let lastAnswer = null;   // 最近渲染的谜底,供纠错反馈定位选手
 function answerCard(a) {
+  lastAnswer = a;
   const photo = a.photo ? `<img class="photo" src="${a.photo}" alt="">`
     : `<div class="photo fallback">${esc(a.nickname.slice(0, 2).toUpperCase())}</div>`;
   const tlogo = a.team_logo ? `<img class="tlogo${a.team_logo.includes("_lm.") ? " chip" : ""}" src="${a.team_logo}" alt="">` : "";
+  const liq = `https://liquipedia.net/counterstrike/${encodeURIComponent((a.page || a.nickname).replace(/ /g, "_"))}`;
+  const hltv = a.hltv_url || `https://www.hltv.org/search?query=${encodeURIComponent(a.nickname)}`;
   return `<div class="answer-card">${photo}
     <div>
       <div class="a-name">${flagHtml(a.country, a.flag)} ${esc(a.nickname)}</div>
@@ -343,8 +377,40 @@ function answerCard(a) {
         <span><b>${a.majors_count}</b> 次 Major</span>
         <span><b>${a.majors_won ?? 0}</b> 冠</span>
       </div>
+      <div class="a-links">
+        <a href="${liq}" target="_blank" rel="noopener">📖 Liquipedia</a>
+        <a href="${hltv}" target="_blank" rel="noopener">📊 HLTV</a>
+        <button class="linklike" onclick="openFeedback()">✋ 信息有误?</button>
+      </div>
     </div>
   </div>`;
+}
+
+/* ---------------- 玩家纠错反馈 ---------------- */
+function feedbackContext() {
+  if (room.code && !$("view-room").classList.contains("hidden"))
+    return `room ${room.code}`;
+  if (soloGame) return soloGame.mode;
+  return "";
+}
+function openFeedback() {
+  $("fb-player").textContent = lastAnswer
+    ? `${lastAnswer.nickname}(${lastAnswer.real_name || "?"})` : "整体反馈";
+  $("fb-text").value = "";
+  $("fb-modal").classList.remove("hidden");
+  $("fb-text").focus();
+}
+async function sendFeedback() {
+  const message = $("fb-text").value.trim();
+  if (!message) { toast("先写点内容再提交"); return; }
+  try {
+    await api("/api/feedback", { method: "POST", body: {
+      page: lastAnswer ? lastAnswer.page || "" : "",
+      message, context: feedbackContext(),
+    }});
+    $("fb-modal").classList.add("hidden");
+    toast("收到,感谢纠错!核实后会更新数据");
+  } catch (e) { toast(e.message); }
 }
 
 /* ---------------- 胜负结算弹窗 ---------------- */
@@ -448,15 +514,19 @@ function shareDaily() {
 
 /* ---------------- versus ---------------- */
 let getRoomSettings = null;
+function lobbyName(fallback) {
+  const name = $("lobby-name").value.trim();
+  if (name) localStorage.setItem("cstrikle_name", name);
+  return name || fallback;
+}
 async function createRoom() {
   const vsAi = $("vs-ai").checked;
   const settings = getRoomSettings();
   try {
     const r = await api("/api/room", { method: "POST", body: {
-      name: $("host-name").value.trim() || "玩家1",
+      name: lobbyName("玩家1"),
       settings, vs_ai: vsAi, ai_level: $("ai-level").value,
     }});
-    localStorage.setItem("cstrikle_name", $("host-name").value.trim());
     enterRoom(r.code, r.token, vsAi);
     if (!vsAi) toast(`房间码 ${r.code},发给朋友让他加入`, 6000);
   } catch (e) { toast(e.message); }
@@ -466,12 +536,51 @@ async function joinRoom() {
   if (code.length < 4) { toast("输入 4 位房间码"); return; }
   try {
     const r = await api(`/api/room/${code}/join`, { method: "POST", body: {
-      name: $("join-name").value.trim() || "玩家2",
+      name: lobbyName("玩家2"),
     }});
-    localStorage.setItem("cstrikle_name", $("join-name").value.trim());
     enterRoom(r.code, r.token, false);
   } catch (e) { toast(e.message); }
 }
+/* ---------------- 随机匹配 ---------------- */
+let match = { ticket: null, timer: null };
+function matchUi(on) {
+  $("btn-match").classList.toggle("hidden", on);
+  $("mm-status").classList.toggle("hidden", !on);
+}
+async function startMatch() {
+  const name = lobbyName("路人玩家");
+  try {
+    const r = await api("/api/match/join", { method: "POST", body: { name } });
+    if (r.matched) { enterRoom(r.code, r.token, false); toast("匹配成功,开打!"); return; }
+    match.ticket = r.ticket;
+    matchUi(true);
+    match.timer = setInterval(pollMatch, 2000);
+  } catch (e) { toast(e.message); }
+}
+async function pollMatch() {
+  if (!match.ticket) return;
+  try {
+    const r = await api(`/api/match/poll/${match.ticket}`);
+    if (r.matched) {
+      stopMatch();
+      enterRoom(r.code, r.token, false);
+      toast("匹配成功,开打!");
+    }
+  } catch {
+    stopMatch();
+    toast("匹配已过期,请重新开始");
+  }
+}
+function stopMatch() {
+  clearInterval(match.timer);
+  match = { ticket: null, timer: null };
+  matchUi(false);
+}
+function cancelMatch() {
+  if (match.ticket) api(`/api/match/${match.ticket}`, { method: "DELETE" }).catch(() => {});
+  stopMatch();
+}
+
 function enterRoom(code, token, vsAi) {
   room = { ws: null, code, token, state: null, vsAi };
   go("room");
@@ -715,6 +824,6 @@ async function init() {
   });
   $("chat-text").addEventListener("keydown", e => { if (e.key === "Enter") sendChat(); });
   const saved = localStorage.getItem("cstrikle_name") || "";
-  $("host-name").value = saved; $("join-name").value = saved;
+  $("lobby-name").value = saved;
 }
 init();

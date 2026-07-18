@@ -1,6 +1,8 @@
 .git
 .venv
 .env
+data/feedback.jsonl
+feedback
 __pycache__
 *.py[cod]
 *.log

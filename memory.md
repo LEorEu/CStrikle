@@ -1,5 +1,29 @@
 # Project Memory
 
+## 2026-07-18 — 游戏性四连:外链、纠错反馈、随机匹配、年度 Top20
+
+- Request:
+  - Xyp9x 按"助教=刚转岗"口径改回 Rifler/自由身。
+  - 结算弹窗给谜底选手加 HLTV / Liquipedia 外链。
+  - 加"信息有误"玩家纠错反馈按钮,靠玩家众包修数据。
+  - 参考 shnlfriberg.online/multi 加随机匹配。
+  - 新增 HLTV 历年年度 Top20 竞猜模式(人少、新手友好)。
+- Changes:
+  - `player_overrides.json`:Xyp9x → Rifler + 自由身(与 Attacker/NBK- 同类)。
+  - 谜底卡(所有模式共用 answerCard)加 Liquipedia 直链(page 构造)与 HLTV 链接(hltv_player_map 有 ID 用直链,否则站内搜索);`full()` 新增 `hltv_url`。
+  - `POST /api/feedback`:按 IP 滑动窗口限流(默认 5 次/600 秒,FEEDBACK_RATE_* 可调),JSONL 写 `FEEDBACK_PATH`(默认 data/feedback.jsonl,已 gitignore;只读容器需指到可写卷)+ 应用日志双写;前端 fb-modal 小弹窗,记录选手 page 与场景 context。
+  - 随机匹配:`/api/match/join|poll|cancel` 单等待位 + 轮询保活(15 秒 TTL)+ 结果 5 分钟过期;固定 medium + 120 秒;同名自动加"2";大厅第三面板,离开大厅自动退队。原 AI 房限流器重构为通用 `_consume_quota`。
+  - Top20 难度:`data/hltv_top20.json` 快照源自 Liquipedia `HLTV/Top_20_Players` 汇总页(浏览器提取,2012 无榜单);2013–2025 共 13 年全部 20/20 匹配本地库,2010/2011 因缺 9 名 1.6 老将(trace/Gux/fRoD 等)存入 excluded_years 待补。按用户后续决定,不做年份选择:历年上榜合并去重为 99 人全明星池(NiKo 10 次上榜最多),作为标准难度档 `top20` 接入 difficulty_pool;meta 的 pool_sizes 含 top20。
+  - UI 修整(用户反馈):难度按钮改短标签(简单/常规/困难/Top20/自定义)避免换行;每档难度下方动态说明文案(含候选数);难度行加「?」点击展开内嵌规则说明块(教练判定/混合位置黄色/自由身/中国国籍统一,内嵌块避开 panel clip-path 裁剪);对战大厅三处昵称输入合并为顶部一处 `lobby-name`。
+- Verification:
+  - 37 项测试全过(新增 7 项 API 测试:top20 池、feedback 落盘/校验、匹配配对/取消/同名)。
+  - 浏览器端到端:Top20 2025 局(谜底 molodoy)结算卡外链正确、反馈弹窗提交成功且 JSONL 落盘;双标签页随机匹配互相配对进房、对手色块同步、2 分钟倒计时生效、取消/退队正常。
+  - compileall、node --check、git diff --check 通过。
+- Next steps:
+  - 未提交、未部署(用户自行提交;上一轮角色语义工作已由用户提交为 9e5305e/10e2fd3)。
+  - 部署时注意:compose 只读容器需设 `FEEDBACK_PATH=/tmp/feedback.jsonl` 或挂可写卷。
+  - 待选后续:随机匹配 BO3 赛制、2010/2011 老将补库、反馈后台查看工具。
+
 ## Current session
 
 - Request: inspect the project’s AI/search configuration and determine how to use a model provider’s native search capability, especially when routing `grok-4.5` through CPA on the Chuncheon ARM server.

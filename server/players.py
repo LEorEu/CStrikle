@@ -16,6 +16,8 @@ def _fold(s: str) -> str:
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "players.json"
 IMAGES_PATH = Path(__file__).resolve().parent.parent / "data" / "images.json"
 OVERRIDES_PATH = Path(__file__).resolve().parent.parent / "data" / "player_overrides.json"
+HLTV_MAP_PATH = Path(__file__).resolve().parent.parent / "data" / "hltv_player_map.json"
+TOP20_PATH = Path(__file__).resolve().parent.parent / "data" / "hltv_top20.json"
 
 ROLE_LABEL = {
     "igl": "IGL",
@@ -64,13 +66,14 @@ class Player:
                "birth_date", "team", "status", "roles", "majors_count",
                "first_major_year", "last_major_year", "majors", "in_blast_pool",
                "game_role")
-    __slots__ = _FIELDS + ("photo", "team_logo", "flag", "majors_won")
+    __slots__ = _FIELDS + ("photo", "team_logo", "flag", "majors_won",
+                           "hltv_url")
 
     def __init__(self, rec: dict):
         for k in self._FIELDS:
             setattr(self, k, rec.get(k))
         self.roles = self.roles or []
-        self.photo = self.team_logo = self.flag = None
+        self.photo = self.team_logo = self.flag = self.hltv_url = None
         self.majors_won = sum(1 for m in (self.majors or [])
                               if m.get("placement") == "1")
 
@@ -214,6 +217,7 @@ class Player:
             "photo": self.photo,
             "flag": self.flag,
             "team_logo": self.team_logo,
+            "hltv_url": self.hltv_url,
         }
 
 
@@ -262,10 +266,29 @@ class PlayerDB:
             p.photo = _img(self.photo_map.get(p.page))
             p.team_logo = _img(self.team_logo_map.get(p.team or ""))
             p.flag = _img(self.flag_map.get(p.flag_country))
+        if HLTV_MAP_PATH.exists():
+            hltv = json.loads(HLTV_MAP_PATH.read_text(encoding="utf-8"))
+            hltv_map = {k.casefold(): v for k, v in hltv.get("players", {}).items()}
+            for p in self.players:
+                m = hltv_map.get((p.page or "").casefold())
+                if m and m.get("hltv_id") and m.get("slug"):
+                    p.hltv_url = (f"https://www.hltv.org/player/"
+                                  f"{m['hltv_id']}/{m['slug']}")
         self.by_page = {p.page: p for p in self.players}
         self.by_nick: dict[str, list] = {}
         for p in self.players:
             self.by_nick.setdefault(p.nickname.lower(), []).append(p)
+        # HLTV 年度 Top20 快照:历年上榜选手合并成一个去重明星池
+        self.top20_pool: list = []
+        if TOP20_PATH.exists():
+            snap = json.loads(TOP20_PATH.read_text(encoding="utf-8"))
+            seen = set()
+            for year in sorted(snap.get("years", {})):
+                for x in snap["years"][year]:
+                    p = self.by_page.get(x.get("page"))
+                    if p and p.is_game_ready and p.page not in seen:
+                        seen.add(p.page)
+                        self.top20_pool.append(p)
 
     @staticmethod
     def _fame(p) -> tuple:
@@ -304,6 +327,8 @@ class PlayerDB:
 
     # ------------------------------------------------------------- pools
     def difficulty_pool(self, difficulty: str) -> list:
+        if difficulty == "top20":
+            return list(self.top20_pool)
         if difficulty == "easy":
             return [p for p in self.answer_players
                     if (p.majors_count or 0) >= 4

@@ -61,10 +61,12 @@
   <!-- ==================== 对战大厅 ==================== -->
   <section id="view-versus-lobby" class="view hidden">
     <h2>对战模式</h2>
+    <label class="lobby-name">你的昵称
+      <input id="lobby-name" value="" maxlength="20" placeholder="路人玩家">
+    </label>
     <div class="lobby-grid">
       <div class="panel">
         <h3>创建房间</h3>
-        <label>你的昵称 <input id="host-name" value="" maxlength="20" placeholder="玩家1"></label>
         <label class="chk"><input type="checkbox" id="vs-ai"> 和 AI 打(它会上网查资料还会喷你)
           <span id="vs-ai-note" class="dim hidden">(自定义难度不可用 AI)</span></label>
         <label id="ai-level-row" class="hidden">AI 强度
@@ -79,9 +81,17 @@
       </div>
       <div class="panel">
         <h3>加入房间</h3>
-        <label>你的昵称 <input id="join-name" value="" maxlength="20" placeholder="玩家2"></label>
         <label>房间码 <input id="join-code" maxlength="4" placeholder="ABCD" style="text-transform:uppercase"></label>
         <button class="primary" onclick="joinRoom()">加入</button>
+      </div>
+      <div class="panel">
+        <h3>随机匹配</h3>
+        <p class="dim">自动配对一位路人对手 · 常规难度 · 整局限时 2 分钟</p>
+        <button id="btn-match" class="primary" onclick="startMatch()">🎲 开始匹配</button>
+        <div id="mm-status" class="mm-status hidden">
+          <span class="mm-dot"></span>匹配中,等待对手…
+          <button class="linklike" onclick="cancelMatch()">取消</button>
+        </div>
       </div>
     </div>
     <button onclick="go('home')">返回</button>
@@ -138,6 +148,22 @@
       <button onclick="document.getElementById('modal').classList.add('hidden')">✕</button>
     </div>
     <div id="transcript-body"></div>
+  </div>
+</div>
+
+<!-- 选手信息纠错弹窗 -->
+<div id="fb-modal" class="modal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-body fb-body">
+    <div class="modal-head">
+      <h2>✋ 选手信息纠错</h2>
+      <button onclick="document.getElementById('fb-modal').classList.add('hidden')">✕</button>
+    </div>
+    <p class="dim">纠错对象:<span id="fb-player"></span></p>
+    <textarea id="fb-text" rows="4" maxlength="500"
+      placeholder="例:他现在是 XX 战队现役,不是自由身 / 位置应该是狙击手 / 国籍写错了…"></textarea>
+    <div class="row-btns">
+      <button class="primary" onclick="sendFeedback()">提交反馈</button>
+    </div>
   </div>
 </div>
 

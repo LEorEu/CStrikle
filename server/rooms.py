@@ -85,7 +85,9 @@ class Room:
         diff = {"easy": "热门选手(Major常客或现役强队)",
                 "medium": "常规(打过至少2次Major或现役职业哥)",
                 "hard": "全部打过Major的选手(含冷门老哥)",
-                "custom": "自定义(全部选手起筛)"}[s["difficulty"]]
+                "custom": "自定义(全部选手起筛)",
+                "top20": "历年 HLTV 年度 Top20 上榜选手(全明星池)",
+                }[s["difficulty"]]
         parts = [diff]
         if s["regions"]:
             parts.append("赛区限定: " + "/".join(s["regions"]))

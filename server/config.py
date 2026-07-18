@@ -32,5 +32,16 @@ AI_ROOM_RATE_WINDOW_SECONDS = max(
 
 AI_ENABLED = bool(AI_BASE_URL and AI_API_KEY)
 
+# 玩家纠错反馈:JSONL 落盘路径(生产容器只读时指向可写卷或 /tmp),
+# 写入失败时仍会记入应用日志,不丢反馈。
+FEEDBACK_PATH = Path(
+    os.getenv("FEEDBACK_PATH",
+              Path(__file__).resolve().parent.parent / "data" / "feedback.jsonl")
+)
+FEEDBACK_RATE_LIMIT = max(1, int(os.getenv("FEEDBACK_RATE_LIMIT", "5")))
+FEEDBACK_RATE_WINDOW_SECONDS = max(
+    60, int(os.getenv("FEEDBACK_RATE_WINDOW_SECONDS", "600"))
+)
+
 # 调试:开启后暴露 /api/room/{code}/debug_answer(仅本地测试用)
 DEBUG = os.getenv("CSTRIKLE_DEBUG", "0") not in ("0", "false", "")

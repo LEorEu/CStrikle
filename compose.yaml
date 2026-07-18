@@ -9,6 +9,9 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    volumes:
+      # 玩家纠错反馈落盘(配合 .env 的 FEEDBACK_PATH=/data/feedback/feedback.jsonl)
+      - ./feedback:/data/feedback
     security_opt:
       - no-new-privileges:true
     networks:

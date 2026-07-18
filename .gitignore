@@ -10,3 +10,7 @@ progress.md
 *.log
 /*.png
 *-deploy.tar.gz
+
+# runtime player feedback
+data/feedback.jsonl
+feedback/

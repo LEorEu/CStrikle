@@ -10,7 +10,7 @@ from .players import Player, PlayerDB
 GREEN, YELLOW, GRAY = "green", "yellow", "gray"
 
 DEFAULT_SETTINGS = {
-    "difficulty": "medium",      # easy | medium | hard | custom
+    "difficulty": "medium",      # easy | medium | hard | custom | top20
     "regions": [],               # empty = all
     "active_only": False,
     "year_from": None,           # Major-era window, e.g. 2013..2026
@@ -26,7 +26,7 @@ def normalize_settings(raw: dict | None) -> dict:
         for k in s:
             if k in raw and raw[k] is not None:
                 s[k] = raw[k]
-    if s["difficulty"] not in ("easy", "medium", "hard", "custom"):
+    if s["difficulty"] not in ("easy", "medium", "hard", "custom", "top20"):
         s["difficulty"] = "medium"
     s["max_guesses"] = max(4, min(15, int(s["max_guesses"] or 8)))
     if s["regions"] and not isinstance(s["regions"], list):
