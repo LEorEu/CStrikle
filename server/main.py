@@ -182,25 +182,27 @@ def game_guess(gid: str, body: GuessBody):
 
 
 # ----------------------------------------------------------- matchmaking
-# 随机匹配:固定常规难度 + 2 分钟整局限时的人人对战。
-# 单等待位内存实现:等待者靠轮询保活,超时自动出队。
-MATCH_SETTINGS = {"difficulty": "medium", "game_seconds": 120}
+# 随机匹配:按难度分队列的人人对战,统一 2 分钟整局限时。
+# 内存等待队列:等待者靠轮询保活,超时自动出队;只和同难度配对。
+MATCH_DIFFICULTIES = ("top20", "easy", "medium", "hard")
+MATCH_GAME_SECONDS = 120
 MATCH_WAIT_TTL = 15          # 秒:超过没轮询就当他关页走人了
 MATCH_RESULT_TTL = 300
 
 _match_lock = threading.Lock()
-_match_waiter: dict | None = None          # {ticket, name, last_seen}
+_match_waiters: dict[str, dict] = {}       # ticket -> {name, difficulty, last_seen}
 _match_results: dict[str, dict] = {}       # ticket -> {code, token, ts}
 
 
 class MatchJoin(BaseModel):
     name: str = "玩家"
+    difficulty: str = "medium"
 
 
 def _purge_match_state(now: float):
-    global _match_waiter
-    if _match_waiter and now - _match_waiter["last_seen"] > MATCH_WAIT_TTL:
-        _match_waiter = None
+    for t in [t for t, w in _match_waiters.items()
+              if now - w["last_seen"] > MATCH_WAIT_TTL]:
+        _match_waiters.pop(t, None)
     for t in [t for t, r in _match_results.items()
               if now - r["ts"] > MATCH_RESULT_TTL]:
         _match_results.pop(t, None)
@@ -208,23 +210,28 @@ def _purge_match_state(now: float):
 
 @app.post("/api/match/join")
 async def match_join(body: MatchJoin):
-    global _match_waiter
     name = body.name.strip()[:20] or "路人玩家"
+    diff = body.difficulty if body.difficulty in MATCH_DIFFICULTIES else "medium"
     now = time.time()
     with _match_lock:
         _purge_match_state(now)
-        if _match_waiter is None:
+        partner_ticket = next(
+            (t for t, w in _match_waiters.items() if w["difficulty"] == diff),
+            None)
+        if partner_ticket is None:
             ticket = secrets.token_urlsafe(12)
-            _match_waiter = {"ticket": ticket, "name": name, "last_seen": now}
+            _match_waiters[ticket] = {"name": name, "difficulty": diff,
+                                      "last_seen": now}
             return {"matched": False, "ticket": ticket}
-        waiter = _match_waiter
-        _match_waiter = None
+        waiter = _match_waiters.pop(partner_ticket)
         if name == waiter["name"]:
             name += "2"          # 同名会让胜负判定文案分不清人
-        room = rooms.create(dict(MATCH_SETTINGS), waiter["name"], vs_ai=False)
+        room = rooms.create(
+            {"difficulty": diff, "game_seconds": MATCH_GAME_SECONDS},
+            waiter["name"], vs_ai=False)
         seat = room.join(name)
         room.start_clock()
-        _match_results[waiter["ticket"]] = {
+        _match_results[partner_ticket] = {
             "code": room.code, "token": room.host.token, "ts": now,
         }
         return {"matched": True, "code": room.code, "token": seat.token}
@@ -232,7 +239,6 @@ async def match_join(body: MatchJoin):
 
 @app.get("/api/match/poll/{ticket}")
 async def match_poll(ticket: str):
-    global _match_waiter
     now = time.time()
     with _match_lock:
         _purge_match_state(now)
@@ -240,18 +246,17 @@ async def match_poll(ticket: str):
         if result:
             return {"matched": True, "code": result["code"],
                     "token": result["token"]}
-        if _match_waiter and _match_waiter["ticket"] == ticket:
-            _match_waiter["last_seen"] = now
+        waiter = _match_waiters.get(ticket)
+        if waiter:
+            waiter["last_seen"] = now
             return {"matched": False}
     raise HTTPException(404, "匹配已过期,请重新开始")
 
 
 @app.delete("/api/match/{ticket}")
 async def match_cancel(ticket: str):
-    global _match_waiter
     with _match_lock:
-        if _match_waiter and _match_waiter["ticket"] == ticket:
-            _match_waiter = None
+        _match_waiters.pop(ticket, None)
         _match_results.pop(ticket, None)
     return {"ok": True}
 

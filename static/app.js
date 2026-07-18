@@ -118,10 +118,10 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
   <div class="settings">
     <div class="srow"><b>难度</b>
       <span class="seg" data-k="difficulty">
+        <button data-v="top20">Top20</button>
         <button data-v="easy">简单</button>
         <button data-v="medium" class="on">常规</button>
         <button data-v="hard">困难</button>
-        <button data-v="top20">Top20</button>
         <button data-v="custom">自定义</button>
       </span>
       <span class="dim pool-hint"></span>
@@ -137,12 +137,14 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
     <div class="custom-rows hidden">
       <div class="srow"><b>赛区</b>
         <span class="regions">${regions.map(r =>
-          `<span class="tag" data-r="${r}">${REGION_CN[r] || r}</span>`).join(" ")}</span>
-        <span class="dim">(不选=全部)</span>
+          `<span class="tag" data-r="${r}">${REGION_CN[r] || r}</span>`).join("")}</span>
       </div>
+      <div class="srow"><b></b><span class="dim">不选 = 全部赛区</span></div>
       <div class="srow"><b>范围</b>
         <label class="chk" style="margin:0"><input type="checkbox" class="active-only">仅现役</label>
-        <span>Major年代
+      </div>
+      <div class="srow"><b>Major年代</b>
+        <span class="yr-span">
           <select class="yr-from"><option value="">2013</option>${range(2014, 2026).map(y => `<option>${y}</option>`).join("")}</select>
           —
           <select class="yr-to">${range(2013, 2025).map(y => `<option>${y}</option>`).join("")}<option value="" selected>至今</option></select>
@@ -159,8 +161,8 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
           <option value="180">3 分钟</option>
           <option value="300">5 分钟</option>
         </select>
-        <span class="dim">时间到还没人猜中就算平局</span>
       </div>` : ""}
+      ${withTimer ? `<div class="srow"><b></b><span class="dim">时间到还没人猜中就算平局</span></div>` : ""}
     </div>
   </div>`;
   const seg = el.querySelector(".seg");
@@ -204,10 +206,14 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
     medium: `谜底为打过 2+ 次 Major 或现役职业哥 · ${fixed}`,
     hard: `全部合格谜底,包括冷门老哥 · ${fixed}`,
     top20: `谜底进过 HLTV 年度 Top20(2013–2025 全明星池,共 ${ps.top20 ?? "?"} 人),新手友好 · ${fixed}`,
-    custom: "自由配置筛选与规则",
+    custom: "",          // 自定义档直接展开筛选行,不需要说明文案
   };
   const descEl = el.querySelector(".diff-desc");
-  const applyDesc = (v) => { descEl.textContent = DIFF_DESC[v] || ""; };
+  const applyDesc = (v) => {
+    const txt = DIFF_DESC[v] || "";
+    descEl.textContent = txt;
+    el.querySelector(".diff-desc-row").classList.toggle("hidden", !txt);
+  };
   applyDesc("medium");
   seg.querySelectorAll("button").forEach(b => b.onclick = () => {
     seg.querySelectorAll("button").forEach(x => x.classList.remove("on"));
@@ -549,8 +555,9 @@ function matchUi(on) {
 }
 async function startMatch() {
   const name = lobbyName("路人玩家");
+  const difficulty = document.querySelector(".mm-seg .on").dataset.v;
   try {
-    const r = await api("/api/match/join", { method: "POST", body: { name } });
+    const r = await api("/api/match/join", { method: "POST", body: { name, difficulty } });
     if (r.matched) { enterRoom(r.code, r.token, false); toast("匹配成功,开打!"); return; }
     match.ticket = r.ticket;
     matchUi(true);
@@ -825,5 +832,9 @@ async function init() {
   $("chat-text").addEventListener("keydown", e => { if (e.key === "Enter") sendChat(); });
   const saved = localStorage.getItem("cstrikle_name") || "";
   $("lobby-name").value = saved;
+  document.querySelectorAll(".mm-seg button").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".mm-seg button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+  });
 }
 init();

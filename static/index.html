@@ -86,7 +86,15 @@
       </div>
       <div class="panel">
         <h3>随机匹配</h3>
-        <p class="dim">自动配对一位路人对手 · 常规难度 · 整局限时 2 分钟</p>
+        <p class="dim">自动配对一位同难度的路人对手 · 整局限时 2 分钟</p>
+        <div class="mm-diff">
+          <span class="seg mm-seg">
+            <button data-v="top20">Top20</button>
+            <button data-v="easy">简单</button>
+            <button data-v="medium" class="on">常规</button>
+            <button data-v="hard">困难</button>
+          </span>
+        </div>
         <button id="btn-match" class="primary" onclick="startMatch()">🎲 开始匹配</button>
         <div id="mm-status" class="mm-status hidden">
           <span class="mm-dot"></span>匹配中,等待对手…

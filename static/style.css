@@ -443,3 +443,10 @@ label.chk { display: flex; align-items: center; gap: 8px; color: var(--fg); }
 }
 .rules-pop b { color: var(--t); font-weight: 700; }
 .lobby-name { max-width: 300px; margin-bottom: 14px; }
+
+/* ---------- 自定义档窄面板排版 ---------- */
+.tag { white-space: nowrap; }
+.settings .regions { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.settings .yr-span { display: inline-flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+.settings .srow > b { flex: none; }
+.mm-diff { margin: 4px 0 12px; }

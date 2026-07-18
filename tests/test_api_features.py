@@ -15,7 +15,7 @@ class ApiFeatureTests(unittest.TestCase):
 
     def setUp(self):
         # 匹配与限流都是进程内全局状态,逐用例清零避免互相污染
-        main._match_waiter = None
+        main._match_waiters.clear()
         main._match_results.clear()
         main._feedback_attempts.clear()
 
@@ -97,6 +97,25 @@ class ApiFeatureTests(unittest.TestCase):
         room = main.rooms.get(r2["code"])
         names = {s.name for s in room.seats()}
         self.assertEqual(len(names), 2)
+
+    def test_match_never_pairs_across_difficulties(self):
+        r1 = self.client.post("/api/match/join", json={
+            "name": "甲", "difficulty": "top20"}).json()
+        r2 = self.client.post("/api/match/join", json={
+            "name": "乙", "difficulty": "medium"}).json()
+        # 不同难度各自排队,谁都不该被配对
+        self.assertFalse(r1["matched"])
+        self.assertFalse(r2["matched"])
+        # 同难度的第三人进来,只和 top20 队列里的甲配对
+        r3 = self.client.post("/api/match/join", json={
+            "name": "丙", "difficulty": "top20"}).json()
+        self.assertTrue(r3["matched"])
+        room = main.rooms.get(r3["code"])
+        self.assertEqual(room.settings["difficulty"], "top20")
+        self.assertEqual({s.name for s in room.seats()}, {"甲", "丙"})
+        # 乙仍在常规队列等待
+        self.assertFalse(
+            self.client.get(f"/api/match/poll/{r2['ticket']}").json()["matched"])
 
 
 if __name__ == "__main__":
