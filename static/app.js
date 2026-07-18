@@ -89,7 +89,9 @@ async function api(path, opts = {}) {
   if (!r.ok) {
     let msg = r.statusText;
     try { msg = (await r.json()).detail || msg; } catch {}
-    throw new Error(msg);
+    const err = new Error(msg);
+    err.status = r.status;
+    throw err;
   }
   return r.json();
 }
@@ -131,8 +133,7 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
     <div class="rules-pop hidden"><b>属性判定规则</b>
       · <b>位置</b>:指挥 / 狙击手 / 步枪手 / 教练。只有职业教练(zonic、B1ad3 这类)算「教练」;刚退役转教练组的(Attacker、gla1ve 等)仍按选手时期位置算。<br>
       · <b>混合位置</b>:指挥狙(Jame、Maka)和狙枪双修(s1mple、SmithZz)在位置格给黄色「有重叠」;指挥默认持步枪,指挥 vs 步枪手不给黄。<br>
-      · <b>战队</b>:没有队伍的选手(退役 / 未签约 / 玩票)统一算「自由身」,互相判绿;被下放但仍在编制的算原队;教练只显示 HLTV Top100 的执教队,其余同样算自由身。<br>
-      · <b>国籍</b>:港澳台与大陆统一按中国判定为绿,同赛区给黄。
+      · <b>战队</b>:没有队伍的选手(退役 / 未签约 / 玩票)统一算「自由身」,互相判绿;被下放但仍在编制的算原队;教练只显示 HLTV Top100 的执教队,其余同样算自由身。
     </div>
     <div class="custom-rows hidden">
       <div class="srow"><b>赛区</b>
@@ -656,7 +657,8 @@ function renderRoom() {
 
   // opponent panel
   if (opp) {
-    $("opp-name").textContent = `${opp.is_ai ? "🤖 " : "🧑 "}${opp.name}`;
+    $("opp-name").textContent = opp.name
+      + (opp.present === false ? "(已离开)" : "");
     $("opp-remaining").textContent = `对手剩余次数 ${opp.remaining}`;
     const MINI = { nationality: "国", team: "队", age: "龄", role: "位",
                    majors: "M", majors_won: "冠" };
@@ -685,7 +687,9 @@ function renderRoom() {
         : iWon ? "VICTORY — 你先猜中了" : `DEFEAT — ${esc(s.winner)} 先猜中了`}</div>`
       + answerCard(s.answer);
     if (opp && opp.is_ai) $("btn-transcript").classList.remove("hidden");
-    $("btn-rematch").classList.remove("hidden");
+    // 对手已经跑了就没有「再来一局」可言
+    $("btn-rematch").classList.toggle("hidden",
+      !!(opp && !opp.is_ai && opp.present === false));
     const rev = $("opp-reveal-main");
     if (s.opponent_rows && s.opponent_rows.length) {
       rev.innerHTML = `<h3 class="reveal-title">对手 ${esc(opp ? opp.name : "")} 的猜测</h3>`;
@@ -701,7 +705,9 @@ function renderRoom() {
       const title = iWon ? "VICTORY" : s.winner === "draw" ? "DRAW" : "DEFEAT";
       const sub = iWon ? "你先猜中了" : s.winner === "draw" ? "谁都没猜出来"
         : `${s.winner} 先猜中了`;
-      const btns = `<button class="primary" onclick="roomRematch()">🔁 再来一局</button>`
+      const oppGone = opp && !opp.is_ai && opp.present === false;
+      const btns = (oppGone ? ""
+        : `<button class="primary" onclick="roomRematch()">🔁 再来一局</button>`)
         + (opp && opp.is_ai
         ? `<button onclick="overlayTranscript()">🧠 看 AI 的思考回放</button>` : "")
         + `<button onclick="closeEndOverlay()">关闭</button>`;
@@ -764,7 +770,13 @@ async function roomRematch() {
     });
     closeEndOverlay();
     if (!room.ws || room.ws.readyState !== WebSocket.OPEN) connectWs();
-  } catch (e) { toast(e.message); }
+  } catch (e) {
+    toast(e.message);
+    if (e.status === 409) {         // 对手已离开,回对战大厅
+      closeEndOverlay();
+      leaveRoom();
+    }
+  }
 }
 async function showTranscript() {
   try {

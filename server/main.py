@@ -307,6 +307,9 @@ async def rematch_room(
     if room.vs_ai:
         client_ip = request.client.host if request.client else "unknown"
         _consume_ai_room_quota(client_ip)
+    other = room.opponent(seat)
+    if other and not other.is_ai and (other.left or other.ws is None):
+        raise HTTPException(409, "对手已经离开了房间")
     try:
         room.rematch()
     except ValueError as e:
@@ -366,6 +369,7 @@ async def room_ws(ws: WebSocket, code: str, token: str = ""):
         return
     await ws.accept()
     seat.ws = ws
+    seat.left = False              # 重连回来就不算离开
     room.cancel_abandon()          # 断线重连回来了,取消弃局倒计时
     await room.broadcast_state()
     try:
@@ -388,6 +392,13 @@ async def room_ws(ws: WebSocket, code: str, token: str = ""):
     finally:
         if seat.ws is ws:
             seat.ws = None
+            # 终局后前端不会自动重连,关页/刷新也视为离开,通知留守方
+            if room.status == "over" and not seat.left:
+                seat.left = True
+                other = room.opponent(seat)
+                if other and not other.is_ai and other.ws is not None:
+                    await room.post_chat("系统", f"{seat.name} 离开了房间")
+                    await room.broadcast_state()
         # 所有人类都断线(刷新/关页)时,只留几秒重连窗口,然后立即终局
         if room.status == "playing" and not room.humans_connected():
             room.arm_abandon()

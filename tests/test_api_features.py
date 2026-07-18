@@ -117,6 +117,48 @@ class ApiFeatureTests(unittest.TestCase):
         self.assertFalse(
             self.client.get(f"/api/match/poll/{r2['ticket']}").json()["matched"])
 
+    # ------------------------------------------------- leave after game over
+    def _make_room(self):
+        r = self.client.post("/api/room", json={
+            "name": "甲", "settings": {"difficulty": "easy"},
+            "vs_ai": False}).json()
+        j = self.client.post(f"/api/room/{r['code']}/join",
+                             json={"name": "乙"}).json()
+        return r, j, main.rooms.get(r["code"])
+
+    def test_leave_after_over_notifies_opponent_and_blocks_rematch(self):
+        r, j, room = self._make_room()
+        with self.client.websocket_connect(
+                f"/ws/room/{r['code']}?token={r['token']}") as w1:
+            w1.receive_json()          # 甲连上时的 state
+            with self.client.websocket_connect(
+                    f"/ws/room/{r['code']}?token={j['token']}") as w2:
+                w1.receive_json()      # 乙连上触发的广播
+                w2.receive_json()
+                room.status = "over"
+                room.winner = "甲"
+                w2.send_json({"type": "leave"})
+                # 留守的甲要收到系统聊天 + 标记对手不在场的新 state
+                chat = w1.receive_json()
+                self.assertEqual(chat["type"], "chat")
+                self.assertIn("离开", chat["text"])
+                state = w1.receive_json()
+                self.assertEqual(state["type"], "state")
+                self.assertFalse(state["opponent"]["present"])
+            # 对手已离开,再来一局应被拒绝
+            resp = self.client.post(f"/api/room/{r['code']}/rematch",
+                                    headers={"X-Room-Token": r["token"]})
+            self.assertEqual(resp.status_code, 409)
+
+    def test_rematch_blocked_when_opponent_never_connected(self):
+        r, j, room = self._make_room()
+        room.status = "over"
+        room.winner = "draw"
+        # 乙的 ws 压根没连上(等同已跑路),甲不能对着空气重开
+        resp = self.client.post(f"/api/room/{r['code']}/rematch",
+                                headers={"X-Room-Token": r["token"]})
+        self.assertEqual(resp.status_code, 409)
+
 
 if __name__ == "__main__":
     unittest.main()

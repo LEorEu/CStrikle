@@ -24,6 +24,7 @@ class Seat:
         self.token = token
         self.is_ai = is_ai
         self.ws = None
+        self.left = False        # 明确离开(或终局后关页),不再回来
         self.rows = []           # full guess rows (own view)
         self.status = "playing"  # playing | won | lost
 
@@ -128,8 +129,15 @@ class Room:
         await self.broadcast_state()
 
     async def end_by_leave(self, seat: Seat):
-        """玩家点「离开房间」:对手还在打就判对手获胜,否则直接终止。"""
+        """玩家点「离开房间」:对局中判对手获胜;已终局则只通知留守方。"""
+        seat.left = True
         other = self.opponent(seat)
+        if self.status == "over":
+            # 胜负已定,不改结果,但要让还留在结算页的对手知道人跑了
+            if other and not other.is_ai and other.ws is not None:
+                await self.post_chat("系统", f"{seat.name} 离开了房间")
+                await self.broadcast_state()
+            return
         if (self.status == "playing" and other and not other.is_ai
                 and other.status == "playing" and other.ws is not None):
             await self.finish(f"{seat.name} 离开了房间,{other.name} 获胜", other)
@@ -204,6 +212,8 @@ class Room:
         if opp:
             d["opponent"] = {"name": opp.name, "status": opp.status,
                              "is_ai": opp.is_ai, "colors": opp.colors(),
+                             "present": opp.is_ai or (not opp.left
+                                                      and opp.ws is not None),
                              "remaining": self.settings["max_guesses"] - len(opp.rows)}
         if self.status == "over":
             d["answer"] = self.answer.full()
