@@ -3,7 +3,11 @@
 import argparse
 import asyncio
 import json
+import sys
 import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from server.ai_player import AIPlayer
 from server.game import compare
@@ -41,7 +45,7 @@ def build_rows(db: PlayerDB, answer_name: str, guess_names: list[str]) -> list[d
     return rows
 
 
-async def run(effort: str, scenario_index: int):
+async def run(effort: str, thinking: str, ai_level: str, scenario_index: int):
     scenario = SCENARIOS[scenario_index]
     db = PlayerDB()
     pool = db.difficulty_pool("medium")
@@ -54,6 +58,8 @@ async def run(effort: str, scenario_index: int):
         "benchmark medium pool",
         max_guesses=8,
         reasoning_effort=effort,
+        thinking_mode=thinking,
+        ai_level=ai_level,
     )
     analysis = ai.solver.analyze(
         rows,
@@ -81,8 +87,11 @@ async def run(effort: str, scenario_index: int):
         (event for event in events if event["type"] == "solver"),
         None,
     )
+    usage_events = [event for event in events if event["type"] == "usage"]
     print(json.dumps({
         "effort": effort,
+        "thinking": thinking or "default",
+        "ai_level": ai_level,
         "scenario": scenario["name"],
         "answer": scenario["answer"],
         "history_depth": len(rows),
@@ -112,13 +121,38 @@ async def run(effort: str, scenario_index: int):
             for e in events
             if e["type"] in ("reasoning", "thinking")
         ),
+        "usage": {
+            key: sum(event.get(key, 0) for event in usage_events)
+            for key in (
+                "prompt_tokens",
+                "cached_tokens",
+                "cache_miss_tokens",
+                "completion_tokens",
+                "total_tokens",
+            )
+        },
         "event_types": [e["type"] for e in events],
     }, ensure_ascii=False))
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--effort", choices=("low", "medium"), required=True)
+    parser.add_argument(
+        "--effort",
+        choices=("low", "medium", "high", "max"),
+        required=True,
+    )
+    parser.add_argument(
+        "--thinking",
+        choices=("enabled", "disabled"),
+        default="disabled",
+    )
+    parser.add_argument(
+        "--ai-level",
+        choices=("easy", "normal", "hard"),
+        default="hard",
+        help="hard is deterministic and is the recommended A/B benchmark level",
+    )
     parser.add_argument(
         "--scenario",
         type=int,
@@ -126,7 +160,7 @@ def main():
         required=True,
     )
     args = parser.parse_args()
-    asyncio.run(run(args.effort, args.scenario))
+    asyncio.run(run(args.effort, args.thinking, args.ai_level, args.scenario))
 
 
 if __name__ == "__main__":

@@ -393,3 +393,102 @@
   - 生产验收：s1mple/Senzu 均为 `BC.Game`、共用队标且 team=green；NiKo=17 次 Major/1 冠；重赛首人只 ready、第二人确认后才 playing；公网前端已有等待文案。
   - AI 配置保持 `grok-4.5-cstrikle`、项目搜索开启、2 steps、35 秒、medium。
   - 已清理本地/远端上传临时包与远端旧展开目录，保留正式回滚 tar.gz；用户未跟踪文件 `新建 文本文档.txt` 始终未触碰。
+
+## 2026-07-18 — DeepSeek V4 Flash 试跑、FribergCS2 与主播模式
+
+- Request:
+  - 用用户临时提供的官方 DeepSeek Key 评估 `deepseek-v4-flash`，估算 5000 局/天、10 天费用，并解释 AI 强度/求解逻辑。
+  - 展示品牌改为 `FribergCS2`，副标题保留“猜 CS 职业哥”；猜测输入改为底部浮动长条。
+  - 对战设置增加主播模式，遮蔽对手 ID 和聊天内容，并由聊天标题眼睛按钮临时显示。
+- AI findings and changes:
+  - 临时 Key 只用于单次进程环境，未写入 `.env`、源码、日志或 Git；官方 `/models`、V4 Flash 非思考工具调用均成功。
+  - 新增可选 `AI_THINKING_MODE=enabled|disabled`；空值保持现有 Grok 行为，切换 V4 Flash 时建议显式 `disabled`，因为官方默认开启思考且 low/medium 会映射为 high。
+  - AI transcript 新增 token usage 事件；`scripts/benchmark_reasoning.py` 支持 thinking、high/max、usage 汇总和 AI 强度，默认 hard 以保证 A/B 落子一致。
+  - 非思考四个固定局面为 4.339–9.114 秒、4999 输入/1309 输出；思考模式为 6.363–19.042 秒、4997 输入/2597 输出。两组都一次请求、零搜索并服从本地 solver，思考没有增加胜率。
+  - 按官方价格和实测提示规模，非思考 50,000 局在平均 4/6/8 次模型调用时约 ¥299–381 / ¥449–571 / ¥599–762（区间为实测缓存到全未缓存）。
+  - AI 强度与模型推理档分离：easy 在严格候选中随机；normal 在信息增益前五随机；hard 使用最佳信息增益，并在小候选集合精确求解。模型只能解释/聊天/调用工具，不能覆盖 solver 指定落子。
+- UI changes:
+  - title、H1、每日分享文本改为 `FribergCS2`；内部 `cstrikle` localStorage 键和 CPA metadata 保留兼容。
+  - 单人和对战输入都移到网格后，改为视口底部的 CS HUD 控制条；候选列表向上展开，桌面与移动端均保留正常滚动。
+  - 对战大厅新增持久化主播模式；前端缓存最近聊天以支持重新渲染，默认遮蔽对手 ID、聊天发送者/正文和系统消息中的对手昵称，眼睛按钮只在本机临时还原。
+  - AI API Key 与请求仍只在 FastAPI 服务端；浏览器不接触密钥。终局回放需要有效房间 token，且只包含游戏提示/模型事件，不含请求头。
+- Verification:
+  - 全部 44 项 unittest 通过；Python compileall、`node --check static/app.js`、`git diff --check` 通过。
+  - Playwright 桌面、390×844 移动端视觉检查通过；自动断言候选向上、底栏贴近下沿、主播遮蔽和眼睛还原均为 true。
+  - 唯一浏览器控制台 404 是未提供 favicon 的默认请求，不影响功能。
+- Next steps:
+  - 本轮未修改生产 `.env`，未切换线上 Grok、未提交、未推送、未部署。
+  - 若用户确认上线，生产建议使用 `AI_BASE_URL=https://api.deepseek.com`、`AI_MODEL=deepseek-v4-flash`、`AI_THINKING_MODE=disabled`；DDGS 是否保留取决于是否需要背景素材，和 AI 胜率无关。
+
+## 2026-07-18 — Muyuan gpt-5.5 兼容性与 localhost UI Mock
+
+- Request:
+  - 临时测试 `https://muyuan.do/v1` 的 `gpt-5.5` 速度。
+  - 启动本地服务并 mock 对局数据，让用户查看本轮 UI 修改。
+- Muyuan result:
+  - Key 只进入临时进程环境，未写入 `.env`、源码、日志或 Git；diff 秘密扫描为 0。
+  - `/models` 可访问，但 chat completion 在进入模型前返回 403 `channel:client_restricted`。
+  - OpenAI Python SDK 被识别为 `AsyncOpenAI/Python 2.45.0`；标准 httpx + `Mozilla/5.0` 同样在约 0.868 秒被拒。
+  - 公开站点讨论转述站方策略：当前渠道只允许官方 Codex/Claude Code，Python、curl 与第三方客户端会被拒。CStrikle 是 FastAPI 服务端，不能合规使用该渠道；未伪造官方客户端标识，也无法获得真实模型速度。
+- UI mock:
+  - `static/app.js` 新增仅 localhost/127.0.0.1/::1 且显式 `?mock=streamer` 才触发的预览。
+  - mock 使用 ZywOo/s1mple 两行反馈、对手三行进度、90 秒计时和三条聊天；默认开启主播遮蔽，眼睛按钮可还原。
+  - 普通 `/` 首页不受影响；生产域名不会触发 mock。
+- Verification:
+  - Playwright 断言两行数据、底栏位置、默认遮蔽、眼睛还原和普通首页隔离均通过；视觉截图确认年龄/角色/颜色正常。
+  - 45 项 unittest、compileall、JS 语法和 diff check 全部通过。
+- Local service:
+  - 无窗口 Uvicorn 已持续运行在 `http://127.0.0.1:8765`，PID 32760。
+  - `netstat -ano`、普通首页 GET、mock URL GET 和 `/api/meta` 独立复核通过；meta 返回 649 名选手。
+  - 非提升权限下 `Get-NetTCPConnection` 一度未显示监听，属于权限假阴性，不是服务被回收。
+- Scope:
+  - 未修改生产 `.env`，未切线上模型，未提交、未推送、未部署。
+
+## 2026-07-18 — CPA 新 Codex Plus 路由、本地真实 AI 与搜索候选修复
+
+- Request:
+  - 让 FribergCS2 后续使用春川 CPA 新增的 Codex Plus 账号，并在本地以真实数据库/真实 AI 正常启动。
+  - 用户现场发现底部输入 ID 后候选列表不可见，要求恢复为可用的上拉候选框。
+- CPA routing:
+  - 新旧 Codex OAuth auth 都启用且无 priority；仅添加账号时 CPA 会在匹配账号间调度，不能保证项目固定使用新账号。
+  - 按 CLIProxyAPI 的 per-auth OAuth `model-aliases` 机制，只在新 Codex Plus auth 上增加唯一别名 `gpt-5.5-cstrikle -> gpt-5.5`，旧账号和全局路由未改。
+  - 修改前已在 CPA auth 目录生成带日期的备份；CPA 热加载成功，`/v1/models` 可见新别名。
+- Real AI verification:
+  - 最小强制工具调用约 3.52 秒，正确调用 `submit_guess`，上游响应模型为 `gpt-5.5`。
+  - 项目 hard/one_feedback 固定局面约 11.063 秒，0 次 DDGS 搜索、1585 total tokens，严格提交 solver 指定的 s1mple。
+  - 本地真实房间日志中连续四次 AI 调用约 5.93/3.87/3.94/3.88 秒；额外测试客户端超时是错误读取 websocket state 结构，并非 AI 请求超时。
+- Local service:
+  - 本地忽略文件 `.env` 的模型改为 `gpt-5.5-cstrikle`，CPA 地址、DDGS=1、reasoning=medium、tools=auto 保持不变；密钥未输出或写入跟踪文件。
+  - 旧 Uvicorn PID 32760 经命令行确认后停止；真实服务以 PID 23480 运行在 `http://127.0.0.1:8765/`。
+  - `/api/meta` 为 649 名选手、644 名可出题选手，AI enabled 且模型为新别名；已打开新的可见 Chrome 窗口，不带 mock 参数。
+- Search suggestion fix:
+  - 根因是 `.guess-dock` 上的 `clip-path` 会裁剪绝对定位到容器上方的 `.suggest`，所以 JS 有数据但视觉上完全不可见。
+  - 移除 dock 容器级 `clip-path`，保留原边框、阴影、模糊和阵营色；候选继续使用 `bottom: calc(100% + 5px)` 向上展开。
+  - Playwright 使用真实 649 人数据库验证：1449×656 桌面与 390×844 手机视口输入 `s1` 均显示 5 条建议，候选列表完整位于搜索框上方。
+- Scope:
+  - 本轮没有提交、推送或部署 FribergCS2 项目代码；生产 `cs2.estia.moe` 仍使用之前的线上配置。
+
+## 2026-07-18 — 恢复原版输入框与 AI 决策回放
+
+- Request:
+  - 用户否定底部浮动长输入框，要求恢复原版位置与外观。
+  - 用户发现 GPT-5.5 回放几乎没有“思考过程”，希望解释 solver 的影响并优化。
+- Input layout:
+  - 单人和对战输入框都恢复到反馈网格之前，宽度恢复原版上限 460px。
+  - 删除 `guess-dock`、sticky、满宽 HUD 标签、上拉候选和满屏 flex；候选重新从输入框下方向下展开。
+  - Playwright 真实数据验证：桌面输入框 460×46，移动端 366×46；两端输入 `s1` 均显示 5 条同宽下拉建议。
+- AI reasoning diagnosis:
+  - `PlayerSolver` 会先完成严格候选过滤、信息增益评分或小集合有限步精确求解，并指定本轮唯一允许提交的落子。
+  - GPT-5.5 在该流程中通常直接返回 `say`/`submit_guess` 工具调用，`content` 和 `reasoning_content` 可以为空；没有文本不代表没有执行模型调用。
+  - 模型私有思维链既不稳定也不应成为产品功能依赖；游戏强度来自可复现的服务器 solver。
+- Explainability changes:
+  - solver transcript 新增上一轮/当前候选数、剩余回合、逐步中文解释、选中落子的期望剩余人数/最坏分支/信息熵，以及精确解出率。
+  - 实时 `ai_status.detail` 现在分阶段显示“按反馈筛选”“计算信息增益/决策树”“整理公开解说并提交”等安全状态，只给候选数与算法阶段，不泄露候选名或指定落子。
+  - UI 将“AI 思考回放”改为“AI 决策回放”，增加决策卡、三项指标、排名折叠和说明文字；模型主动公开的解说、搜索和工具动作继续保留。
+  - 桌面和 390×844 移动端视觉通过；移动端三项指标自动单列，弹层内部滚动正常。
+- Verification:
+  - 真实 `gpt-5.5-cstrikle` 首回合 9.11 秒完成，502 名候选、3 条解释、完整 selected metrics；事件为 solver/usage/say/guess，安全状态未泄露最终落子 Refrezh。
+  - 46 项 unittest、compileall、`node --check static/app.js`、`git diff --check` 全部通过；秘密模式扫描 0 命中。
+  - 本地服务已重启为 PID 35064，继续运行在 `http://127.0.0.1:8765/`，meta 为 649 名选手和 `gpt-5.5-cstrikle`。
+- Scope:
+  - 本轮未提交、未推送、未部署；生产站仍未包含这些本地 UI/回放修改。

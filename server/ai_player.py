@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-LLM opponent: a tool-using agent that plays the guessing game.
+LLM opponent backed by a deterministic solver.
 
-Every turn it can think out loud, run web searches, talk trash, and must end
-by submitting a guess. Everything (reasoning, tool calls, search results,
-trash talk) is recorded into a transcript the human can replay after the
-match.
+The replay records verifiable solver decisions, public model explanations,
+searches and tool actions. Provider-private chain-of-thought is not required
+for the replay to remain useful.
 """
 import asyncio
 import json
@@ -128,6 +127,7 @@ class AIPlayer:
         on_say=None,
         on_status=None,
         reasoning_effort: str | None = None,
+        thinking_mode: str | None = None,
         ai_level: str = "normal",
     ):
         self.db = db
@@ -145,6 +145,16 @@ class AIPlayer:
             config.AI_REASONING_EFFORT
             if reasoning_effort is None
             else reasoning_effort.strip().lower()
+        )
+        requested_thinking = (
+            config.AI_THINKING_MODE
+            if thinking_mode is None
+            else thinking_mode.strip().lower()
+        )
+        self.thinking_mode = (
+            requested_thinking
+            if requested_thinking in ("enabled", "disabled")
+            else ""
         )
         self.client = AsyncOpenAI(
             base_url=config.AI_BASE_URL,
@@ -204,6 +214,121 @@ class AIPlayer:
         lines.append("\n请解释求解器结论并立即提交指定猜测。")
         return "\n".join(lines)
 
+    def _solver_event(
+        self,
+        analysis: SolverAnalysis,
+        previous_candidate_count: int,
+        remaining_turns: int,
+    ) -> dict:
+        candidate_count = len(analysis.candidates)
+        selected = next(
+            (
+                move for move in analysis.moves
+                if move.player.page == analysis.recommended.page
+            ),
+            None,
+        )
+        if selected is None:
+            selected_moves = self.solver.rank_moves(
+                analysis.candidates,
+                limit=1,
+                action_pool=(analysis.recommended,),
+            )
+            selected = selected_moves[0] if selected_moves else None
+
+        explanation = []
+        if previous_candidate_count == candidate_count:
+            explanation.append(
+                f"当前从 {candidate_count} 名严格候选开始分析。"
+            )
+        else:
+            explanation.append(
+                f"最新反馈把严格候选从 {previous_candidate_count} 人"
+                f"缩小到 {candidate_count} 人。"
+            )
+
+        if candidate_count == 1:
+            explanation.append("只有一人符合全部反馈，直接锁定该候选。")
+        elif analysis.mode.startswith("小候选集合"):
+            explanation.append(
+                f"候选已足够少，按剩余 {remaining_turns} 次机会递归计算决策树，"
+                "优先最大化整局猜中概率。"
+            )
+        elif analysis.mode.startswith("普通难度"):
+            explanation.append(
+                "普通难度会在信息增益前五名中随机选择，仍严格遵守全部历史反馈。"
+            )
+        elif analysis.mode.startswith("简单难度"):
+            explanation.append(
+                "简单难度会在严格候选中随机选择，不会猜已经被反馈排除的人。"
+            )
+        else:
+            explanation.append(
+                "候选较多，枚举合法落子并依次比较期望剩余人数、"
+                "最坏分支和信息熵。"
+            )
+
+        if selected is not None:
+            kind = "信息探针" if not selected.in_candidates else "严格候选"
+            explanation.append(
+                f"最终选择 {analysis.recommended.nickname}（{kind}）："
+                f"预计反馈后平均剩 {selected.expected_remaining:.2f} 人，"
+                f"最坏分支剩 {selected.worst_case} 人，"
+                f"信息熵 {selected.entropy:.3f} bit。"
+            )
+            selected_metrics = {
+                "expected_remaining": round(selected.expected_remaining, 4),
+                "worst_case": selected.worst_case,
+                "entropy": round(selected.entropy, 4),
+                "in_candidates": selected.in_candidates,
+            }
+        else:
+            selected_metrics = None
+
+        if analysis.exact_solve_probability is not None:
+            explanation.append(
+                f"按当前剩余回合，精确求解预计成功率为 "
+                f"{analysis.exact_solve_probability * 100:.1f}%。"
+            )
+
+        return {
+            "type": "solver",
+            "mode": analysis.mode,
+            "previous_candidate_count": previous_candidate_count,
+            "candidate_count": candidate_count,
+            "remaining_turns": remaining_turns,
+            "recommended": analysis.recommended.nickname,
+            "exact_solve_probability": analysis.exact_solve_probability,
+            "selected_metrics": selected_metrics,
+            "explanation": explanation,
+            "moves": [
+                {
+                    "nickname": move.player.nickname,
+                    "expected_remaining": round(move.expected_remaining, 4),
+                    "worst_case": move.worst_case,
+                    "entropy": round(move.entropy, 4),
+                    "in_candidates": move.in_candidates,
+                }
+                for move in analysis.moves
+            ],
+        }
+
+    @staticmethod
+    def _solver_status(analysis: SolverAnalysis, remaining_turns: int) -> str:
+        count = len(analysis.candidates)
+        if count == 1:
+            return "反馈筛选完成：已锁定唯一严格候选，正在提交落子…"
+        if analysis.mode.startswith("小候选集合"):
+            return (
+                f"严格候选 {count} 人 · 正在计算剩余 "
+                f"{remaining_turns} 回合的精确决策树…"
+            )
+        if analysis.mode.startswith("普通难度"):
+            return f"严格候选 {count} 人 · 正在信息增益前五名中选择…"
+        if analysis.mode.startswith("简单难度"):
+            return f"严格候选 {count} 人 · 正在按简单难度选择合法落子…"
+        return f"严格候选 {count} 人 · 正在比较信息增益与最坏分支…"
+
     # ------------------------------------------------- shared tool actions
     async def _do_search(self, q: str, res: TurnResult) -> str:
         if res.searches_used >= 1:
@@ -254,37 +379,38 @@ class AIPlayer:
                         guessed_names: set) -> TurnResult:
         res = TurnResult()
         turn_no = len(my_rows) + 1
+        remaining_turns = max(1, self.max_guesses - len(my_rows))
         guessed_pages = {
             row.get("player", {}).get("page", "")
             for row in my_rows
             if row.get("player", {}).get("page")
         }
+        if self.on_status:
+            await self.on_status(
+                "thinking",
+                "正在按全部历史反馈筛选严格候选…",
+            )
         analysis = await asyncio.to_thread(
             self.solver.analyze,
             my_rows,
-            max(1, self.max_guesses - len(my_rows)),
+            remaining_turns,
             guessed_pages,
         )
         analysis = self.solver.relax(analysis, self.ai_level, guessed_pages)
         self._required_guess = analysis.recommended
         res.fallback_guess = analysis.recommended.page
-        res.events.append({
-            "type": "solver",
-            "mode": analysis.mode,
-            "candidate_count": len(analysis.candidates),
-            "recommended": analysis.recommended.nickname,
-            "exact_solve_probability": analysis.exact_solve_probability,
-            "moves": [
-                {
-                    "nickname": move.player.nickname,
-                    "expected_remaining": round(move.expected_remaining, 4),
-                    "worst_case": move.worst_case,
-                    "entropy": round(move.entropy, 4),
-                    "in_candidates": move.in_candidates,
-                }
-                for move in analysis.moves
-            ],
-        })
+        previous_candidates = self.solver.filter_candidates(my_rows[:-1])
+        previous_candidate_count = (
+            len(previous_candidates)
+            if previous_candidates
+            else len(self.solver.initial_candidates)
+        )
+        res.events.append(self._solver_event(
+            analysis,
+            previous_candidate_count,
+            remaining_turns,
+        ))
+        solver_status = self._solver_status(analysis, remaining_turns)
         messages = [
             {"role": "system", "content": self._system_prompt()},
             {
@@ -297,7 +423,11 @@ class AIPlayer:
 
         for step in range(config.AI_MAX_STEPS):
             if self.on_status:
-                await self.on_status("thinking", None)
+                await self.on_status(
+                    "thinking",
+                    solver_status if step == 0
+                    else "正在整理公开解说并提交指定落子…",
+                )
             started = time.perf_counter()
             try:
                 if self.tools_mode == "native":
@@ -312,6 +442,10 @@ class AIPlayer:
                     }
                     if self.reasoning_effort:
                         request["reasoning_effort"] = self.reasoning_effort
+                    if self.thinking_mode:
+                        request["extra_body"] = {
+                            "thinking": {"type": self.thinking_mode},
+                        }
                     # 第一次没有完成猜测时，后续步骤只允许提交猜测，
                     # 避免模型连续聊天/搜索导致一个回合调用三四次。
                     if step > 0:
@@ -331,6 +465,10 @@ class AIPlayer:
                     }
                     if self.reasoning_effort:
                         request["reasoning_effort"] = self.reasoning_effort
+                    if self.thinking_mode:
+                        request["extra_body"] = {
+                            "thinking": {"type": self.thinking_mode},
+                        }
                     resp = await self.client.chat.completions.create(**request)
             except Exception as e:
                 elapsed = time.perf_counter() - started
@@ -359,6 +497,27 @@ class AIPlayer:
                 config.AI_MODEL, turn_no, step + 1, elapsed,
             )
             msg = resp.choices[0].message
+            usage = getattr(resp, "usage", None)
+            if usage:
+                prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+                completion_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
+                details = getattr(usage, "prompt_tokens_details", None)
+                cached_tokens = int(
+                    getattr(details, "cached_tokens", 0)
+                    or getattr(usage, "prompt_cache_hit_tokens", 0)
+                    or 0
+                )
+                res.events.append({
+                    "type": "usage",
+                    "prompt_tokens": prompt_tokens,
+                    "cached_tokens": cached_tokens,
+                    "cache_miss_tokens": max(0, prompt_tokens - cached_tokens),
+                    "completion_tokens": completion_tokens,
+                    "total_tokens": int(
+                        getattr(usage, "total_tokens", 0)
+                        or prompt_tokens + completion_tokens
+                    ),
+                })
             reasoning = getattr(msg, "reasoning_content", None)
             if reasoning:
                 res.events.append({"type": "reasoning", "text": reasoning})

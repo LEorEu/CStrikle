@@ -22,6 +22,10 @@ AI_SEARCH_CACHE_TTL_SECONDS = max(
 AI_TOOLS_MODE = os.getenv("AI_TOOLS_MODE", "auto").lower()
 # 兼容 OpenAI 风格 reasoning_effort；留空时不发送该参数。
 AI_REASONING_EFFORT = os.getenv("AI_REASONING_EFFORT", "").strip().lower()
+# 可选思考模式，主要用于 DeepSeek V4；留空时保持上游模型默认行为。
+AI_THINKING_MODE = os.getenv("AI_THINKING_MODE", "").strip().lower()
+if AI_THINKING_MODE not in ("enabled", "disabled"):
+    AI_THINKING_MODE = ""
 # AI 落子后的最短间隔(原 fast/normal/slow 档已砍掉,固定按最快节奏来)
 AI_GUESS_DELAY_SECONDS = 1.0
 # Per-client protection for the public AI-room creation endpoint.

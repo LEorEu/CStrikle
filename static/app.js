@@ -1,11 +1,17 @@
-/* CStrikle frontend */
+/* FribergCS2 frontend */
 "use strict";
 const $ = (id) => document.getElementById(id);
 const API = "";
+const STREAMER_MODE_KEY = "cstrikle_streamer_mode";
 
 let META = null, PLAYERS = [];
 let soloGame = null;
-let room = { ws: null, code: null, token: null, state: null, vsAi: false };
+let streamerMode = localStorage.getItem(STREAMER_MODE_KEY) === "1";
+let streamerReveal = false;
+let room = {
+  ws: null, code: null, token: null, state: null, vsAi: false,
+  chat: [], lastStatus: null,
+};
 
 /* ---------------- country flags ---------------- */
 const ISO = {
@@ -515,7 +521,7 @@ function shareDaily() {
   const g = soloGame;
   const map = { green: "🟩", yellow: "🟨", gray: "⬛" };
   const lines = g.guesses.map(r => r.cells.map(c => map[c.state]).join(""));
-  const txt = `CStrikle ${new Date().toISOString().slice(0, 10)} ${g.status === "won" ? g.guesses.length : "X"}/${g.settings.max_guesses}\n` + lines.join("\n");
+  const txt = `FribergCS2 ${new Date().toISOString().slice(0, 10)} ${g.status === "won" ? g.guesses.length : "X"}/${g.settings.max_guesses}\n` + lines.join("\n");
   navigator.clipboard.writeText(txt).then(() => toast("已复制,发给朋友吧"));
 }
 
@@ -590,7 +596,11 @@ function cancelMatch() {
 }
 
 function enterRoom(code, token, vsAi) {
-  room = { ws: null, code, token, state: null, vsAi };
+  room = {
+    ws: null, code, token, state: null, vsAi,
+    chat: [], lastStatus: null,
+  };
+  streamerReveal = false;
   go("room");
   $("room-code").textContent = code;
   $("room-guess-input").value = "";
@@ -601,6 +611,7 @@ function enterRoom(code, token, vsAi) {
   $("room-result").classList.add("hidden");
   $("room-result").dataset.spoiler = "";
   $("opp-reveal-main").innerHTML = "";
+  updateStreamerUi();
   connectWs();
 }
 function connectWs() {
@@ -616,19 +627,80 @@ function connectWs() {
   };
 }
 function handleWs(msg) {
-  if (msg.type === "state") { room.state = msg; renderRoom(); }
-  else if (msg.type === "chat") addChat(msg);
+  if (msg.type === "state") {
+    room.state = msg;
+    mergeChat(msg.chat || []);
+    renderRoom();
+  }
+  else if (msg.type === "chat") mergeChat([msg]);
   else if (msg.type === "error") toast(msg.message);
   else if (msg.type === "ai_status") {
     const el = $("ai-status");
     if (msg.state === "idle") el.classList.add("hidden");
     else {
       el.classList.remove("hidden");
-      el.textContent = msg.state === "searching" ? "AI 正在上网搜资料…" : "AI 正在思考…";
+      el.textContent = msg.detail || (
+        msg.state === "searching" ? "AI 正在上网搜资料…" : "AI 正在分析局面…"
+      );
     }
   }
 }
 let turnTimerInt = null;
+function streamerPrivacyActive() {
+  return streamerMode && !streamerReveal;
+}
+function visibleOpponentName(name, fallback = "对手") {
+  return streamerPrivacyActive() ? fallback : (name || fallback);
+}
+function visibleWinnerName(name, you) {
+  if (!streamerPrivacyActive() || name === "draw" || name === you.name) return name;
+  return "对手";
+}
+function sanitizeSystemChat(text) {
+  let shown = String(text || "");
+  if (!streamerPrivacyActive() || !room.state || !room.state.opponent) return shown;
+  const opponentName = room.state.opponent.name;
+  if (opponentName) shown = shown.split(opponentName).join("对手");
+  return shown;
+}
+function chatKey(m) {
+  return `${m.ts || ""}\u241f${m.from || ""}\u241f${m.text || ""}`;
+}
+function mergeChat(messages) {
+  if (!Array.isArray(room.chat)) room.chat = [];
+  const known = new Set(room.chat.map(chatKey));
+  for (const message of messages) {
+    const key = chatKey(message);
+    if (!known.has(key)) {
+      room.chat.push(message);
+      known.add(key);
+    }
+  }
+  room.chat = room.chat.slice(-100);
+  renderChat();
+}
+function updateStreamerUi() {
+  const toggle = $("streamer-mode");
+  if (toggle) toggle.checked = streamerMode;
+  const reveal = $("chat-reveal");
+  const note = $("chat-privacy-note");
+  if (!reveal || !note) return;
+  reveal.classList.toggle("hidden", !streamerMode);
+  reveal.classList.toggle("revealed", streamerReveal);
+  reveal.setAttribute("aria-pressed", String(streamerReveal));
+  reveal.setAttribute("aria-label", streamerReveal
+    ? "重新隐藏对手和聊天内容" : "临时显示对手和聊天内容");
+  reveal.title = reveal.getAttribute("aria-label");
+  note.classList.toggle("hidden", !streamerMode);
+  note.textContent = streamerReveal ? "主播模式 · 临时显示中" : "主播模式已隐藏";
+}
+function toggleStreamerReveal() {
+  if (!streamerMode) return;
+  streamerReveal = !streamerReveal;
+  updateStreamerUi();
+  if (room.state) renderRoom();
+  else renderChat();
+}
 function renderRoom() {
   const s = room.state;
   const you = s.you, opp = s.opponent;
@@ -661,7 +733,7 @@ function renderRoom() {
 
   // opponent panel
   if (opp) {
-    $("opp-name").textContent = opp.name
+    $("opp-name").textContent = visibleOpponentName(opp.name, "对手（已隐藏）")
       + (opp.present === false ? "(已离开)" : "");
     $("opp-remaining").textContent = `对手剩余次数 ${opp.remaining}`;
     const MINI = { nationality: "国", team: "队", age: "龄", role: "位",
@@ -677,18 +749,18 @@ function renderRoom() {
     $("opp-grid").innerHTML = ""; $("opp-remaining").textContent = "";
   }
 
-  // chat backlog (state carries recent history)
-  if (s.chat && !$("chat-log").childElementCount) s.chat.forEach(addChat);
+  renderChat();
 
   const res = $("room-result");
   if (s.status === "over") {
     res.dataset.spoiler = "";
     res.classList.remove("hidden");
     const iWon = s.winner === you.name;
+    const shownWinner = visibleWinnerName(s.winner, you);
     res.className = "result " + (iWon ? "win" : s.winner === "draw" ? "" : "lose");
     res.innerHTML = `<div class="verdict">${s.winner === "draw"
         ? "DRAW — 平局,谁都没猜出来"
-        : iWon ? "VICTORY — 你先猜中了" : `DEFEAT — ${esc(s.winner)} 先猜中了`}</div>`
+        : iWon ? "VICTORY — 你先猜中了" : `DEFEAT — ${esc(shownWinner)} 先猜中了`}</div>`
       + answerCard(s.answer);
     if (opp && opp.is_ai) $("btn-transcript").classList.remove("hidden");
     // 对手已经跑了就没有「再来一局」可言
@@ -706,7 +778,9 @@ function renderRoom() {
     }
     const rev = $("opp-reveal-main");
     if (s.opponent_rows && s.opponent_rows.length) {
-      rev.innerHTML = `<h3 class="reveal-title">对手 ${esc(opp ? opp.name : "")} 的猜测</h3>`;
+      rev.innerHTML = `<h3 class="reveal-title">${esc(
+        visibleOpponentName(opp ? opp.name : "", "对手")
+      )} 的猜测</h3>`;
       const div = document.createElement("div");
       div.className = "grid";
       renderGrid(div, s.opponent_rows);
@@ -718,7 +792,7 @@ function renderRoom() {
       const kind = iWon ? "win" : s.winner === "draw" ? "draw" : "lose";
       const title = iWon ? "VICTORY" : s.winner === "draw" ? "DRAW" : "DEFEAT";
       const sub = iWon ? "你先猜中了" : s.winner === "draw" ? "谁都没猜出来"
-        : `${s.winner} 先猜中了`;
+        : `${shownWinner} 先猜中了`;
       const oppGone = opp && !opp.is_ai && opp.present === false;
       const btns = (oppGone ? ""
         : `<button id="btn-rematch-overlay" class="primary" onclick="roomRematch()"
@@ -738,6 +812,11 @@ function renderRoom() {
         }
       }, 700);
     }
+    if (!$("end-overlay").classList.contains("hidden")) {
+      $("end-sub").textContent = iWon ? "你先猜中了"
+        : s.winner === "draw" ? "谁都没猜出来"
+        : `${shownWinner} 先猜中了`;
+    }
   } else {
     if (s.answer_spoiler) {
       // 你已出局:可折叠偷看谜底,避免重复渲染打断已展开的状态
@@ -756,14 +835,26 @@ function renderRoom() {
     $("btn-rematch").classList.add("hidden");
   }
 }
-function addChat(m) {
+function renderChat() {
   const log = $("chat-log");
-  const div = document.createElement("div");
-  const isAi = m.from && m.from.startsWith("AI");
-  div.className = m.from === "系统" ? "c-sys" : isAi ? "c-ai" : "";
-  div.innerHTML = m.from === "系统" ? esc(m.text)
-    : `<span class="c-from">${esc(m.from)}:</span> ${esc(m.text)}`;
-  log.appendChild(div);
+  if (!log) return;
+  log.innerHTML = "";
+  for (const m of (room.chat || [])) {
+    const div = document.createElement("div");
+    const isSystem = m.from === "系统";
+    const isAi = m.from && m.from.startsWith("AI");
+    div.className = isSystem ? "c-sys" : isAi ? "c-ai" : "";
+    if (isSystem) {
+      div.textContent = sanitizeSystemChat(m.text);
+    } else if (streamerPrivacyActive()) {
+      const isYou = room.state && m.from === room.state.you.name;
+      div.innerHTML = `<span class="c-from">${isYou ? "你" : "对手"}:</span> `
+        + `<span class="c-masked">••••••••</span>`;
+    } else {
+      div.innerHTML = `<span class="c-from">${esc(m.from)}:</span> ${esc(m.text)}`;
+    }
+    log.appendChild(div);
+  }
   log.scrollTop = log.scrollHeight;
 }
 function wsReady() {
@@ -823,14 +914,31 @@ function evHtml(e) {
     case "solver": {
       const prob = e.exact_solve_probability != null
         ? ` · 剩余回合解出率 ${(e.exact_solve_probability * 100).toFixed(1)}%` : "";
+      const explanation = (e.explanation || []).map(line =>
+        `<li>${esc(line)}</li>`
+      ).join("");
+      const metrics = e.selected_metrics ? `
+        <div class="decision-metrics">
+          <span><b>${e.selected_metrics.expected_remaining}</b>期望剩余</span>
+          <span><b>${e.selected_metrics.worst_case}</b>最坏分支</span>
+          <span><b>${e.selected_metrics.entropy}</b>信息熵</span>
+        </div>` : "";
       const moves = (e.moves || []).map((m, i) =>
         `${i + 1}. ${esc(m.nickname)}${m.in_candidates ? "" : "(探针)"} — 期望剩余 ${m.expected_remaining} · 最坏 ${m.worst_case} · 熵 ${m.entropy}`
       ).join("\n");
-      return `<div class="ev ev-solver">🧮 求解器:候选剩 <b>${e.candidate_count}</b> 人 · ${esc(e.mode)}${prob}<br>→ 指定落子 <b>${esc(e.recommended)}</b>
-        <details><summary>信息增益排名</summary><pre>${moves}</pre></details></div>`;
+      return `<div class="ev ev-solver">
+        <div class="decision-head">
+          <span>SERVER SOLVER</span>
+          <b>${esc(e.recommended)}</b>
+        </div>
+        <div class="decision-summary">严格候选 <b>${e.candidate_count}</b> 人 · ${esc(e.mode)}${prob}</div>
+        ${explanation ? `<ol class="decision-steps">${explanation}</ol>` : ""}
+        ${metrics}
+        <details><summary>查看信息增益排名</summary><pre>${moves}</pre></details>
+      </div>`;
     }
-    case "reasoning": return `<div class="ev"><details><summary>内部推理(reasoning)</summary><pre>${esc(e.text)}</pre></details></div>`;
-    case "thinking": return `<div class="ev ev-thinking">${esc(e.text)}</div>`;
+    case "reasoning": return `<div class="ev"><details><summary>模型提供的推理摘要</summary><pre>${esc(e.text)}</pre></details></div>`;
+    case "thinking": return `<div class="ev ev-thinking"><b>模型公开解说</b><br>${esc(e.text)}</div>`;
     case "search": return `<div class="ev ev-search">🔍 搜索:「${esc(e.query)}」</div>`;
     case "search_result": return `<div class="ev"><details><summary>搜索结果</summary><pre>${esc(e.text)}</pre></details></div>`;
     case "say": return `<div class="ev ev-say">💬 垃圾话:${esc(e.text)}</div>`;
@@ -839,6 +947,86 @@ function evHtml(e) {
     case "forced_guess": return `<div class="ev ev-rejected">⚠️ ${esc(e.reason)}:${esc(e.name)}</div>`;
     default: return "";
   }
+}
+
+/* ---------------- localhost UI preview ---------------- */
+function mockRow(nickname, states, facts = {}) {
+  const p = PLAYERS.find(x => x.nickname.toLowerCase() === nickname.toLowerCase())
+    || PLAYERS[0];
+  if (!p) return null;
+  const values = {
+    nationality: [p.country, p.region],
+    team: [p.team_label || p.team || "自由身", null],
+    age: [facts.age ?? p.age ?? "?", null],
+    role: [facts.role || p.role || "Rifler", null],
+    majors: [p.majors_count, null],
+    majors_won: [p.majors_won, null],
+  };
+  return {
+    player: p,
+    correct: false,
+    cells: Object.entries(values).map(([key, [value, extra]], i) => ({
+      key, value, extra,
+      state: states[i] || "gray",
+      dir: key === "age" || key === "majors" ? (i % 2 ? "down" : "up") : null,
+    })),
+  };
+}
+function openLocalMockPreview() {
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+  if (!localHosts.has(location.hostname)
+      || new URLSearchParams(location.search).get("mock") !== "streamer") return;
+  const rows = [
+    mockRow(
+      "ZywOo",
+      ["yellow", "gray", "yellow", "green", "gray", "gray"],
+      {age: 25, role: "AWPer"},
+    ),
+    mockRow(
+      "s1mple",
+      ["green", "green", "gray", "yellow", "yellow", "gray"],
+      {age: 28, role: "AWPer"},
+    ),
+  ].filter(Boolean);
+  room = {
+    ws: null, code: "MOCK", token: null, vsAi: false,
+    chat: [
+      {ts: 1, from: "系统", text: "VeryRecognizableFriend 加入了房间"},
+      {ts: 2, from: "VeryRecognizableFriend", text: "这把我已经锁定答案了"},
+      {ts: 3, from: "主播本人", text: "那就看看谁更快"},
+    ],
+    lastStatus: "playing",
+    state: {
+      type: "state", status: "playing",
+      now: Date.now() / 1000, deadline: Date.now() / 1000 + 92,
+      settings: {max_guesses: 8},
+      you: {
+        name: "主播本人", rows, status: "playing",
+        rematch_ready: false,
+      },
+      opponent: {
+        name: "VeryRecognizableFriend", present: true, remaining: 5,
+        is_ai: false, rematch_ready: false,
+        colors: [
+          ["gray", "yellow", "gray", "green", "gray", "gray"],
+          ["yellow", "green", "yellow", "gray", "yellow", "gray"],
+          ["green", "green", "gray", "yellow", "yellow", "gray"],
+        ].map(row => row.map((state, i) => ({
+          key: ["nationality", "team", "age", "role", "majors", "majors_won"][i],
+          state, dir: i === 2 ? "up" : null,
+        }))),
+      },
+    },
+  };
+  streamerMode = true;
+  streamerReveal = false;
+  $("room-code").textContent = "MOCK";
+  $("room-grid").innerHTML = "";
+  $("room-result").classList.add("hidden");
+  $("opp-reveal-main").innerHTML = "";
+  go("room");
+  updateStreamerUi();
+  renderRoom();
 }
 
 /* ---------------- init ---------------- */
@@ -870,9 +1058,20 @@ async function init() {
   $("chat-text").addEventListener("keydown", e => { if (e.key === "Enter") sendChat(); });
   const saved = localStorage.getItem("cstrikle_name") || "";
   $("lobby-name").value = saved;
+  $("streamer-mode").checked = streamerMode;
+  $("streamer-mode").addEventListener("change", e => {
+    streamerMode = e.target.checked;
+    streamerReveal = false;
+    localStorage.setItem(STREAMER_MODE_KEY, streamerMode ? "1" : "0");
+    updateStreamerUi();
+    if (room.state) renderRoom();
+    else renderChat();
+  });
+  updateStreamerUi();
   document.querySelectorAll(".mm-seg button").forEach(b => b.onclick = () => {
     document.querySelectorAll(".mm-seg button").forEach(x => x.classList.remove("on"));
     b.classList.add("on");
   });
+  openLocalMockPreview();
 }
 init();
