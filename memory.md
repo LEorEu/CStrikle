@@ -19,10 +19,12 @@
   - 37 项测试全过(新增 7 项 API 测试:top20 池、feedback 落盘/校验、匹配配对/取消/同名)。
   - 浏览器端到端:Top20 2025 局(谜底 molodoy)结算卡外链正确、反馈弹窗提交成功且 JSONL 落盘;双标签页随机匹配互相配对进房、对手色块同步、2 分钟倒计时生效、取消/退队正常。
   - compileall、node --check、git diff --check 通过。
+- Deployment (2026-07-18):
+  - 提交 `8bbe76b` 并推送 origin/main;git archive 打包上传春川 `/home/ubuntu/docker/cstrikle`。
+  - 部署前修复:`cstrikle.feedback` logger 显式挂 stderr handler(root logger 无 handler 时 INFO 会被静默丢弃);compose 加 `./feedback:/data/feedback` 可写卷(宿主目录 1777),服务器 `.env` 追加 `FEEDBACK_PATH=/data/feedback/feedback.jsonl`;`.dockerignore`/`.gitignore` 排除反馈文件。
+  - 生产验证:容器 healthy;公网 meta `pool_sizes` 含 top20=99;前端新资源就位;真实反馈 POST 同时落宿主卷 JSONL 和 docker logs;匹配 join/poll/cancel 公网可用(注意 Windows Git Bash 里 curl 发中文 JSON 会因 GBK 编码 400,非服务端问题)。
 - Next steps:
-  - 未提交、未部署(用户自行提交;上一轮角色语义工作已由用户提交为 9e5305e/10e2fd3)。
-  - 部署时注意:compose 只读容器需设 `FEEDBACK_PATH=/tmp/feedback.jsonl` 或挂可写卷。
-  - 待选后续:随机匹配 BO3 赛制、2010/2011 老将补库、反馈后台查看工具。
+  - 待选后续:随机匹配 BO3 赛制、2010/2011 老将补库、反馈后台查看工具(反馈文件在服务器 `feedback/feedback.jsonl`)。
 
 ## Current session
 
