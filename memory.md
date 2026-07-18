@@ -385,5 +385,11 @@
   - 全部 44 项 unittest 通过；Python compileall、`node --check static/app.js`、`git diff --check` 通过。
   - 烟测确认 BC.Game 同队反馈为 green；NiKo 为 17 次 Major、1 冠；Falcons 五名冠军选手的 2026 科隆 placement 均为 1。
   - 保留用户未跟踪文件 `新建 文本文档.txt`，未触碰。
-- Next steps:
-  - 按本轮约定仅完成本地修改，尚未提交、推送或部署；用户确认后再发布到 GitHub/春川 ARM。
+- Release and deployment:
+  - 用户随后明确授权发布；提交 `afeff31`（Fix team aliases, rematch consent, and Cologne result）已推送到 `origin/main`。
+  - 从已推送提交生成精确归档，SHA-256=`F864A901042F81CA4B9F0A317E627A4B23F69EE25C95BC166496BC0403F82ABA`；远端哈希一致。
+  - 春川覆盖前备份为 `/home/ubuntu/cstrikle-pre-afeff31-20260718-160709.tar.gz`；精确替换源码时保留 `.env`、`feedback/` 和 `deploy.log`。
+  - 新镜像构建并 recreate 成功；最终容器 healthy、FailingStreak=0、RestartCount=0，公开首页和 `/api/meta` 均为 200。
+  - 生产验收：s1mple/Senzu 均为 `BC.Game`、共用队标且 team=green；NiKo=17 次 Major/1 冠；重赛首人只 ready、第二人确认后才 playing；公网前端已有等待文案。
+  - AI 配置保持 `grok-4.5-cstrikle`、项目搜索开启、2 steps、35 秒、medium。
+  - 已清理本地/远端上传临时包与远端旧展开目录，保留正式回滚 tar.gz；用户未跟踪文件 `新建 文本文档.txt` 始终未触碰。
