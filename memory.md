@@ -492,3 +492,26 @@
   - 本地服务已重启为 PID 35064，继续运行在 `http://127.0.0.1:8765/`，meta 为 649 名选手和 `gpt-5.5-cstrikle`。
 - Scope:
   - 本轮未提交、未推送、未部署；生产站仍未包含这些本地 UI/回放修改。
+
+## 2026-07-18 — FribergCS2 UI、主播模式与 GPT-5.5 决策回放上线
+
+- Request:
+  - 用户确认恢复后的输入布局和 AI 决策回放效果，要求推送当前代码并部署到春川 ARM。
+- Git release:
+  - 发布范围为 `.env.example`、AI 配置/基准/回放后端、品牌与主播模式前端及 AI 单测共 9 个跟踪文件。
+  - 暂存前后秘密模式扫描均为 0；本地 `.env` 被 `.gitignore` 排除，API Key 未进入提交或部署归档。
+  - 功能提交 `7796a56`（Improve AI decisions, privacy, and UI branding）已推送到 `origin/main`。
+  - 从该提交生成精确 Git 归档，SHA-256 为 `cb81f13ecac96e5f3e1360158fedb8b767e879004cd6b182f878579f604c52ec`；服务器上传包哈希一致。
+- Production deployment:
+  - 部署目录仍为 `/home/ubuntu/docker/cstrikle`，Caddy 与域名无需修改。
+  - 部署前完整回滚包为 `/home/ubuntu/cstrikle-pre-7796a56-20260718-183640.tar.gz`，SHA-256 为 `5e639f8e2099f33236c547a0a43fc0558fad4e14736173924e46e489a46d1347`。
+  - 使用 staging 解包后保留 `.env`、`feedback/` 和 `deploy.log`，反馈目录与旧版本 `diff -qr` 一致。
+  - 仅将生产 `AI_MODEL` 从 `grok-4.5-cstrikle` 切到新账号专属别名 `gpt-5.5-cstrikle`；CPA 地址、项目 DDGS、medium、auto、2 steps 和 35 秒上限保持不变。
+  - 新镜像构建并 recreate 成功；临时上传包和旧展开目录已清理，正式回滚 tar 保留。
+- Verification:
+  - 发布前完整 46 项 unittest、Python compileall、JavaScript 语法、`git diff --check` 和秘密扫描均通过。
+  - 生产容器 `healthy`、RestartCount=0、FailingStreak=0；公网 `/api/meta` 返回 649/644 人、AI enabled、模型 `gpt-5.5-cstrikle`。
+  - 公网首页命中 `FribergCS2`、主播模式和“AI 决策回放”，本机与服务器两条公网链路均验证成功。
+  - 生产真实 AI 烟测房间创建成功，`gpt-5.5-cstrikle` 首次模型调用 4.17 秒完成，无模型错误或 solver 回退。
+- Next steps:
+  - 观察实际玩家局面的 GPT-5.5 延迟和 token usage；若出现持续慢调用，可按回放中的 usage/solver 事件与 CPA 日志定位，不需要恢复原生搜索。
