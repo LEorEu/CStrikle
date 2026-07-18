@@ -23,6 +23,10 @@
   - 提交 `8bbe76b` 并推送 origin/main;git archive 打包上传春川 `/home/ubuntu/docker/cstrikle`。
   - 部署前修复:`cstrikle.feedback` logger 显式挂 stderr handler(root logger 无 handler 时 INFO 会被静默丢弃);compose 加 `./feedback:/data/feedback` 可写卷(宿主目录 1777),服务器 `.env` 追加 `FEEDBACK_PATH=/data/feedback/feedback.jsonl`;`.dockerignore`/`.gitignore` 排除反馈文件。
   - 生产验证:容器 healthy;公网 meta `pool_sizes` 含 top20=99;前端新资源就位;真实反馈 POST 同时落宿主卷 JSONL 和 docker logs;匹配 join/poll/cancel 公网可用(注意 Windows Git Bash 里 curl 发中文 JSON 会因 GBK 编码 400,非服务端问题)。
+- Follow-up (2026-07-18, `d824c1e` 已部署):
+  - 修自定义档窄面板排版(tag 整词不换行、筛选行独立对齐、自定义不显示说明行)。
+  - Top20 移到难度段第一位(真正的新手档);随机匹配加难度选择(Top20/简单/常规/困难),服务端改为按难度分队列,结构上杜绝跨难度配对;生产实测 top20 与 medium 各自排队、同难度即配。
+  - 架构确认(用户问答):匹配永远新建房间,不会进入手动房;房间无硬上限(内存字典,6h 清理,4 位码 168 万空间);每房间独立谜底/设置/座位/计时;每个 AI 房独立 AIPlayer 实例(私有历史/缓存),仅共享上游账号池,无串台可能。
 - Next steps:
   - 待选后续:随机匹配 BO3 赛制、2010/2011 老将补库、反馈后台查看工具(反馈文件在服务器 `feedback/feedback.jsonl`)。
 
