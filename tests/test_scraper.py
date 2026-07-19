@@ -86,8 +86,24 @@ class ScraperTests(unittest.TestCase):
             "single_current_player_roster",
         ))
 
-    def test_staff_history_never_produces_game_team(self):
-        for role in ("Coach", "Assistant Coach"):
+    def test_head_coach_history_retains_current_team(self):
+        source = """
+{{Infobox player
+|id=head-coach
+|team=Example
+|status=Active
+|roles=Coach
+|team_history=
+{{TH|2026-01-01 — '''Present'''|Example|Coach}}
+}}
+"""
+        self.assertEqual(resolve_game_team(parse_infobox(source)), (
+            "Example",
+            "single_current_head_coach_team",
+        ))
+
+    def test_non_head_staff_history_never_produces_game_team(self):
+        for role in ("Assistant Coach", "Inactive Coach", "Analyst"):
             source = f"""
 {{{{Infobox player
 |id=staff
@@ -100,7 +116,11 @@ class ScraperTests(unittest.TestCase):
 """
             team, reason = resolve_game_team(parse_infobox(source))
             self.assertEqual(team, "", role)
-            self.assertTrue(reason.startswith("staff_role:"), role)
+            self.assertIn(
+                reason,
+                {"no_current_head_coach_team", f"staff_role:{role.casefold()}"},
+                role,
+            )
 
     def test_duplicate_current_rows_for_same_team_are_not_ambiguous(self):
         source = """

@@ -681,3 +681,22 @@
   - 本轮未改 AI 配置；部署前备份、部署后 `.env` 和容器三处 `AI_MODEL` 均为 `grok-4.5`。
 - Next steps:
   - 无；若后续接入 HLTV 阵容同步，继续让 Liquipedia 负责完整重建、HLTV 负责低频差异审核与人工覆盖建议。
+
+## 2026-07-19 — 纠正主教练与其他 staff 的战队边界
+
+- Request:
+  - 用户指出 NEO、gla1ve、zhokiNg 等现任主教练被错误显示为自由身，并明确只有助教和其他 staff 应清空战队。
+- Changes:
+  - 构建器将当前队史拆为 Head Coach、Assistant Coach、Inactive/Benched 和其他 staff；明确 Coach/Head Coach 保留当前战队，其他非选手职务不产生游戏 team。
+  - 运行时读取版本化 `team_resolution` 判断主教练，不再只依赖可能失真的顶层 roles；主教练保留战队和 Coach，但 `is_active` 仍为 false。
+  - 修复 gla1ve、mou、AZR 的旧空 team/历史位置覆盖；当前分别为 100 Thieves/Coach、HOTU/Coach、FlyQuest/Coach。
+  - 补齐 broadcast analyst staff 枚举，避免 natu 等组织职务污染原始游戏 team。
+  - S0tF1k 当前是助教且顶层只剩 coach；根据 HLTV 1470 张地图、Sniping 7/100 的生涯统计补 `played_role=Rifler`。
+  - 重新从 Liquipedia 刷新 650/657 个页面；7 个既有不可用裸标题保持不变。
+- Verification:
+  - NEO=Astralis/Coach、gla1ve=100 Thieves/Coach、zhokiNg=TYLOO/Coach、mou=HOTU/Coach、AZR=FlyQuest/Coach、jR=Inner Circle/Coach，全部不算正式现役选手。
+  - friberg=自由身/Rifler，Xyp9x/Attacker/S0tF1k=自由身/Rifler，kaze=自由身/AWPer，natu=自由身/IGL。
+  - 全库 30 名明确当前主教练保留战队；非主教练 staff 带 team 为 0；650 名可搜索、645 名可出题、276 名正式阵容选手，位置未知数为 0。
+  - 完整 unittest 55/55、Python compileall、JavaScript 语法、JSON 解析和 `git diff --check` 全部通过。
+- Next steps:
+  - 提交推送后，按完整备份、精确 Git 归档和公网关键样例验收流程重新部署春川 ARM。

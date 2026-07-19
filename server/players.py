@@ -33,6 +33,7 @@ ANSWER_ROLES = {"IGL", "AWPer", "Rifler", "Coach"}
 HEAD_COACH_ROLES = {"coach", "head coach"}
 STAFF_ROLES = {
     *HEAD_COACH_ROLES,
+    "inactive coach",
     "assistant coach",
     "manager",
     "analyst",
@@ -78,7 +79,7 @@ class Player:
     _FIELDS = ("page", "nickname", "real_name", "country", "region",
                "birth_date", "team", "status", "roles", "majors_count",
                "first_major_year", "last_major_year", "majors", "in_blast_pool",
-               "game_role")
+               "game_role", "team_resolution")
     __slots__ = _FIELDS + ("photo", "team_logo", "flag", "majors_won",
                            "hltv_url")
 
@@ -132,11 +133,17 @@ class Player:
 
     @property
     def is_head_coach(self) -> bool:
+        if self.team_resolution:
+            return self.team_resolution in {
+                "single_current_head_coach_team",
+                "newest_current_head_coach_team",
+                "head_coach_top_level_fallback",
+            }
         return any(r in HEAD_COACH_ROLES for r in self.roles)
 
     @property
     def is_staff(self) -> bool:
-        return any(r in STAFF_ROLES for r in self.roles)
+        return self.is_head_coach or any(r in STAFF_ROLES for r in self.roles)
 
     @property
     def played_role(self) -> str:
@@ -280,8 +287,8 @@ class PlayerDB:
             merged["majors"] = apply_major_results(
                 merged.get("majors"), self.major_results)
             p = Player(merged)
-            if p.is_staff:
-                # team 只表示当前正式选手阵容；主教练、助教和其他职务均自由身。
+            if p.is_staff and not p.is_head_coach:
+                # 主教练保留当前战队；助教和其他职务显示自由身。
                 p.team = ""
             if p.team:
                 # 榜单中的战队统一使用快照规范名，避免同队别名在界面上分裂。

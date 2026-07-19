@@ -203,14 +203,18 @@ def clean_value(v: str) -> str:
 INFOBOX_START = re.compile(r"\{\{Infobox\s+player", re.I)
 PRESENT = re.compile(r"\bpresent\b", re.I)
 STAFF_HISTORY_MARKERS = (
-    "coach", "assistant coach", "manager", "analyst", "caster", "streamer",
-    "content creator", "observer", "host",
+    "coach", "head coach", "assistant coach", "manager", "analyst",
+    "broadcast analyst", "caster", "streamer", "content creator", "observer",
+    "host",
 )
 NON_ROSTER_HISTORY_MARKERS = (
     "inactive", "benched", "bench", "substitute", "stand-in", "standin",
     "trial",
 )
-STAFF_ROLE_MARKERS = set(STAFF_HISTORY_MARKERS)
+HEAD_COACH_ROLE_MARKERS = {"coach", "head coach"}
+NON_HEAD_STAFF_ROLE_MARKERS = (
+    set(STAFF_HISTORY_MARKERS) - HEAD_COACH_ROLE_MARKERS
+) | {"inactive coach"}
 RETIRED_STATUSES = {"retired"}
 
 
@@ -328,12 +332,14 @@ def _start_key(period: str) -> tuple[int, int, int]:
 
 def _history_kind(entry: dict) -> str:
     details = _normalized_words(entry.get("details", []))
-    if "assistant coach" in details:
-        return "assistant_coach"
-    if any(marker in details for marker in STAFF_HISTORY_MARKERS):
-        return "staff"
     if any(marker in details for marker in NON_ROSTER_HISTORY_MARKERS):
         return "inactive"
+    if "assistant coach" in details:
+        return "assistant_coach"
+    if "head coach" in details or "coach" in details:
+        return "head_coach"
+    if any(marker in details for marker in STAFF_HISTORY_MARKERS):
+        return "staff"
     return "player"
 
 
@@ -345,28 +351,21 @@ def current_team_history(infobox: dict) -> list[dict]:
     ]
 
 
-def resolve_game_team(infobox: dict) -> tuple[str, str]:
-    """Return the active player-roster team and an auditable resolution reason."""
-    source_team = infobox.get("team") or ""
-    status = _normalized_words(infobox.get("status") or "")
-    roles = _normalized_words(
-        infobox.get("roles") or infobox.get("role") or ""
-    )
-    current = current_team_history(infobox)
+def _role_values(infobox: dict) -> set[str]:
+    raw = str(infobox.get("roles") or infobox.get("role") or "")
+    return {
+        _normalized_words(value)
+        for value in re.split(r"[,;/]", raw)
+        if _normalized_words(value)
+    }
 
-    if status in RETIRED_STATUSES:
-        return "", f"career_status:{status}"
-    if any(marker in roles for marker in STAFF_ROLE_MARKERS):
-        return "", f"staff_role:{roles}"
-    if not current:
-        if status == "inactive":
-            return "", "career_status:inactive"
-        return source_team, "top_level_fallback"
 
-    candidates = [
-        entry for entry in current
-        if _history_kind(entry) == "player" and entry.get("team")
-    ]
+def _resolve_current_team(
+    candidates: list[dict],
+    source_team: str,
+    *,
+    reason_suffix: str,
+) -> tuple[str, str]:
     by_team = {}
     for entry in candidates:
         key = _team_key(entry.get("team", ""))
@@ -377,9 +376,9 @@ def resolve_game_team(infobox: dict) -> tuple[str, str]:
             by_team[key] = entry
     candidates = list(by_team.values())
     if not candidates:
-        return "", "no_current_player_roster"
+        return "", f"no_current_{reason_suffix}"
     if len(candidates) == 1:
-        return candidates[0]["team"], "single_current_player_roster"
+        return candidates[0]["team"], f"single_current_{reason_suffix}"
 
     newest_key = max(_start_key(entry.get("period", "")) for entry in candidates)
     newest = [
@@ -387,7 +386,7 @@ def resolve_game_team(infobox: dict) -> tuple[str, str]:
         if _start_key(entry.get("period", "")) == newest_key
     ]
     if len(newest) == 1:
-        return newest[0]["team"], "newest_current_player_roster"
+        return newest[0]["team"], f"newest_current_{reason_suffix}"
 
     source_key = _team_key(source_team)
     source_matches = [
@@ -398,6 +397,52 @@ def resolve_game_team(infobox: dict) -> tuple[str, str]:
         return source_matches[0]["team"], "top_level_tiebreaker"
     teams = ", ".join(sorted({entry["team"] for entry in newest}))
     raise ValueError(f"无法消解多个当前正式队伍：{teams}")
+
+
+def resolve_game_team(infobox: dict) -> tuple[str, str]:
+    """Return the gameplay team and an auditable resolution reason.
+
+    Active players and current head coaches retain a team. Assistant coaches,
+    inactive/benched members, and other staff are teamless in gameplay.
+    """
+    source_team = infobox.get("team") or ""
+    status = _normalized_words(infobox.get("status") or "")
+    role_values = _role_values(infobox)
+    current = current_team_history(infobox)
+    head_coach_candidates = [
+        entry for entry in current
+        if _history_kind(entry) == "head_coach" and entry.get("team")
+    ]
+
+    if head_coach_candidates:
+        return _resolve_current_team(
+            head_coach_candidates,
+            source_team,
+            reason_suffix="head_coach_team",
+        )
+    if role_values & NON_HEAD_STAFF_ROLE_MARKERS:
+        roles = " ".join(sorted(role_values))
+        return "", f"staff_role:{roles}"
+    if role_values & HEAD_COACH_ROLE_MARKERS:
+        if not current and source_team:
+            return source_team, "head_coach_top_level_fallback"
+        return "", "no_current_head_coach_team"
+    if status in RETIRED_STATUSES:
+        return "", f"career_status:{status}"
+    if not current:
+        if status == "inactive":
+            return "", "career_status:inactive"
+        return source_team, "top_level_fallback"
+
+    candidates = [
+        entry for entry in current
+        if _history_kind(entry) == "player" and entry.get("team")
+    ]
+    return _resolve_current_team(
+        candidates,
+        source_team,
+        reason_suffix="player_roster",
+    )
 
 
 def parse_infobox(wikitext: str) -> dict:

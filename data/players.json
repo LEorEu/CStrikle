@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-19T11:11:20+00:00",
+ "generated_at": "2026-07-19T11:45:48+00:00",
  "source": "liquipedia.net (CC-BY-SA 3.0) + blast.tv active list",
  "count": 657,
  "players": [
@@ -310,7 +310,7 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "1992-11-26",
-   "team": "",
+   "team": "Aurora Young Blood",
    "status": "Active",
    "roles": [
     "coach"
@@ -355,7 +355,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Flamie",
@@ -839,7 +839,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach broadcast analyst"
+   "team_resolution": "staff_role:broadcast analyst coach"
   },
   {
    "page": "WayLander",
@@ -1508,7 +1508,7 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "1996-1-15",
-   "team": "",
+   "team": "K27",
    "status": "Active",
    "roles": [
     "coach"
@@ -1545,7 +1545,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Boombl4",
@@ -1702,7 +1702,7 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "1995-06-18",
-   "team": "",
+   "team": "NEW VISION",
    "status": "Active",
    "roles": [
     "coach"
@@ -1739,7 +1739,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Jame",
@@ -1932,7 +1932,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Degster",
@@ -2509,7 +2509,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Perfecto",
@@ -4201,7 +4201,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Nico",
@@ -4538,7 +4538,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "ColoN",
@@ -4640,7 +4640,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:analyst"
   },
   {
    "page": "MSL",
@@ -4954,7 +4954,7 @@
    "country": "Denmark",
    "region": "Europe",
    "birth_date": "1995-6-7",
-   "team": "",
+   "team": "100 Thieves",
    "status": "Active",
    "roles": [
     "coach"
@@ -5087,7 +5087,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Karrigan",
@@ -5516,7 +5516,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "CadiaN",
@@ -5657,7 +5657,7 @@
    "country": "Denmark",
    "region": "Europe",
    "birth_date": "1991-6-8",
-   "team": "",
+   "team": "Sashi Esport",
    "status": "Active",
    "roles": [
     "coach"
@@ -5686,7 +5686,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Zonic",
@@ -5695,7 +5695,7 @@
    "country": "Denmark",
    "region": "Europe",
    "birth_date": "1986-7-30",
-   "team": "",
+   "team": "Team Falcons",
    "status": "Active",
    "roles": [
     "coach"
@@ -5724,7 +5724,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Lucky (Danish player)",
@@ -6157,7 +6157,7 @@
    "country": "Denmark",
    "region": "Europe",
    "birth_date": "1994-11-6",
-   "team": "",
+   "team": "FaZe Up Next",
    "status": "Active",
    "roles": [
     "coach"
@@ -6202,7 +6202,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "JUGi",
@@ -7979,7 +7979,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Draken (William Sundin)",
@@ -8249,7 +8249,7 @@
      ]
     }
    ],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:streamer"
   },
   {
    "page": "Fifflaren",
@@ -8295,7 +8295,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:manager"
   },
   {
    "page": "Friberg",
@@ -8397,7 +8397,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "GeT RiGhT",
@@ -8524,7 +8524,7 @@
    "country": "Sweden",
    "region": "Europe",
    "birth_date": "1991-2-22",
-   "team": "",
+   "team": "Ninjas in Pyjamas",
    "status": "Active",
    "roles": [
     "coach"
@@ -8633,7 +8633,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "THREAT",
@@ -9580,7 +9580,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Pita",
@@ -9589,7 +9589,7 @@
    "country": "Sweden",
    "region": "Europe",
    "birth_date": "1990-12-18",
-   "team": "",
+   "team": "EYEBALLERS",
    "status": "Active",
    "roles": [
     "coach"
@@ -9626,7 +9626,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Twist",
@@ -11385,7 +11385,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "IoRek",
@@ -11839,7 +11839,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Xms",
@@ -12864,7 +12864,7 @@
      "details": []
     }
    ],
-   "team_resolution": "staff_role:caster broadcast analyst"
+   "team_resolution": "staff_role:broadcast analyst caster"
   },
   {
    "page": "Starix",
@@ -12926,7 +12926,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Zeus (Ukrainian player)",
@@ -13370,7 +13370,7 @@
    "country": "Ukraine",
    "region": "CIS",
    "birth_date": "1986-11-11",
-   "team": "",
+   "team": "Natus Vincere",
    "status": "Active",
    "roles": [
     "coach"
@@ -13463,7 +13463,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Bondik",
@@ -13698,7 +13698,7 @@
    "country": "Ukraine",
    "region": "CIS",
    "birth_date": "1992-08-12",
-   "team": "",
+   "team": "ALGO Esports",
    "status": "Active",
    "roles": [
     "coach"
@@ -13735,7 +13735,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "JR",
@@ -13744,7 +13744,7 @@
    "country": "Ukraine",
    "region": "CIS",
    "birth_date": "1993-10-22",
-   "team": "",
+   "team": "Inner Circle",
    "status": "Active",
    "roles": [
     "rifle"
@@ -13797,7 +13797,7 @@
      ]
     }
    ],
-   "team_resolution": "no_current_player_roster"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Crush",
@@ -14883,7 +14883,7 @@
    "country": "Poland",
    "region": "Europe",
    "birth_date": "1987-6-15",
-   "team": "",
+   "team": "Astralis",
    "status": "Active",
    "roles": [
     "coach"
@@ -15016,7 +15016,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "PashaBiceps",
@@ -15317,7 +15317,7 @@
    "country": "Poland",
    "region": "Europe",
    "birth_date": "1986-6-6",
-   "team": "",
+   "team": "BC.Game Esports",
    "status": "Active",
    "roles": [
     "coach"
@@ -15434,7 +15434,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Innocent",
@@ -15632,7 +15632,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Furlan",
@@ -15670,7 +15670,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "GruBy",
@@ -15762,7 +15762,7 @@
      ]
     }
    ],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:caster"
   },
   {
    "page": "Peet",
@@ -15847,7 +15847,7 @@
    "country": "Poland",
    "region": "Europe",
    "birth_date": "1998-1-31",
-   "team": "",
+   "team": "Natus Vincere Junior",
    "status": "Active",
    "roles": [
     "coach"
@@ -15876,7 +15876,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Dycha",
@@ -16592,7 +16592,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "TabseN",
@@ -16848,7 +16848,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "JDC",
@@ -17010,7 +17010,7 @@
      ]
     }
    ],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:manager"
   },
   {
    "page": "Fel1x",
@@ -17095,7 +17095,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:igl coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "R0bs3n",
@@ -17135,7 +17135,7 @@
    "country": "Germany",
    "region": "Europe",
    "birth_date": "1995-9-13",
-   "team": "",
+   "team": "BIG Academy",
    "status": "Active",
    "roles": [
     "coach"
@@ -17212,7 +17212,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "AlexRr",
@@ -17803,7 +17803,7 @@
    "country": "Finland",
    "region": "Europe",
    "birth_date": "1992-05-20",
-   "team": "",
+   "team": "ENCE",
    "status": "Active",
    "roles": [
     "coach"
@@ -17880,7 +17880,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "DiSTURBED",
@@ -17918,7 +17918,7 @@
      ]
     }
    ],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:manager"
   },
   {
    "page": "KHRN",
@@ -18025,7 +18025,7 @@
    "country": "Finland",
    "region": "Europe",
    "birth_date": "1991-12-26",
-   "team": "",
+   "team": "HAVU Taimi",
    "status": "Active",
    "roles": [
     "coach"
@@ -18054,7 +18054,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "SuNny",
@@ -18370,7 +18370,7 @@
    "country": "Finland",
    "region": "Europe",
    "birth_date": "1996-2-18",
-   "team": "",
+   "team": "HEROIC",
    "status": "Active",
    "roles": [
     "coach"
@@ -18399,7 +18399,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "OttoNd",
@@ -18629,7 +18629,7 @@
    "country": "Kazakhstan",
    "region": "CIS",
    "birth_date": "1991-10-17",
-   "team": "",
+   "team": "HOTU",
    "status": "Active",
    "roles": [
     "coach"
@@ -18698,7 +18698,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "HObbit",
@@ -18839,7 +18839,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach rifle"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Buster",
@@ -19417,7 +19417,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Prb",
@@ -19842,7 +19842,7 @@
      ]
     }
    ],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Hallzerk",
@@ -20264,7 +20264,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Woxic",
@@ -20607,7 +20607,7 @@
    "country": "United Kingdom",
    "region": "Europe",
    "birth_date": "1991-12-23",
-   "team": "",
+   "team": "M80",
    "status": "Active",
    "roles": [
     "coach"
@@ -20652,7 +20652,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Smooya",
@@ -20865,7 +20865,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "AZUWU",
@@ -21452,7 +21452,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Dziugss",
@@ -21622,7 +21622,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "STYKO",
@@ -23926,7 +23926,7 @@
    "country": "Serbia",
    "region": "Europe",
    "birth_date": "1992-11-16",
-   "team": "",
+   "team": "MIBR",
    "status": "Active",
    "roles": [
     "coach"
@@ -23955,7 +23955,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Nexa",
@@ -24072,7 +24072,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:broadcast analyst"
   },
   {
    "page": "RigoN",
@@ -24180,7 +24180,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "NEOFRAG",
@@ -25044,7 +25044,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:broadcast analyst caster"
   },
   {
    "page": "Sgares",
@@ -25147,7 +25147,7 @@
    "country": "United States",
    "region": "North America",
    "birth_date": "1996-9-20",
-   "team": "",
+   "team": "Third Prime",
    "status": "Active",
    "roles": [
     "coach"
@@ -25200,7 +25200,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Yay",
@@ -25550,7 +25550,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:broadcast analyst igl"
   },
   {
    "page": "Skadoodle",
@@ -26861,7 +26861,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Arya",
@@ -26923,7 +26923,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:assistant coach lurker"
   },
   {
    "page": "RUSH",
@@ -28506,7 +28506,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "AbleJ",
@@ -29231,7 +29231,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Biguzera",
@@ -30061,7 +30061,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Lucaozy",
@@ -31264,7 +31264,7 @@
    "country": "Canada",
    "region": "North America",
    "birth_date": "1989-4-21",
-   "team": "",
+   "team": "Team Voca",
    "status": "Active",
    "roles": [
     "coach"
@@ -31325,7 +31325,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "ANDROID",
@@ -31634,7 +31634,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach caster"
+   "team_resolution": "staff_role:caster coach"
   },
   {
    "page": "JasonR",
@@ -31674,7 +31674,7 @@
    "country": "Canada",
    "region": "North America",
    "birth_date": "1993-07-28",
-   "team": "",
+   "team": "NRG",
    "status": "Active",
    "roles": [
     "coach"
@@ -31719,7 +31719,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "NAF",
@@ -32703,7 +32703,7 @@
    "country": "Australia",
    "region": "Oceania",
    "birth_date": "1992-10-2",
-   "team": "",
+   "team": "FlyQuest",
    "status": "Active",
    "roles": [
     "coach"
@@ -32788,7 +32788,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "Havoc",
@@ -32880,7 +32880,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:broadcast analyst"
   },
   {
    "page": "SPUNJ",
@@ -32935,7 +32935,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:caster broadcast analyst"
+   "team_resolution": "staff_role:broadcast analyst caster"
   },
   {
    "page": "TopguN",
@@ -33125,7 +33125,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Liazz",
@@ -34009,7 +34009,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:analyst coach"
   },
   {
    "page": "LOVEYY",
@@ -34531,7 +34531,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:retired"
+   "team_resolution": "staff_role:caster igl"
   },
   {
    "page": "AumaN",
@@ -34561,7 +34561,7 @@
    "in_blast_pool": false,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "ZhokiNg",
@@ -34570,7 +34570,7 @@
    "country": "China",
    "region": "Asia",
    "birth_date": "1993-12-07",
-   "team": "",
+   "team": "TYLOO",
    "status": "Active",
    "roles": [
     "coach"
@@ -34599,7 +34599,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "EmiliaQAQ",
@@ -35118,7 +35118,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "BLitz",
@@ -37221,7 +37221,7 @@
    "country": "Uzbekistan",
    "region": "CIS",
    "birth_date": "1998-11-18",
-   "team": "",
+   "team": "RUSTEC",
    "status": "Active",
    "roles": [
     "coach"
@@ -37250,7 +37250,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "T0rick",
@@ -37319,7 +37319,7 @@
    "in_blast_pool": true,
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "staff_role:entry coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Kaze",
@@ -37374,7 +37374,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:awp coach"
+   "team_resolution": "no_current_head_coach_team"
   },
   {
    "page": "Marek",
@@ -37383,7 +37383,7 @@
    "country": "Taiwan",
    "region": "Asia",
    "birth_date": "1993-08-22",
-   "team": "",
+   "team": "Rare Atom",
    "status": "Active",
    "roles": [
     "coach"
@@ -37412,7 +37412,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "T.c",
@@ -37421,7 +37421,7 @@
    "country": "South Africa",
    "region": "Middle East & Africa",
    "birth_date": "1992-8-23",
-   "team": "",
+   "team": "Passion UA",
    "status": "Active",
    "roles": [
     "coach"
@@ -37441,7 +37441,7 @@
      ]
     }
    ],
-   "team_resolution": "staff_role:coach"
+   "team_resolution": "single_current_head_coach_team"
   },
   {
    "page": "ALEX",

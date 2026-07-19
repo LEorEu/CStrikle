@@ -346,8 +346,11 @@
  },
  "Gla1ve": {
   "game_role": "Coach",
-  "team": "",
-  "reason": "Current 100 Thieves head coach; game role follows the current head-coach position while team remains free agent."
+  "reason": "Current 100 Thieves head coach; head coaches retain their current team while remaining outside the active player roster."
+ },
+ "S0tF1k": {
+  "played_role": "Rifler",
+  "reason": "Current assistant coach; HLTV career statistics cover 1470 maps with a 7/100 sniping score, identifying his playing-era role as Rifler."
  },
  "NBK-": {
   "game_role": "Rifler",
@@ -360,9 +363,8 @@
   "reason": "Played for BIG until 2023, recently moved to assistant coach; remembered as a support Rifler."
  },
  "Mou": {
-  "game_role": "AWPer",
-  "team": "",
-  "reason": "Played until 2023-10 (K23); HOTU coach only since 2024-11. Remembered as AVANGAR Major-final AWPer."
+  "game_role": "Coach",
+  "reason": "Current HOTU head coach; head coaches retain their current team and use the Coach game role."
  },
  "Attacker": {
   "game_role": "Rifler",
@@ -370,9 +372,8 @@
   "reason": "Retired 2025-12 and became TYLOO assistant coach; career TYLOO rifler with 6 Majors, not a career coach."
  },
  "AZR": {
-  "game_role": "IGL",
-  "team": "",
-  "reason": "Played until 2025-03 (Talon disband); FlyQuest coach only since 2025-10. Remembered as Renegades/100T IGL."
+  "game_role": "Coach",
+  "reason": "Current FlyQuest head coach; head coaches retain their current team and use the Coach game role."
  },
  "ErkaSt": {
   "team": "",
