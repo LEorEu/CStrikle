@@ -26,11 +26,23 @@ ROLE_LABEL = {
     "rifle": "Rifler", "rifler": "Rifler", "lurker": "Rifler",
     "lurk": "Rifler", "entry": "Rifler", "entryfragger": "Rifler",
     "support": "Rifler",
-    "coach": "Coach", "assistant coach": "Coach",
+    "coach": "Coach", "head coach": "Coach",
     "analyst": "Analyst", "broadcast analyst": "Analyst",
 }
 ANSWER_ROLES = {"IGL", "AWPer", "Rifler", "Coach"}
-COACH_ROLES = {"coach", "assistant coach"}
+HEAD_COACH_ROLES = {"coach", "head coach"}
+STAFF_ROLES = {
+    *HEAD_COACH_ROLES,
+    "assistant coach",
+    "manager",
+    "analyst",
+    "broadcast analyst",
+    "caster",
+    "streamer",
+    "content creator",
+    "observer",
+    "host",
+}
 
 REGIONS = ["Europe", "CIS", "North America", "South America", "Asia",
            "Oceania", "Middle East & Africa", "Other"]
@@ -83,7 +95,7 @@ class Player:
         if self.game_role in ANSWER_ROLES:
             return self.game_role
         # 当前明确是教练时保留 Coach；其余按 IGL、AWP、步枪优先级归一化。
-        if any(r in COACH_ROLES for r in self.roles):
+        if self.is_head_coach:
             return "Coach"
         if "igl" in self.roles:
             return "IGL"
@@ -116,7 +128,15 @@ class Player:
 
     @property
     def is_coach(self) -> bool:
-        return any(r in COACH_ROLES for r in self.roles)
+        return self.is_head_coach
+
+    @property
+    def is_head_coach(self) -> bool:
+        return any(r in HEAD_COACH_ROLES for r in self.roles)
+
+    @property
+    def is_staff(self) -> bool:
+        return any(r in STAFF_ROLES for r in self.roles)
 
     @property
     def played_role(self) -> str:
@@ -159,7 +179,12 @@ class Player:
 
     @property
     def is_active(self) -> bool:
-        return self.in_blast_pool or (self.status or "").lower() == "active"
+        # 游戏里的“现役”指当前正式选手阵容，不是历史题库成员或组织雇员。
+        return bool(
+            self.team
+            and not self.is_staff
+            and (self.status or "").lower() != "retired"
+        )
 
     @property
     def team_label(self) -> str:
@@ -255,16 +280,17 @@ class PlayerDB:
             merged["majors"] = apply_major_results(
                 merged.get("majors"), self.major_results)
             p = Player(merged)
-            if p.is_coach and p.team and not self.ranking.contains(p.team):
+            if p.is_staff:
+                # team 只表示当前正式选手阵容；主教练、助教和其他职务均自由身。
                 p.team = ""
-            elif p.team:
+            if p.team:
                 # 榜单中的战队统一使用快照规范名，避免同队别名在界面上分裂。
                 p.team = self.ranking.canonical_name(p.team) or p.team
             if (p.game_role not in ANSWER_ROLES
                     and p.primary_role not in ("IGL", "AWPer", "Rifler")
-                    and not (p.is_coach and p.team)):
-                # 除了带上榜战队的现任教练,其余职务人员(教练/分析师/经理/解说)
-                # 和空角色老选手都回退到选手时期的打法位置
+                    and not p.is_head_coach):
+                # 助教/分析师/经理/解说和空角色老选手回退到选手时期位置；
+                # 当前主教练则保留 Coach。
                 fallback = override.get("played_role") or p.played_role
                 if fallback:
                     p.game_role = fallback

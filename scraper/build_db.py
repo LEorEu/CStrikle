@@ -18,6 +18,7 @@ Usage:
   python scraper/build_db.py            # full build -> data/players.json
   python scraper/build_db.py --no-blast # skip blast.tv merge
 """
+import argparse
 import json
 import re
 import sys
@@ -200,6 +201,203 @@ def clean_value(v: str) -> str:
 
 
 INFOBOX_START = re.compile(r"\{\{Infobox\s+player", re.I)
+PRESENT = re.compile(r"\bpresent\b", re.I)
+STAFF_HISTORY_MARKERS = (
+    "coach", "assistant coach", "manager", "analyst", "caster", "streamer",
+    "content creator", "observer", "host",
+)
+NON_ROSTER_HISTORY_MARKERS = (
+    "inactive", "benched", "bench", "substitute", "stand-in", "standin",
+    "trial",
+)
+STAFF_ROLE_MARKERS = set(STAFF_HISTORY_MARKERS)
+RETIRED_STATUSES = {"retired"}
+
+
+def _extract_templates(text: str, name: str) -> list[str]:
+    """Extract balanced ``{{name|...}}`` templates, including nested templates."""
+    start_re = re.compile(r"\{\{\s*" + re.escape(name) + r"\s*\|", re.I)
+    templates = []
+    offset = 0
+    while match := start_re.search(text, offset):
+        depth = 0
+        cursor = match.start()
+        while cursor < len(text) - 1:
+            pair = text[cursor:cursor + 2]
+            if pair == "{{":
+                depth += 1
+                cursor += 2
+                continue
+            if pair == "}}":
+                depth -= 1
+                cursor += 2
+                if depth == 0:
+                    templates.append(text[match.start() + 2:cursor - 2])
+                    offset = cursor
+                    break
+                continue
+            cursor += 1
+        else:
+            break
+    return templates
+
+
+def _split_template_args(inner: str) -> list[str]:
+    """Split template arguments without splitting nested templates or links."""
+    parts, current = [], []
+    template_depth = link_depth = 0
+    cursor = 0
+    while cursor < len(inner):
+        pair = inner[cursor:cursor + 2]
+        if pair == "{{":
+            template_depth += 1
+            current.append(pair)
+            cursor += 2
+            continue
+        if pair == "}}" and template_depth:
+            template_depth -= 1
+            current.append(pair)
+            cursor += 2
+            continue
+        if pair == "[[":
+            link_depth += 1
+            current.append(pair)
+            cursor += 2
+            continue
+        if pair == "]]" and link_depth:
+            link_depth -= 1
+            current.append(pair)
+            cursor += 2
+            continue
+        char = inner[cursor]
+        if char == "|" and not template_depth and not link_depth:
+            parts.append("".join(current).strip())
+            current = []
+        else:
+            current.append(char)
+        cursor += 1
+    parts.append("".join(current).strip())
+    return parts
+
+
+def parse_team_history(wikitext: str) -> list[dict]:
+    """Parse Liquipedia ``TH`` rows while preserving their roster modifiers."""
+    history = []
+    for inner in _extract_templates(wikitext, "TH"):
+        parts = _split_template_args(inner)
+        if len(parts) < 3:
+            continue
+        period = clean_value(parts[1])
+        team = clean_value(parts[2])
+        details = []
+        for raw in parts[3:]:
+            if "=" in raw:
+                key, _, value = raw.partition("=")
+                if key.strip().casefold() not in {"role", "status", "type", "position"}:
+                    continue
+                raw = value
+            value = clean_value(raw)
+            if value:
+                details.append(value)
+        if period or team:
+            history.append({
+                "period": period,
+                "team": team,
+                "details": details,
+            })
+    return history
+
+
+def _normalized_words(values) -> str:
+    if isinstance(values, str):
+        values = [values]
+    text = " ".join(str(value or "") for value in values)
+    return " ".join(re.findall(r"[a-z0-9]+", text.casefold()))
+
+
+def _team_key(value: str) -> str:
+    return "".join(re.findall(r"[a-z0-9]+", (value or "").casefold()))
+
+
+def _start_key(period: str) -> tuple[int, int, int]:
+    match = re.search(r"(\d{4})-(\d{2}|\?\?)-(\d{2}|\?\?)", period or "")
+    if not match:
+        return (0, 0, 0)
+    return tuple(0 if value == "??" else int(value) for value in match.groups())
+
+
+def _history_kind(entry: dict) -> str:
+    details = _normalized_words(entry.get("details", []))
+    if "assistant coach" in details:
+        return "assistant_coach"
+    if any(marker in details for marker in STAFF_HISTORY_MARKERS):
+        return "staff"
+    if any(marker in details for marker in NON_ROSTER_HISTORY_MARKERS):
+        return "inactive"
+    return "player"
+
+
+def current_team_history(infobox: dict) -> list[dict]:
+    return [
+        entry
+        for entry in infobox.get("_team_history", [])
+        if PRESENT.search(entry.get("period", ""))
+    ]
+
+
+def resolve_game_team(infobox: dict) -> tuple[str, str]:
+    """Return the active player-roster team and an auditable resolution reason."""
+    source_team = infobox.get("team") or ""
+    status = _normalized_words(infobox.get("status") or "")
+    roles = _normalized_words(
+        infobox.get("roles") or infobox.get("role") or ""
+    )
+    current = current_team_history(infobox)
+
+    if status in RETIRED_STATUSES:
+        return "", f"career_status:{status}"
+    if any(marker in roles for marker in STAFF_ROLE_MARKERS):
+        return "", f"staff_role:{roles}"
+    if not current:
+        if status == "inactive":
+            return "", "career_status:inactive"
+        return source_team, "top_level_fallback"
+
+    candidates = [
+        entry for entry in current
+        if _history_kind(entry) == "player" and entry.get("team")
+    ]
+    by_team = {}
+    for entry in candidates:
+        key = _team_key(entry.get("team", ""))
+        previous = by_team.get(key)
+        if previous is None or _start_key(entry.get("period", "")) > _start_key(
+            previous.get("period", "")
+        ):
+            by_team[key] = entry
+    candidates = list(by_team.values())
+    if not candidates:
+        return "", "no_current_player_roster"
+    if len(candidates) == 1:
+        return candidates[0]["team"], "single_current_player_roster"
+
+    newest_key = max(_start_key(entry.get("period", "")) for entry in candidates)
+    newest = [
+        entry for entry in candidates
+        if _start_key(entry.get("period", "")) == newest_key
+    ]
+    if len(newest) == 1:
+        return newest[0]["team"], "newest_current_player_roster"
+
+    source_key = _team_key(source_team)
+    source_matches = [
+        entry for entry in newest
+        if _team_key(entry.get("team", "")) == source_key
+    ]
+    if source_key and len(source_matches) == 1:
+        return source_matches[0]["team"], "top_level_tiebreaker"
+    teams = ", ".join(sorted({entry["team"] for entry in newest}))
+    raise ValueError(f"无法消解多个当前正式队伍：{teams}")
 
 
 def parse_infobox(wikitext: str) -> dict:
@@ -218,6 +416,7 @@ def parse_infobox(wikitext: str) -> dict:
         k, v = m.group(1).lower(), m.group(2)
         if k in INFOBOX_KEYS and k not in out:
             out[k] = clean_value(v)
+    out["_team_history"] = parse_team_history(section)
     return out
 
 
@@ -347,6 +546,7 @@ def build(include_blast: bool = True):
         roles_raw = ib.get("roles") or ib.get("role") or ""
         roles = [r.strip().lower() for r in roles_raw.split(",") if r.strip()]
         years = sorted({m["year"] for m in majors if m["year"]})
+        team, team_resolution = resolve_game_team(ib)
         rec = {
             "page": final,
             "nickname": nickname,
@@ -354,7 +554,10 @@ def build(include_blast: bool = True):
             "country": country,
             "region": region_of(country),
             "birth_date": ib.get("birth_date") or "",
-            "team": ib.get("team") or "",
+            "team": team,
+            "source_team": ib.get("team") or "",
+            "current_team_history": current_team_history(ib),
+            "team_resolution": team_resolution,
             "status": ib.get("status") or "",
             "roles": roles,
             "majors_count": len(majors),
@@ -398,5 +601,71 @@ def build(include_blast: bool = True):
     print(f"done: {len(players)} players -> {path}  (dups merged: {dup}, missing: {miss})")
 
 
+def refresh_existing(path: Path = DATA / "players.json") -> None:
+    """Refresh current role/team fields without rebuilding Major/manual records."""
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    players = raw.get("players")
+    if not isinstance(players, list):
+        raise ValueError(f"invalid players file: {path}")
+    titles = [str(player.get("page") or "") for player in players]
+    with httpx.Client(headers={"User-Agent": UA, "Accept-Encoding": "gzip"},
+                      timeout=60) as client:
+        boxes = fetch_infoboxes(client, titles)
+
+    refreshed, missing = [], []
+    for player in players:
+        page = str(player.get("page") or "")
+        infobox = boxes.get(page)
+        if not infobox:
+            missing.append(page)
+            refreshed.append(player)
+            continue
+        roles_raw = infobox.get("roles") or infobox.get("role") or ""
+        team, resolution = resolve_game_team(infobox)
+        updated = dict(player)
+        updated.update({
+            "team": team,
+            "source_team": infobox.get("team") or "",
+            "current_team_history": current_team_history(infobox),
+            "team_resolution": resolution,
+            "status": infobox.get("status") or "",
+            "roles": [
+                role.strip().lower()
+                for role in roles_raw.split(",")
+                if role.strip()
+            ],
+        })
+        refreshed.append(updated)
+
+    raw["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    raw["players"] = refreshed
+    path.write_text(
+        json.dumps(raw, ensure_ascii=False, indent=1),
+        encoding="utf-8",
+    )
+    print(f"refreshed: {len(refreshed) - len(missing)}/{len(refreshed)}")
+    if missing:
+        print(f"kept unchanged because page was unavailable: {len(missing)}")
+        for page in missing:
+            print(f"  - {page}")
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--no-blast", action="store_true", help="skip blast.tv identity merge"
+    )
+    parser.add_argument(
+        "--refresh-existing",
+        action="store_true",
+        help="refresh current team/status/roles while preserving existing records",
+    )
+    args = parser.parse_args(argv)
+    if args.refresh_existing:
+        refresh_existing()
+    else:
+        build(include_blast=not args.no_blast)
+
+
 if __name__ == "__main__":
-    build(include_blast="--no-blast" not in sys.argv)
+    main()

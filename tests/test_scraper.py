@@ -1,6 +1,11 @@
 import unittest
 
-from scraper.build_db import parse_infobox, unresolved_blast_titles
+from scraper.build_db import (
+    parse_infobox,
+    parse_team_history,
+    resolve_game_team,
+    unresolved_blast_titles,
+)
 from server.major_results import apply_major_results
 
 
@@ -40,6 +45,110 @@ class ScraperTests(unittest.TestCase):
         self.assertEqual(corrected[0]["placement"], "1")
         self.assertEqual(corrected[1]["placement"], "")
         self.assertEqual(majors[0]["placement"], "")  # 不原地污染解析结果
+
+    def test_inactive_current_team_resolves_to_free_agent(self):
+        source = """
+{{Infobox player
+|id=nota
+|team=PARIVISION
+|status=Active
+|roles=rifle
+|team_history=
+{{TH|2025-01-13 — 2026-06-19|PARIVISION}}
+{{TH|2026-06-19 — '''Present'''|PARIVISION|Inactive}}
+}}
+"""
+        infobox = parse_infobox(source)
+        self.assertEqual(resolve_game_team(infobox), (
+            "",
+            "no_current_player_roster",
+        ))
+
+    def test_inactive_old_team_does_not_override_new_active_team(self):
+        source = """
+{{Infobox player
+|id=BELCHONOKK
+|team=TDK
+|status=Active
+|roles=rifle
+|team_history=
+{{TH|2026-06-17 — '''Present'''|PARIVISION|Inactive}}
+{{TH|2026-07-17 — '''Present'''|TDK}}
+}}
+"""
+        infobox = parse_infobox(source)
+        self.assertEqual(
+            [entry["team"] for entry in parse_team_history(source)],
+            ["PARIVISION", "TDK"],
+        )
+        self.assertEqual(resolve_game_team(infobox), (
+            "TDK",
+            "single_current_player_roster",
+        ))
+
+    def test_staff_history_never_produces_game_team(self):
+        for role in ("Coach", "Assistant Coach"):
+            source = f"""
+{{{{Infobox player
+|id=staff
+|team=Example
+|status=Active
+|roles={role}
+|team_history=
+{{{{TH|2026-01-01 — '''Present'''|Example|{role}}}}}
+}}}}
+"""
+            team, reason = resolve_game_team(parse_infobox(source))
+            self.assertEqual(team, "", role)
+            self.assertTrue(reason.startswith("staff_role:"), role)
+
+    def test_duplicate_current_rows_for_same_team_are_not_ambiguous(self):
+        source = """
+{{Infobox player
+|id=duplicate
+|team=EYEBALLERS
+|status=Active
+|roles=rifle
+|team_history=
+{{TH|2025-01-01 — '''Present'''|EYEBALLERS}}
+{{TH|2026-01-01 — '''Present'''|EYEBALLERS}}
+}}
+"""
+        self.assertEqual(resolve_game_team(parse_infobox(source)), (
+            "EYEBALLERS",
+            "single_current_player_roster",
+        ))
+
+    def test_active_team_history_wins_over_top_level_inactive_status(self):
+        source = """
+{{Infobox player
+|id=moved
+|team=New Team
+|status=Inactive
+|roles=rifle
+|team_history=
+{{TH|2026-01-01 — '''Present'''|Old Team|Inactive}}
+{{TH|2026-07-01 — '''Present'''|New Team}}
+}}
+"""
+        self.assertEqual(resolve_game_team(parse_infobox(source)), (
+            "New Team",
+            "single_current_player_roster",
+        ))
+
+    def test_unresolved_two_team_conflict_fails_instead_of_guessing(self):
+        source = """
+{{Infobox player
+|id=ambiguous
+|status=Active
+|roles=rifle
+|team_history=
+{{TH|2026-07-01 — '''Present'''|Team A}}
+{{TH|2026-07-01 — '''Present'''|Team B}}
+}}
+"""
+        with self.assertRaisesRegex(ValueError, "多个当前正式队伍"):
+            resolve_game_team(parse_infobox(source))
 
 
 if __name__ == "__main__":

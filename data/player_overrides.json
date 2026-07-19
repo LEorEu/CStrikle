@@ -345,9 +345,9 @@
   "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
  },
  "Gla1ve": {
-  "game_role": "IGL",
+  "game_role": "Coach",
   "team": "",
-  "reason": "Recently retired star player (played Majors through 2024); 100T coach job must not erase his playing identity as legendary IGL."
+  "reason": "Current 100 Thieves head coach; game role follows the current head-coach position while team remains free agent."
  },
  "NBK-": {
   "game_role": "Rifler",
@@ -391,5 +391,9 @@
   "game_role": "Rifler",
   "team": "",
   "reason": "MOUZ assistant coach is a recent staff job like Attacker/NBK-; remembered as Astralis clutch-minister Rifler. User decision 2026-07-18."
+ },
+ "KrizzeN": {
+  "played_role": "Rifler",
+  "reason": "Current assistant coach; HLTV career profile shows 763 maps with negligible sniper usage, so his playing-era role is Rifler."
  }
 }

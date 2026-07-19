@@ -571,3 +571,93 @@
   - 临时增量包已从本地和服务器清理，完整回滚包保留。
 - Next steps:
   - 本轮按用户要求只部署，尚未提交或推送；favicon 与 MachineWJQ 数据均需在下次完整仓库部署前一起提交，否则会被 Git 版本覆盖。
+
+## 2026-07-19 — 退役与非选手职务的战队字段诊断
+
+- Request:
+  - 核查 Kjaerbye、f0rest、Hyper、denis、DiSTURBED 等退役或转职人员为何仍显示 JiJieHao、NiP、Phantom Esports、esports player foundation、HAVU 等战队。
+  - 用户确定游戏数据应以 HLTV 为最终标准；本轮只分析，不修改产品数据、不提交、不部署。
+- Findings:
+  - 本地数据与 Liquipedia 当前顶层字段一致，问题不是单纯的旧快照：Liquipedia 会把 streamer、caster、manager 等当前组织归属继续写入 `team`。
+  - HLTV 当前个人页将 Kjaerbye 标为 `No team`，将 Hyper、denis、f0rest 标为 `Retired`，DiSTURBED 为 `No team`；因此这些组织都不应作为游戏战队。
+  - Liquipedia 队史已把 Kjaerbye 标为 2024-08-20 起 inactive，但抓取器只保留顶层 infobox，丢弃了 `team_history` 的 inactive 标记。
+  - 全库 657 条原始记录中有 14 名 Retired 仍带非空 team；按 Retired/Inactive 和非选手职务归一化，至少 20 条记录需要清空游戏 team。
+  - `Player.is_active` 当前把 `in_blast_pool` 当作现役依据，导致部分退役选手进入“仅现役”题库；`in_blast_pool` 实际只代表原始竞猜身份池。
+- Decision:
+  - HLTV 最终负责游戏面对的当前战队、active/benched/inactive/retired、最新正式比赛与当前阵容身份。
+  - Liquipedia 只补真名、生日、国籍、Major 历史和职务说明；主播、解说、经理等组织归属应拆到 `affiliation`，不能写入游戏 `team`。
+  - 历史主位置和 IGL/AWPer/Rifler 歧义继续由 HLTV/比赛履历提供证据，`player_overrides.json` 作为人工最终裁决。
+  - `Active` 只指当前正式比赛阵容；No team、Benched/Inactive 显示自由身，明确退役才标 Retired。Top100 教练保留战队的既有例外不变。
+  - HLTV 同步只在本地维护流程中使用浏览器导出、缓存和审核建议，不让生产游戏实时抓取 HLTV。
+- Verification:
+  - 已核对本地原始记录、运行时归一化、Liquipedia API/队史及上述 HLTV 个人页；结论在五名样例和 14 条 Retired+team 数据上相互一致。
+  - 本轮没有改动业务代码或玩家数据库，因此未运行产品测试。
+- Next steps:
+  - 若用户授权实施，先修 `is_active` 与 team/status 归一化并补五名回归测试，再扩展本地 HLTV 同步报告，最后批量审核并写入覆盖层。
+
+## 2026-07-19 — HLTV 异常发现与下放/转会状态机
+
+- Request:
+  - 设计一套无需逐人复核全部数据库、但能持续发现错误战队和状态的 HLTV 同步规则。
+  - 重点处理 PARIVISION 的 nota 下放，以及 BELCHONOKK 下放后加入 TDK 的连续变化。
+- Findings:
+  - 本地仍把 nota、BELCHONOKK 都标为 PARIVISION Active；HLTV 当前将 nota 标为 `PARIVISION (benched)`，BELCHONOKK 标为 TDK。
+  - HLTV PARIVISION 队伍页的 Transfers 已按日期记录两人的 bench 事件及 BELCHONOKK 转入 TDK；TDK 队伍页和个人页也相互印证新队。
+  - HLTV `/transfers` 可以作为每日增量入口；Top100 队伍页可以作为每周阵容对账入口；只有差异选手才需要打开个人页。
+  - 本地 657 人中 381 人带 team，284 人的 team 属于当前 Top100、分布于 70 支队伍，先扫 Top100 可覆盖大多数高频现役答案。
+  - 现有 `sync_hltv_roles.py` 只逐人抓角色，未解析 benched/Retired/No team；稳定 HLTV ID 映射也只有 4 人，需要从阵容和 transfer 链接渐进补齐。
+- Decision:
+  - 新同步采用“每日 transfer 增量 + 每周 Top100 roster 快照 + 异常个人页复核 + 非 Top100 滚动审计”，不每轮抓 657 个个人页。
+  - 拆分 `team`、`affiliation`、`roster_status`；team 只表示 active player roster。
+  - bench/inactive 保存原组织到 affiliation，但游戏 team 清空、status=Inactive；若稍后加入新队，以更新的 active roster 证据覆盖旧 bench 事件。
+  - 缺页、请求失败或单次未出现绝不自动判离队；自动写入至少要求稳定 HLTV ID 与明确事件/两份成功来源一致。
+- Verification:
+  - 已用 HLTV 个人页、PARIVISION/TDK 队伍页、transfer feed 和新闻交叉验证 nota/BELCHONOKK 的状态链。
+  - 本轮只完成规则设计与审计，没有修改业务代码、数据库、Git 历史或生产环境。
+- Next steps:
+  - 用户若确认实施，扩展现有同步脚本生成 roster/transfer 差异报告，先以只读模式跑全库，再审核自动应用规则。
+
+## 2026-07-19 — 游戏语义下的自由身与角色重建规则
+
+- Request:
+  - 用户澄清游戏 team 只表示当前正式选手首发战队；退役、无队、下放、替补、主教练、助教等都应显示自由身。
+  - 只有当前主教练映射 Coach；Xyp9x、Attacker 等助教回退到选手时期位置，gla1ve 当前主教练应从 IGL 改为 Coach。
+  - 要求解释 nota/BELCHONOKK 多条当前队史如何处理，以及干净部署/重建如何保证准确。
+- Findings:
+  - Liquipedia API 当前 revision 明确写出 nota=`PARIVISION|Inactive`；BELCHONOKK 同时有 `PARIVISION|Inactive` 与更新的 `TDK` 正式条目。
+  - Xyp9x、Attacker 的当前队史修饰为 Assistant Coach；gla1ve 为 Coach。
+  - 现有构建器忽略 team_history，只抓顶层 team/status；运行时又把 coach 与 assistant coach 混为一类。
+  - 当前 Xyp9x、Attacker 的正确展示来自人工 override；gla1ve 的人工 IGL override 已过时；nota/BELCHONOKK 没有 override。
+  - Dockerfile 直接复制版本化 `data/`，服务启动不会重新抓取上游；干净部署天然使用已审核快照。
+- Decision:
+  - “自由身”作为游戏标签定义为“没有当前正式选手首发战队”，不表达合同法律状态。
+  - 构建器解析所有 Present team_history：Inactive/Benched/staff 条目不产生 team；唯一正式 player 条目产生 team；旧队 inactive + 新队 active 时取新队；未消解的多 active 冲突使构建失败。
+  - 当前 Coach → 自由身 + Coach；Assistant Coach 等 staff → 自由身 + 版本化 played_role。
+  - `career_status` 与 `roster_active` 分离，Top100 和 `in_blast_pool` 不再决定游戏 team/现役阵容。
+  - Liquipedia 是完整重建源，HLTV 作为低频差异审计和冲突最终裁决，不成为部署或运行时依赖。
+- Verification:
+  - 已核对五名样例的本地原始数据、runtime 输出、override 与 2026-07-19 Liquipedia API revision。
+  - 已核对 Dockerfile/compose，确认部署只复制数据快照。
+  - 本轮仅规则审计与设计，未改业务代码和玩家数据，未提交或部署。
+- Next steps:
+  - 若用户确认实施，修改 build_db 的 team_history 解析、runtime coach/active 规则与构建校验，迁移 gla1ve override，并用五个样例做回归测试。
+
+## 2026-07-19 — 实现自由身重建、角色分离与队伍别名回归
+
+- Request:
+  - 用户确认规则并要求修改、推送 GitHub、部署春川 ARM。
+  - 补充要求排查类似 s1mple/Senzu 的同队不同显示名问题。
+- Changes:
+  - `scraper/build_db.py` 增加平衡模板提取和 `{{TH}}` 队史解析；Inactive/Benched/Substitute/staff 不产生游戏 team，存在另一条正式队伍时选正式队伍，多个同队记录先去重，无法消解的不同队伍使构建失败。
+  - 增加 `--refresh-existing`，只刷新现有记录的 team/status/roles/当前队史证据，保留 Major、MachineWJQ 与其他人工数据。
+  - `server/players.py` 将主教练与助教拆开；所有 staff 都显示自由身，只有主教练映射 Coach，助教回退版本化 played_role；`is_active` 改为当前正式选手阵容语义。
+  - gla1ve 更新为自由身 + Coach；KrizzeN 根据 HLTV 生涯数据补 `played_role=Rifler`。
+  - 650/657 个 Liquipedia 页面成功刷新；7 个不可用裸标题是既有同名空 stub，保留旧数据并继续从 searchable 集合排除。
+  - 全库产生 116 条 team 更新，roles/status 无批量变化；runtime 队伍规范键冲突为 0，s1mple/Senzu 均为同一个 `BC.Game` 和同一 Logo。
+- Verification:
+  - 完整 unittest 54/54 通过；Python compileall、前端 JavaScript 语法、JSON 解析、`git diff --check` 全部通过。
+  - 关键结果：nota=自由身/Rifler，BELCHONOKK=TDK/Rifler，Xyp9x/Attacker=自由身/Rifler，gla1ve=自由身/Coach。
+  - 可搜索 650、可出题 645、当前正式阵容 276、排除 stub 7；没有 retired/staff 仍带 team。
+  - 提交前差异秘密模式扫描为 0。
+- Next steps:
+  - 提交推送并按完整备份、精确 Git 归档、生产健康与公网关键样例验收流程部署。

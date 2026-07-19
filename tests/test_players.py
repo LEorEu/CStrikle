@@ -2,6 +2,7 @@ import unittest
 
 from server.game import GREEN, compare
 from server.players import ANSWER_ROLES, Player, PlayerDB
+from server.rankings import normalize_team_name
 
 
 class PlayerDatabaseTests(unittest.TestCase):
@@ -27,23 +28,24 @@ class PlayerDatabaseTests(unittest.TestCase):
         self.assertEqual(len(self.db.by_nick["alex"]), 2)
         self.assertEqual(len(self.db.by_nick["adren"]), 2)
 
-    def test_coach_team_uses_hltv_top100_snapshot(self):
+    def test_staff_affiliation_never_becomes_game_team(self):
         friberg = self.db.lookup("friberg")
         neo = self.db.lookup("NEO")
-        # 无上榜战队的教练回退到选手时期位置;有上榜战队的教练保持 Coach
-        self.assertEqual(friberg.primary_role, "Rifler")
+        # team 只表示正式选手席位；主教练也显示自由身。
+        self.assertEqual(friberg.primary_role, "Coach")
         self.assertEqual(friberg.team, "")
         self.assertEqual(neo.primary_role, "Coach")
-        self.assertEqual(neo.team, "Astralis")
+        self.assertEqual(neo.team, "")
 
-    def test_teamless_coach_falls_back_to_playing_role(self):
-        self.assertEqual(self.db.lookup("GuardiaN").primary_role, "AWPer")
-        self.assertEqual(self.db.lookup("Golden").primary_role, "IGL")
-        self.assertEqual(self.db.lookup("kRYSTAL").primary_role, "IGL")
-        # 全库不再存在"Free Agent + Coach"的自相矛盾组合
+    def test_head_coach_and_assistant_coach_have_distinct_roles(self):
+        self.assertEqual(self.db.lookup("GuardiaN").primary_role, "Coach")
+        self.assertEqual(self.db.lookup("Golden").primary_role, "Coach")
+        self.assertEqual(self.db.lookup("kRYSTAL").primary_role, "Coach")
+        self.assertEqual(self.db.lookup("KrizzeN").primary_role, "Rifler")
+        # 当前主教练保留 Coach，但所有 staff 的 team 都为空。
         for p in self.db.players:
             if p.primary_role == "Coach":
-                self.assertTrue(p.team, p.page)
+                self.assertEqual(p.team or "", "", p.page)
 
     def test_primary_role_inference_mechanism(self):
         # 断言推断"机制"而非具体选手的争议结论(SmithZz/pashaBiceps 该是狙还是
@@ -64,6 +66,9 @@ class PlayerDatabaseTests(unittest.TestCase):
         # 4) support / lurk / entry / rifle 一族都归 Rifler
         for tag in ("support", "lurk", "lurker", "entry", "rifle", "rifler"):
             self.assertEqual(role_of([tag]), "Rifler", tag)
+        # 5) 只有主教练算 Coach；助教必须依赖 played_role/人工覆盖。
+        self.assertEqual(role_of(["coach"]), "Coach")
+        self.assertEqual(role_of(["assistant coach"]), "?")
 
     def test_primary_role_smoke_undisputed_players(self):
         # 只用没争议的真人做冒烟:coldzera 明显步枪、ZywOo 明显狙。
@@ -119,6 +124,20 @@ class PlayerDatabaseTests(unittest.TestCase):
             c for c in compare(s1mple, senzu) if c["key"] == "team")
         self.assertEqual(team_cell["state"], GREEN)
 
+    def test_all_runtime_team_aliases_have_one_canonical_label(self):
+        labels_by_key = {}
+        for player in self.db.players:
+            if not player.team:
+                continue
+            key = normalize_team_name(player.team)
+            labels_by_key.setdefault(key, set()).add(player.team)
+        conflicts = {
+            key: labels
+            for key, labels in labels_by_key.items()
+            if len(labels) > 1
+        }
+        self.assertEqual(conflicts, {})
+
     def test_cologne_2026_falcons_players_receive_champion_placement(self):
         nicknames = ("m0NESY", "kyousuke", "karrigan", "TeSeS", "NiKo")
         for nickname in nicknames:
@@ -130,16 +149,27 @@ class PlayerDatabaseTests(unittest.TestCase):
         self.assertEqual(self.db.lookup("NiKo").majors_won, 1)
 
     def test_recently_retired_staff_keep_playing_identity(self):
-        # 刚退役转教练组的人保留选手身份+自由身;职业教练保留 Coach+上榜战队
+        # 助教保留选手身份；当前主教练使用 Coach；两者均为自由身。
         attacker = self.db.lookup("Attacker")
         zhoking = self.db.lookup("zhokiNg")
         gla1ve = self.db.lookup("gla1ve")
         self.assertEqual(attacker.primary_role, "Rifler")
         self.assertEqual(attacker.team or "", "")
-        self.assertEqual(gla1ve.primary_role, "IGL")
+        self.assertEqual(gla1ve.primary_role, "Coach")
         self.assertEqual(gla1ve.team or "", "")
         self.assertEqual(zhoking.primary_role, "Coach")
-        self.assertEqual(zhoking.team, "TYLOO")
+        self.assertEqual(zhoking.team or "", "")
+
+    def test_inactive_and_new_team_examples(self):
+        nota = self.db.lookup("nota")
+        belchonokk = self.db.lookup("BELCHONOKK")
+        xyp9x = self.db.lookup("Xyp9x")
+        self.assertEqual((nota.team or "", nota.primary_role), ("", "Rifler"))
+        self.assertEqual(
+            (belchonokk.team, belchonokk.primary_role),
+            ("TDK", "Rifler"),
+        )
+        self.assertEqual((xyp9x.team or "", xyp9x.primary_role), ("", "Rifler"))
 
     def test_china_regions_share_nationality_and_flag(self):
         mainland = self.db.lookup("Attacker")
