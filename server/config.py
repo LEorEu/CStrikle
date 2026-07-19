@@ -12,6 +12,13 @@ AI_MODEL = os.getenv("AI_MODEL", "gpt-4o-mini")
 AI_SEARCH_ENABLED = os.getenv("AI_SEARCH_ENABLED", "1") not in ("0", "false", "")
 AI_MAX_STEPS = int(os.getenv("AI_MAX_STEPS", "2"))
 AI_TIMEOUT_SECONDS = max(10, int(os.getenv("AI_TIMEOUT_SECONDS", "35")))
+AI_DECISION_TIMEOUT_SECONDS = max(
+    3,
+    min(
+        AI_TIMEOUT_SECONDS,
+        int(os.getenv("AI_DECISION_TIMEOUT_SECONDS", "20")),
+    ),
+)
 AI_EXACT_THRESHOLD = max(2, int(os.getenv("AI_EXACT_THRESHOLD", "10")))
 AI_SEARCH_CACHE_TTL_SECONDS = max(
     60, int(os.getenv("AI_SEARCH_CACHE_TTL_SECONDS", "3600"))

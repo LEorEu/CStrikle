@@ -117,6 +117,26 @@ class ApiFeatureTests(unittest.TestCase):
         self.assertFalse(
             self.client.get(f"/api/match/poll/{r2['ticket']}").json()["matched"])
 
+    def test_standard_rooms_are_always_two_minutes(self):
+        response = self.client.post("/api/room", json={
+            "name": "甲",
+            "settings": {"difficulty": "top20", "game_seconds": 60},
+            "vs_ai": False,
+        })
+        self.assertEqual(response.status_code, 200)
+        room = main.rooms.get(response.json()["code"])
+        self.assertEqual(room.settings["game_seconds"], 120)
+
+    def test_custom_room_keeps_selected_timer(self):
+        response = self.client.post("/api/room", json={
+            "name": "甲",
+            "settings": {"difficulty": "custom", "game_seconds": 60},
+            "vs_ai": False,
+        })
+        self.assertEqual(response.status_code, 200)
+        room = main.rooms.get(response.json()["code"])
+        self.assertEqual(room.settings["game_seconds"], 60)
+
     # ------------------------------------------------- leave after game over
     def _make_room(self):
         r = self.client.post("/api/room", json={

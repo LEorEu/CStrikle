@@ -47,28 +47,46 @@ python -m venv .venv
 AI_BASE_URL=https://your-proxy/v1
 AI_API_KEY=sk-xxx
 AI_MODEL=gpt-5.5
-AI_SEARCH_ENABLED=1   # 允许 AI 用 DuckDuckGo 搜索
-AI_TOOLS_MODE=auto    # native | text | auto(见下)
-AI_MAX_STEPS=4        # 单回合最多调用模型 4 次
-AI_REASONING_EFFORT=low # 支持该参数的推理模型可降低延迟
+AI_TOOLS_MODE=auto
+AI_REASONING_EFFORT=low
+AI_DECISION_TIMEOUT_SECONDS=20
 AI_ROOM_RATE_LIMIT=3
 AI_ROOM_RATE_WINDOW_SECONDS=600
 ```
 
-AI 是一个带工具的 agent:每轮先写出推理,可调用 `web_search`
-查资料、用 `say` 发垃圾话,最后 `submit_guess` 提交猜测。
-对局结束后点 **"🧠 看 AI 的思考回放"** 可以看它每一轮想了什么、
-搜了什么关键词、搜到了什么、为什么这么猜。
+AI 有三种强度：
 
-`AI_TOOLS_MODE`:接口不支持 OpenAI function calling 时
-(常见于各类逆向代理),把工具改成"正文输出 JSON 指令行"的文本协议,
-推理 / 搜索 / 垃圾话 / 回放全套保留。`auto` 会先走 native,
-发现接口不认 tools 时自动降级,一般不用动。
+- 下饭：模型读取完整反馈后，凭自己的 CS 常识和直觉自由猜，不使用候选过滤或求解器；第一轮不搜索，后续每轮最多搜索一次。
+- 普通：首轮从信息增益前五随机开局；之后服务器只整理符合反馈的候选，由模型自主选择。
+- 作弊：全程使用确定性求解器的最优落子和小集合精确求解。
 
-`AI_SEARCH_ENABLED=1` 时,搜索由 CStrikle 服务端本地执行
-(DuckDuckGo),模型只负责想关键词。如果上游代理已经为模型全局注入
-原生 `web_search`(例如 CPA 的 Grok 配置),应设为 `0`,避免同一请求里
-出现两个同名 `web_search` 而被上游拒绝。此时搜索完全由模型提供商执行。
+下饭每轮最多进行 `AI_MAX_STEPS` 次模型动作，多步共同受
+`AI_DECISION_TIMEOUT_SECONDS` 的 20 秒总预算限制；普通和作弊每轮最多等待一次
+模型响应。模型超时或没有提交有效人选时，服务器仍会使用已经确定的合法人选继续。
+三档都提供 AI 聊天：下饭和普通尽量在猜测响应里同时调用 `say`，作弊由求解器
+确定落子后只让模型负责说一句话；聊天失败不会改变猜测结果。
+对局结束后可查看玩家语言的 AI 决策回放。
+
+`AI_TOOLS_MODE=text` 可用于不支持 OpenAI function calling 的兼容接口；
+`auto`/`native` 使用 `submit_guess` 工具。普通模式的选人请求不会调用联网搜索，
+避免搜索和二次工具调用拖慢回合。
+
+标准对战难度固定 8 次猜测、整局 2 分钟；自定义房仍可选择不限时或
+1/2/3 分钟。服务端会把旧客户端提交的标准难度 60 秒设置统一纠正为 120 秒。
+
+需要评估不支持 function calling 的兼容接口时，可使用隔离基准工具：
+
+```bash
+python scripts/benchmark_text_provider.py \
+  --base-url https://provider.example/v1 \
+  --model model-name \
+  --key-config /secure/provider-config.json \
+  --key-field auth-key \
+  --samples 5 --timeout 8
+```
+
+工具不会读取项目 `.env` 或打印密钥，会用真实反馈生成歧义候选，并检查正文
+JSON 是否选择了合法选手。
 
 公网部署默认按客户端 IP 限制 AI 房间创建频率(10 分钟 3 个),可通过
 `AI_ROOM_RATE_LIMIT` 和 `AI_ROOM_RATE_WINDOW_SECONDS` 调整。普通双人房

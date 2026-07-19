@@ -12,6 +12,7 @@ from .game import compare, normalize_settings
 from .players import PlayerDB
 
 AI_NAME = "AI·bot"
+STANDARD_GAME_SECONDS = 120
 
 
 def _code() -> str:
@@ -40,12 +41,13 @@ class Room:
                  vs_ai: bool, ai_level: str = "normal"):
         self.db = db
         self.settings = normalize_settings(raw_settings)
+        if self.settings["difficulty"] != "custom":
+            # 标准难度的房间规则由服务端固定，旧客户端也不能退回 1 分钟。
+            self.settings["game_seconds"] = STANDARD_GAME_SECONDS
         if vs_ai:
-            # AI 对局必须有界:禁自定义难度,且整局限时兜底 1 分钟,防止无限烧模型
+            # AI 对局必须有界：禁用可能不限时的自定义难度。
             if self.settings["difficulty"] == "custom":
                 raise ValueError("自定义难度不支持 AI 对手,请选标准难度")
-            if not self.settings["game_seconds"]:
-                self.settings["game_seconds"] = 60
         pool = db.filter_pool(self.settings)
         if len(pool) < 2:
             raise ValueError("筛选条件下候选选手不足(<2),请放宽范围")
@@ -344,7 +346,7 @@ class Room:
         seat = self.guest
         delay = config.AI_GUESS_DELAY_SECONDS
         try:
-            await asyncio.sleep(1.5)   # let the human breathe first
+            await asyncio.sleep(0.8)   # 给玩家一点起手时间，同时保持短局节奏
             while self.status == "playing" and seat.status == "playing":
                 opp = self.host
                 opp_info = (f"对手已猜 {len(opp.rows)}/{self.settings['max_guesses']} 次,"
@@ -361,7 +363,7 @@ class Room:
                     await self._send(s, {"type": "ai_status", "state": "idle",
                                          "detail": None})
                 if turn.guess_name is None:
-                    # 模型失败时使用同一求解器指定落子，不再随机浪费回合。
+                    # 普通难度的模型超时/无效选择使用本轮备用候选，避免卡局。
                     if not turn.fallback_guess:
                         break
                     pick = self.db.by_page.get(turn.fallback_guess)
@@ -369,7 +371,7 @@ class Room:
                         break
                     self.ai.transcript[-1]["events"].append(
                         {"type": "forced_guess", "name": pick.nickname,
-                         "reason": "模型未能提交,使用确定性求解器指定落子"})
+                         "reason": "AI 没有及时完成选择，改用备用人选"})
                     turn.guess_name = pick.page
                 if self.status != "playing":
                     break

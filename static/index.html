@@ -15,20 +15,33 @@
 
 <main>
   <!-- ==================== 首页 ==================== -->
-  <section id="view-home" class="view">
+  <section id="view-home" class="view home-view">
+    <div class="mode-section-head">
+      <div>
+        <span>SELECT OPERATION</span>
+        <h2>选择行动模式</h2>
+      </div>
+      <p>每日一题、无限练习，或者直接和朋友 / AI 对枪。</p>
+    </div>
     <div class="mode-cards">
-      <div class="card" data-eyebrow="DAILY // 每日一题" onclick="startDaily()">
+      <button class="card" type="button" data-index="01"
+        data-eyebrow="DAILY // 每日一题" onclick="startDaily()">
         <h2>每日挑战</h2>
         <p>全球同一谜底,每天一题,常规难度。猜完复制战绩去嘲讽朋友。</p>
-      </div>
-      <div class="card" data-eyebrow="FREEPLAY // 自定义" onclick="showUnlimitedSetup()">
+        <span class="card-cta">接受挑战 <b>→</b></span>
+      </button>
+      <button class="card" type="button" data-index="02"
+        data-eyebrow="FREEPLAY // 自定义" onclick="showUnlimitedSetup()">
         <h2>无限模式</h2>
         <p>自定难度、赛区、年代,想玩几局玩几局。</p>
-      </div>
-      <div class="card" data-eyebrow="VERSUS // 1V1" onclick="go('versus-lobby')">
+        <span class="card-cta">开始训练 <b>→</b></span>
+      </button>
+      <button class="card" type="button" data-index="03"
+        data-eyebrow="VERSUS // 1V1" onclick="go('versus-lobby')">
         <h2>对战模式</h2>
         <p>开房间跟朋友对枪,或者跟会上网查资料、会喷垃圾话的 AI 打。</p>
-      </div>
+        <span class="card-cta">进入大厅 <b>→</b></span>
+      </button>
     </div>
   </section>
 
@@ -76,9 +89,9 @@
           <span id="vs-ai-note" class="dim hidden">(自定义难度不可用 AI)</span></label>
         <label id="ai-level-row" class="hidden">AI 强度
           <select id="ai-level">
-            <option value="easy">下饭(候选内随机猜)</option>
-            <option value="normal" selected>普通(信息增益前5随机)</option>
-            <option value="hard">最强(最优信息增益)</option>
+            <option value="easy">下饭</option>
+            <option value="normal" selected>普通</option>
+            <option value="hard">作弊</option>
           </select>
         </label>
         <div id="settings-room"></div>
@@ -100,7 +113,7 @@
             <button data-v="hard">困难</button>
           </span>
         </div>
-        <button id="btn-match" class="primary" onclick="startMatch()">🎲 开始匹配</button>
+        <button id="btn-match" class="primary" onclick="startMatch()">开始匹配</button>
         <div id="mm-status" class="mm-status hidden">
           <span class="mm-dot"></span>匹配中,等待对手…
           <button class="linklike" onclick="cancelMatch()">取消</button>
@@ -128,8 +141,8 @@
         <div id="room-result" class="result hidden"></div>
         <div id="opp-reveal-main"></div>
         <div class="row-btns">
-          <button id="btn-rematch" class="primary hidden" onclick="roomRematch()">🔁 再来一局</button>
-          <button id="btn-transcript" class="primary hidden" onclick="showTranscript()">🧠 看 AI 的决策回放</button>
+          <button id="btn-rematch" class="primary hidden" onclick="roomRematch()">再来一局</button>
+          <button id="btn-transcript" class="primary hidden" onclick="showTranscript()">查看 AI 决策回放</button>
           <button onclick="leaveRoom()">离开房间</button>
         </div>
       </div>
@@ -173,10 +186,10 @@
 <div id="modal" class="modal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
   <div class="modal-body">
     <div class="modal-head">
-      <h2>🧠 AI 决策回放 <span id="transcript-model" class="dim"></span></h2>
-      <button onclick="document.getElementById('modal').classList.add('hidden')">✕</button>
+      <h2>AI 决策回放 <span id="transcript-model" class="dim"></span></h2>
+      <button aria-label="关闭" onclick="document.getElementById('modal').classList.add('hidden')">×</button>
     </div>
-    <p class="transcript-note">展示服务器求解器可验证的决策依据，以及模型主动公开的解说与搜索记录；不展示模型私有思维链。</p>
+    <p class="transcript-note">回看 AI 每一轮怎样缩小范围、为什么会选这个人。</p>
     <div id="transcript-body"></div>
   </div>
 </div>
@@ -185,8 +198,8 @@
 <div id="fb-modal" class="modal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
   <div class="modal-body fb-body">
     <div class="modal-head">
-      <h2>✋ 选手信息纠错</h2>
-      <button onclick="document.getElementById('fb-modal').classList.add('hidden')">✕</button>
+      <h2>选手信息纠错</h2>
+      <button aria-label="关闭" onclick="document.getElementById('fb-modal').classList.add('hidden')">×</button>
     </div>
     <p class="dim">纠错对象:<span id="fb-player"></span></p>
     <textarea id="fb-text" rows="4" maxlength="500"
@@ -194,6 +207,22 @@
     <div class="row-btns">
       <button class="primary" onclick="sendFeedback()">提交反馈</button>
     </div>
+  </div>
+</div>
+
+<!-- 已猜选手资料弹窗 -->
+<div id="player-modal" class="modal hidden" role="dialog" aria-modal="true"
+  aria-labelledby="player-profile-title" onclick="if(event.target===this)closePlayerProfile()">
+  <div class="modal-body player-profile-body">
+    <div class="modal-head">
+      <div>
+        <span class="profile-kicker">选手资料</span>
+        <h2 id="player-profile-title">PLAYER PROFILE</h2>
+      </div>
+      <button id="player-profile-close" type="button" aria-label="关闭选手资料"
+        onclick="closePlayerProfile()">×</button>
+    </div>
+    <div id="player-profile-content"></div>
   </div>
 </div>
 

@@ -6,6 +6,8 @@ const STREAMER_MODE_KEY = "cstrikle_streamer_mode";
 
 let META = null, PLAYERS = [];
 let soloGame = null;
+const guessedPlayerProfiles = new Map();
+let profileReturnFocus = null;
 let streamerMode = localStorage.getItem(STREAMER_MODE_KEY) === "1";
 let streamerReveal = false;
 let room = {
@@ -133,13 +135,44 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
         <button data-v="custom">自定义</button>
       </span>
       <span class="dim pool-hint"></span>
-      <span class="qtip" tabindex="0" title="属性判定规则">?</span>
+      <button class="qtip" type="button" title="属性判定规则"
+        aria-label="展开属性判定规则" aria-expanded="false">?</button>
     </div>
     <div class="srow diff-desc-row"><b></b><span class="dim diff-desc"></span></div>
-    <div class="rules-pop hidden"><b>属性判定规则</b>
-      · <b>位置</b>:指挥 / 狙击手 / 步枪手 / 教练。只有职业教练(zonic、B1ad3 这类)算「教练」;刚退役转教练组的(Attacker、gla1ve 等)仍按选手时期位置算。<br>
-      · <b>混合位置</b>:指挥狙(Jame、Maka)和狙枪双修(s1mple、SmithZz)在位置格给黄色「有重叠」;指挥默认持步枪,指挥 vs 步枪手不给黄。<br>
-      · <b>战队</b>:没有队伍的选手(退役 / 未签约 / 玩票)统一算「自由身」,互相判绿;被下放但仍在编制的算原队;教练只显示 HLTV Top100 的执教队,其余同样算自由身。
+    <div class="rules-pop hidden">
+      <div class="rules-title">
+        <span>游戏规则</span>
+        <b>属性判定</b>
+      </div>
+      <div class="rules-grid">
+        <section>
+          <span class="rule-no">01</span>
+          <div><b>位置</b>
+            <p>位置分为指挥、狙击手、步枪手和教练。现任主教练按教练计算；助教和其他工作人员按选手时期的位置计算。</p>
+          </div>
+        </section>
+        <section>
+          <span class="rule-no">02</span>
+          <div><b>混合位置</b>
+            <p>指挥狙和狙枪双修在位置格判黄色“有重叠”；指挥默认持步枪，所以指挥与普通步枪手之间不给黄色。</p>
+          </div>
+        </section>
+        <section>
+          <span class="rule-no">03</span>
+          <div><b>战队 / 自由身</b>
+            <p>当前正式阵容选手和现任主教练显示所属战队。退役、无队、下放、替补、助教和其他工作人员显示自由身；加入新队后按新队计算。</p>
+          </div>
+        </section>
+      </div>
+      <div class="region-protocol">
+        <b>赛区划分</b>
+        <div class="region-list">
+          <span>欧洲 <small>含土耳其</small></span>
+          <span>独联体 <small>含哈萨克斯坦</small></span>
+          <span>北美</span><span>南美</span><span>亚洲</span><span>大洋洲</span>
+          <span>中东非洲 <small>含以色列</small></span>
+        </div>
+      </div>
     </div>
     <div class="custom-rows hidden">
       <div class="srow"><b>赛区</b>
@@ -166,7 +199,6 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
           <option value="60">1 分钟</option>
           <option value="120">2 分钟</option>
           <option value="180">3 分钟</option>
-          <option value="300">5 分钟</option>
         </select>
       </div>` : ""}
       ${withTimer ? `<div class="srow"><b></b><span class="dim">时间到还没人猜中就算平局</span></div>` : ""}
@@ -177,10 +209,10 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
   const collect = () => {
     const difficulty = seg.querySelector(".on").dataset.v;
     if (difficulty !== "custom")
-      // 标准难度(含 Top20)用固定规则:8 次猜测,对战整局限时 1 分钟
+      // 标准难度(含 Top20)用固定规则:8 次猜测,对战整局限时 2 分钟
       return { difficulty, regions: [], active_only: false,
                year_from: null, year_to: null, max_guesses: 8,
-               game_seconds: withTimer ? 60 : null };
+               game_seconds: withTimer ? 120 : null };
     return {
       difficulty,
       regions: [...el.querySelectorAll(".tag.on")].map(t => t.dataset.r),
@@ -207,7 +239,7 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
   };
   // 每档难度的说明文案(候选数取自 META)
   const ps = (META && META.pool_sizes) || {};
-  const fixed = `固定 8 次猜测${withTimer ? " · 整局限时 1 分钟" : ""}`;
+  const fixed = `固定 8 次猜测${withTimer ? " · 整局限时 2 分钟" : ""}`;
   const DIFF_DESC = {
     easy: `谜底为 Major 常客或现役强队明星 · ${fixed}`,
     medium: `谜底为打过 2+ 次 Major 或现役职业哥 · ${fixed}`,
@@ -237,6 +269,7 @@ function renderSettings(container, { withGuesses = true, withTimer = false,
   qtip.addEventListener("click", () => {
     qtip.classList.toggle("open");
     rules.classList.toggle("hidden");
+    qtip.setAttribute("aria-expanded", String(!rules.classList.contains("hidden")));
   });
   el.querySelectorAll(".tag").forEach(t => t.onclick = () => {
     t.classList.toggle("on"); updHint();
@@ -268,8 +301,11 @@ function attachSuggest(inputEl, boxEl, onPick) {
     boxEl.innerHTML = items.map((p, i) => `
       <div class="s-item" data-i="${i}">
         ${avaHtml(p)}
-        ${flagHtml(p.country, p.flag)} <b>${esc(p.nickname)}</b>
-        <span class="who">${esc(p.real_name || "")}${p.team ? " · " + esc(p.team) : ""}</span>
+        <span class="s-copy">
+          <span class="s-primary">${flagHtml(p.country, p.flag)} <b>${esc(p.nickname)}</b></span>
+          <span class="s-real">${esc(p.real_name || "暂无真名资料")}</span>
+        </span>
+        <span class="s-team">${esc(p.team || "自由身")}</span>
       </div>`).join("");
     boxEl.classList.remove("hidden");
     boxEl.querySelectorAll(".s-item").forEach(d =>
@@ -326,7 +362,7 @@ function flagHtml(country, flagPath) {
   return f ? `<span class="fl-txt">${f}</span>` : "";
 }
 function avaHtml(p) {
-  if (p.photo) return `<img class="ava" src="${p.photo}" alt="" loading="lazy">`;
+  if (p.photo) return `<img class="ava" src="${p.photo}" alt="${esc(p.nickname || "选手")}头像" loading="lazy">`;
   const init = esc((p.nickname || "?").slice(0, 2).toUpperCase());
   return `<div class="ava fallback">${init}</div>`;
 }
@@ -339,10 +375,25 @@ function rowHtml(row) {
         r = byKey.role, m = byKey.majors, w = byKey.majors_won;
   const tlogo = p.team_logo && p.team
     ? `<img class="tlogo${p.team_logo.includes("_lm.") ? " chip" : ""}" src="${p.team_logo}" alt="" loading="lazy">` : "";
+  guessedPlayerProfiles.set(p.page, {
+    ...p,
+    country: n.value,
+    region: n.extra,
+    team_label: t.value,
+    age: a.value,
+    role: r.value,
+    majors_count: m.value,
+    majors_won: w ? w.value : 0,
+  });
   return `<div class="grow">
-    <div class="cell name">${avaHtml(p)}
-      <span><span class="nick">${esc(p.nickname)}</span>
-      <span class="small">${esc(p.real_name || "")}</span></span></div>
+    <div class="cell name">
+      <button class="player-trigger" type="button" data-player-page="${esc(p.page)}"
+        aria-haspopup="dialog" aria-label="查看 ${esc(p.nickname)} 的资料">
+        ${avaHtml(p)}
+        <span><span class="nick">${esc(p.nickname)}</span>
+        <span class="small">${esc(p.real_name || "")}</span></span>
+      </button>
+    </div>
     <div class="cell ${n.state}" title="${esc(n.value)}"><span class="row1">${flagHtml(n.value, p.flag)} ${esc(cnCountry(n.value))}</span>
       <span class="small">${REGION_CN[n.extra] || ""}</span></div>
     <div class="cell ${t.state}"><span class="row1">${tlogo}<span>${esc(t.value)}</span></span></div>
@@ -351,6 +402,51 @@ function rowHtml(row) {
     <div class="cell ${m.state}"><span class="num">${m.value}${arrow(m)}</span></div>
     ${w ? `<div class="cell ${w.state}"><span class="num">${w.value}${arrow(w)}</span></div>` : '<div class="cell gray">-</div>'}
   </div>`;
+}
+
+function openPlayerProfile(page) {
+  const p = guessedPlayerProfiles.get(page);
+  if (!p) return;
+  const photo = p.photo
+    ? `<img class="profile-photo" src="${p.photo}" alt="${esc(p.nickname)} 头像">`
+    : `<div class="profile-photo fallback">${esc(p.nickname.slice(0, 2).toUpperCase())}</div>`;
+  const tlogo = p.team_logo && p.team_label !== "自由身"
+    ? `<img class="tlogo${p.team_logo.includes("_lm.") ? " chip" : ""}" src="${p.team_logo}" alt="">`
+    : "";
+  const liq = `https://liquipedia.net/counterstrike/${encodeURIComponent(
+    (p.page || p.nickname).replace(/ /g, "_"))}`;
+  const hltv = `https://www.hltv.org/search?query=${encodeURIComponent(p.nickname)}`;
+  $("player-profile-content").innerHTML = `
+    <div class="player-profile">
+      <div class="profile-identity">
+        ${photo}
+        <div>
+          <div class="profile-name">${flagHtml(p.country, p.flag)} ${esc(p.nickname)}</div>
+          <div class="profile-real">${esc(p.real_name || "暂无真名资料")}</div>
+          <span class="profile-role">${esc(cnRole(p.role))}</span>
+        </div>
+      </div>
+      <div class="profile-facts">
+        <div><span>国籍 / 赛区</span><b>${esc(cnCountry(p.country))} · ${esc(REGION_CN[p.region] || p.region)}</b></div>
+        <div><span>当前战队</span><b>${tlogo}${esc(p.team_label || p.team || "自由身")}</b></div>
+        <div><span>年龄</span><b>${p.age ?? "?"} 岁</b></div>
+        <div><span>参加 Major</span><b>${p.majors_count ?? 0} 次</b></div>
+        <div><span>Major 冠军</span><b>${p.majors_won ?? 0} 次</b></div>
+      </div>
+      <div class="profile-links">
+        <a href="${liq}" target="_blank" rel="noopener">Liquipedia</a>
+        <a href="${hltv}" target="_blank" rel="noopener">HLTV</a>
+      </div>
+    </div>`;
+  profileReturnFocus = document.activeElement;
+  $("player-modal").classList.remove("hidden");
+  $("player-profile-close").focus();
+}
+
+function closePlayerProfile() {
+  $("player-modal").classList.add("hidden");
+  if (profileReturnFocus && document.contains(profileReturnFocus)) profileReturnFocus.focus();
+  profileReturnFocus = null;
 }
 function renderGrid(el, rows) {
   el.innerHTML = `<div class="grow header">${HEAD.map(h => `<div>${h}</div>`).join("")}</div>`
@@ -391,9 +487,9 @@ function answerCard(a) {
         <span><b>${a.majors_won ?? 0}</b> 冠</span>
       </div>
       <div class="a-links">
-        <a href="${liq}" target="_blank" rel="noopener">📖 Liquipedia</a>
-        <a href="${hltv}" target="_blank" rel="noopener">📊 HLTV</a>
-        <button class="linklike" onclick="openFeedback()">✋ 信息有误?</button>
+        <a href="${liq}" target="_blank" rel="noopener">Liquipedia</a>
+        <a href="${hltv}" target="_blank" rel="noopener">HLTV</a>
+        <button class="linklike" onclick="openFeedback()">信息有误?</button>
       </div>
     </div>
   </div>`;
@@ -477,7 +573,7 @@ function openGame() {
 function renderSolo() {
   const g = soloGame;
   $("game-mode-label").innerHTML = g.mode === "daily"
-    ? `📅 每日挑战 <b>${new Date().toISOString().slice(0, 10)}</b>` : "♾️ 无限模式";
+    ? `每日挑战 <b>${new Date().toISOString().slice(0, 10)}</b>` : "无限模式";
   $("game-remaining").innerHTML = pipsHtml(g.guesses.length, g.settings.max_guesses);
   $("game-pool").textContent = `候选 ${g.pool_size} 人`;
   renderGrid($("grid"), g.guesses);
@@ -519,7 +615,7 @@ async function soloGuess(p) {
 }
 function shareDaily() {
   const g = soloGame;
-  const map = { green: "🟩", yellow: "🟨", gray: "⬛" };
+  const map = { green: "■", yellow: "◆", gray: "·" };
   const lines = g.guesses.map(r => r.cells.map(c => map[c.state]).join(""));
   const txt = `FribergCS2 ${new Date().toISOString().slice(0, 10)} ${g.status === "won" ? g.guesses.length : "X"}/${g.settings.max_guesses}\n` + lines.join("\n");
   navigator.clipboard.writeText(txt).then(() => toast("已复制,发给朋友吧"));
@@ -742,7 +838,7 @@ function renderRoom() {
       const hit = r.every(c => c.state === "green");
       return `<div class="mini-row${hit ? " hit" : ""}"><span class="mini-idx">${i + 1}</span>${r.map(c =>
         `<div class="mini-cell ${c.state}">${MINI[c.key] || ""}${c.dir === "up" ? "▲" : c.dir === "down" ? "▼" : ""}</div>`
-      ).join("")}${hit ? '<span class="mini-hit">✔</span>' : ""}</div>`;
+      ).join("")}${hit ? '<span class="mini-hit">命中</span>' : ""}</div>`;
     }).join("");
   } else {
     $("opp-name").textContent = "等待对手…";
@@ -769,12 +865,12 @@ function renderRoom() {
     const rematchBtn = $("btn-rematch");
     rematchBtn.classList.toggle("hidden", rematchGone);
     rematchBtn.disabled = rematchReady;
-    rematchBtn.textContent = rematchReady ? "✓ 已准备，等待对手" : "🔁 再来一局";
+    rematchBtn.textContent = rematchReady ? "已准备，等待对手" : "再来一局";
     const overlayRematch = $("btn-rematch-overlay");
     if (overlayRematch) {
       overlayRematch.disabled = rematchReady;
       overlayRematch.textContent = rematchReady
-        ? "✓ 已准备，等待对手" : "🔁 再来一局";
+        ? "已准备，等待对手" : "再来一局";
     }
     const rev = $("opp-reveal-main");
     if (s.opponent_rows && s.opponent_rows.length) {
@@ -797,9 +893,9 @@ function renderRoom() {
       const btns = (oppGone ? ""
         : `<button id="btn-rematch-overlay" class="primary" onclick="roomRematch()"
              ${rematchReady ? "disabled" : ""}>${rematchReady
-               ? "✓ 已准备，等待对手" : "🔁 再来一局"}</button>`)
+               ? "已准备，等待对手" : "再来一局"}</button>`)
         + (opp && opp.is_ai
-        ? `<button onclick="overlayTranscript()">🧠 看 AI 的思考回放</button>` : "")
+        ? `<button onclick="overlayTranscript()">查看 AI 决策回放</button>` : "")
         + `<button onclick="closeEndOverlay()">关闭</button>`;
       setTimeout(() => {
         showEndOverlay(kind, title, sub, s.answer, btns);
@@ -808,7 +904,7 @@ function renderRoom() {
         const liveReady = !!(room.state && room.state.you.rematch_ready);
         if (liveRematch && liveReady) {
           liveRematch.disabled = true;
-          liveRematch.textContent = "✓ 已准备，等待对手";
+          liveRematch.textContent = "已准备，等待对手";
         }
       }, 700);
     }
@@ -826,7 +922,7 @@ function renderRoom() {
         res.className = "result";
         res.innerHTML = `<div class="verdict">你已出局 — 对手还在打</div>
           <div class="r-extra" style="padding-top:12px">
-            <details><summary>👀 偷看谜底(剧透警告)</summary>${answerCard(s.answer_spoiler)}</details>
+            <details><summary>偷看谜底(剧透警告)</summary>${answerCard(s.answer_spoiler)}</details>
           </div>`;
       }
     } else { res.classList.add("hidden"); res.dataset.spoiler = ""; }
@@ -900,7 +996,8 @@ async function showTranscript() {
     const t = await api(`/api/room/${room.code}/transcript`, {
       headers: { "X-Room-Token": room.token },
     });
-    $("transcript-model").textContent = t.model || "";
+    const levelName = {easy: "下饭", normal: "普通", hard: "作弊"}[t.level] || "";
+    $("transcript-model").textContent = levelName ? `· ${levelName}` : "";
     $("transcript-body").innerHTML = t.transcript.map(turn => `
       <div class="turn-block">
         <h4>第 ${turn.turn} 次猜测</h4>
@@ -911,40 +1008,42 @@ async function showTranscript() {
 }
 function evHtml(e) {
   switch (e.type) {
-    case "solver": {
-      const prob = e.exact_solve_probability != null
-        ? ` · 剩余回合解出率 ${(e.exact_solve_probability * 100).toFixed(1)}%` : "";
+    case "decision": {
       const explanation = (e.explanation || []).map(line =>
         `<li>${esc(line)}</li>`
       ).join("");
-      const metrics = e.selected_metrics ? `
-        <div class="decision-metrics">
-          <span><b>${e.selected_metrics.expected_remaining}</b>期望剩余</span>
-          <span><b>${e.selected_metrics.worst_case}</b>最坏分支</span>
-          <span><b>${e.selected_metrics.entropy}</b>信息熵</span>
-        </div>` : "";
-      const moves = (e.moves || []).map((m, i) =>
-        `${i + 1}. ${esc(m.nickname)}${m.in_candidates ? "" : "(探针)"} — 期望剩余 ${m.expected_remaining} · 最坏 ${m.worst_case} · 熵 ${m.entropy}`
-      ).join("\n");
+      const shortlist = (e.shortlist || []).join("、");
       return `<div class="ev ev-solver">
         <div class="decision-head">
-          <span>SERVER SOLVER</span>
-          <b>${esc(e.recommended)}</b>
+          <span>${esc(e.strategy)}难度</span>
+          <b>${esc(e.chosen)}</b>
         </div>
-        <div class="decision-summary">严格候选 <b>${e.candidate_count}</b> 人 · ${esc(e.mode)}${prob}</div>
-        ${explanation ? `<ol class="decision-steps">${explanation}</ol>` : ""}
-        ${metrics}
-        <details><summary>查看信息增益排名</summary><pre>${moves}</pre></details>
+        <div class="decision-summary">${esc(e.summary)}</div>
+        ${explanation ? `<ul class="decision-steps">${explanation}</ul>` : ""}
+        ${shortlist ? `<details><summary>这轮考虑过的人</summary><p>${esc(shortlist)}</p></details>` : ""}
       </div>`;
     }
-    case "reasoning": return `<div class="ev"><details><summary>模型提供的推理摘要</summary><pre>${esc(e.text)}</pre></details></div>`;
-    case "thinking": return `<div class="ev ev-thinking"><b>模型公开解说</b><br>${esc(e.text)}</div>`;
-    case "search": return `<div class="ev ev-search">🔍 搜索:「${esc(e.query)}」</div>`;
+    case "solver": {
+      const explanation = (e.explanation || []).map(line =>
+        `<li>${esc(line)}</li>`
+      ).join("");
+      return `<div class="ev ev-solver">
+        <div class="decision-head">
+          <span>作弊难度</span>
+          <b>${esc(e.recommended)}</b>
+        </div>
+        <div class="decision-summary">根据当前线索，还剩 ${e.candidate_count} 名可能人选。</div>
+        ${explanation ? `<ul class="decision-steps">${explanation}</ul>` : ""}
+      </div>`;
+    }
+    case "reasoning": return `<div class="ev"><details><summary>AI 自己的想法</summary><pre>${esc(e.text)}</pre></details></div>`;
+    case "thinking": return `<div class="ev ev-thinking"><b>AI 的选择理由</b><br>${esc(e.text)}</div>`;
+    case "search": return `<div class="ev ev-search">搜索:「${esc(e.query)}」</div>`;
     case "search_result": return `<div class="ev"><details><summary>搜索结果</summary><pre>${esc(e.text)}</pre></details></div>`;
-    case "say": return `<div class="ev ev-say">💬 垃圾话:${esc(e.text)}</div>`;
-    case "guess": return `<div class="ev ev-guess">🎯 提交猜测:${esc(e.name)}</div>`;
-    case "guess_rejected": return `<div class="ev ev-rejected">❌ 想猜 ${esc(e.name)} 被驳回:${esc(e.reason)}</div>`;
-    case "forced_guess": return `<div class="ev ev-rejected">⚠️ ${esc(e.reason)}:${esc(e.name)}</div>`;
+    case "say": return `<div class="ev ev-say">AI 聊天:${esc(e.text)}</div>`;
+    case "guess": return `<div class="ev ev-guess">提交猜测:${esc(e.name)}</div>`;
+    case "guess_rejected": return `<div class="ev ev-rejected">想猜 ${esc(e.name)} 被驳回:${esc(e.reason)}</div>`;
+    case "forced_guess": return `<div class="ev ev-rejected">${esc(e.reason)}:${esc(e.name)}</div>`;
     default: return "";
   }
 }
@@ -1033,9 +1132,9 @@ function openLocalMockPreview() {
 async function init() {
   try {
     [META, PLAYERS] = await Promise.all([api("/api/meta"), api("/api/players")]);
-    $("meta-info").textContent =
-      `选手库 ${META.player_count} 人 · 更新于 ${META.db_generated_at.slice(0, 10)}`
-      + (META.ai_enabled ? ` · AI: ${META.ai_model}` : " · AI 未配置");
+    $("meta-info").innerHTML =
+      `<span>选手库 ${META.player_count} 人</span>`
+      + `<span>更新于 ${META.db_generated_at.slice(0, 10)}</span>`;
     if (!META.ai_enabled) $("vs-ai").disabled = true;
   } catch (e) { toast("加载选手库失败: " + e.message); }
   getRoomSettings = renderSettings("settings-room", {
@@ -1052,6 +1151,14 @@ async function init() {
   });
   attachSuggest($("guess-input"), $("suggest"), soloGuess);
   attachSuggest($("room-guess-input"), $("room-suggest"), roomGuess);
+  document.addEventListener("click", e => {
+    const trigger = e.target.closest(".player-trigger");
+    if (trigger) openPlayerProfile(trigger.dataset.playerPage);
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !$("player-modal").classList.contains("hidden"))
+      closePlayerProfile();
+  });
   $("vs-ai").addEventListener("change", () => {
     $("ai-level-row").classList.toggle("hidden", !$("vs-ai").checked);
   });

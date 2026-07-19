@@ -362,7 +362,7 @@ def transcript(
         raise HTTPException(403, "对局还没结束,先赢了再看")
     if not room.ai:
         raise HTTPException(404, "本局没有 AI 参与")
-    return {"model": config.AI_MODEL, "transcript": room.ai.transcript}
+    return {"level": room.ai_level, "transcript": room.ai.transcript}
 
 
 @app.websocket("/ws/room/{code}")

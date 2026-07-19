@@ -52,6 +52,5 @@ class PlayerSolverTests(unittest.TestCase):
         self.assertEqual(analysis.recommended.page, answer.page)
         self.assertEqual(analysis.exact_solve_probability, 1.0)
 
-
 if __name__ == "__main__":
     unittest.main()

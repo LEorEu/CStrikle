@@ -708,3 +708,251 @@
   - 公网首页 200，`/api/meta` 为 650 名可搜索、645 名可出题、7 个排除 stub，数据时间 `2026-07-19T19:45:48+08:00`。
   - 生产容器核验 30 名明确主教练带队、276 名正式阵容选手，非主教练 staff 带 team 为 0；关键十二名结果与本地一致。
   - `.env`、feedback 和 deploy.log 保留；AI 模型部署前后均为 `grok-4.5`；上传归档和旧展开目录已清理。
+
+## 2026-07-19 — S0tF1k / hally 当前职务复核
+
+- Request:
+  - 用户怀疑 S0tF1k 已取代 hally 成为 Team Spirit 主教练，要求按 HLTV 复核。
+- Findings:
+  - 2026-04-02 起 hally 因健康问题暂时离岗，S0tF1k 以 temporary coach 身份带队参加 IEM Rio 和 PGL Astana，因此曾实际代理主教练。
+  - 2026-06-04 Spirit 重组教练组后，HLTV 明确 hally 回归 head coach；S0tF1k 与其协作，负责细节、战术、机制和道具。
+  - 2026-06-15 hally 再次因健康问题缺席 Cologne Major，但 HLTV 仍称其为 head coach；两人远程共同工作。
+  - 2026-07-19 当日抓取的 HLTV Spirit 队伍页仍列 hally 为 Coach，当前没有更晚的 HLTV 证据表明 S0tF1k 已正式取代。
+- Decision:
+  - 保持当前游戏映射：hally=Spirit/Coach；S0tF1k=非主教练 staff，因此自由身并回退历史 Rifler。
+  - 本轮不修改业务代码、数据快照、Git 历史或生产环境。
+
+## 2026-07-19 — 主页、头像与规则说明优化
+
+- Request:
+  - 用户希望主页减少单调和空旷感，放大候选下拉及选择/猜测后的选手头像，并补全问号规则中的选手、战队、国籍和赛区判定。
+- Changes:
+  - 首页重构为“赛事战术简报”结构：新增线索 Hero、反馈颜色图例、实时数据库状态板，以及有编号和行动提示的三种模式入口；保留原背景图和蓝橙 CS/HUD 视觉体系。
+  - 下拉候选头像由 30px 提升至桌面 52px/移动端 48px，并分层展示昵称、真名和队伍；猜测记录头像由 38px 提升至桌面 48px/移动端 44px，行高提升至 68px/64px；答案卡头像提升至 116px/100px。
+  - 问号改为可访问按钮，规则说明拆成位置、混合位置、战队/自由身、国籍比较、八赛区与数据来源；明确主教练保留战队，助教/其他 staff、Inactive、Benched、替补等显示自由身，新队优先于旧 inactive 队。
+  - 明确欧洲含土耳其、独联体含哈萨克斯坦、中东非洲含以色列，并列出北美、南美、亚洲、大洋洲和其他；中国、中国香港、中国澳门、中国台湾统一中国国旗且互判绿色。
+  - 自定义计时移除遗留 5 分钟，只保留 1/2/3 分钟。
+- Reasons:
+  - 首页问题来自缺少前景信息层级而非背景素材；强化战术简报和状态信息能填补视觉空洞，同时不破坏既有品牌气质。
+  - 头像需要按使用场景形成清晰层级，候选与猜测记录是辨识瓶颈，终局头像原本已足够大。
+- Verification:
+  - 1440×900 真实数据浏览器回归：首页、规则、候选和猜测记录均无重叠；猜测行实测 68px，头像 48×48px。
+  - 390×844 回归：首页标题稳定为两行、候选头像 48px、横向溢出为 0；完整规则口径显示八类赛区。
+  - 完整 unittest 55/55、Python compileall、`node --check static/app.js` 和 `git diff --check` 全部通过。
+- Next steps:
+  - 本轮按用户当前请求仅完成本地修改，没有提交、推送或部署；待用户确认后再发布。
+  - 已为桌面端实机预览启动本地真实数据服务：`http://127.0.0.1:8766`，Uvicorn PID 31472；`/api/meta` 返回 200。服务仅用于本机查看，尚未提交或部署。
+
+## 2026-07-19 — 玩家文案清理与已猜选手资料卡
+
+- Request:
+  - 用户要求删除面向维护者的规则说明、隐性地区比较规则、“其他”赛区、后台术语与模型名，清理装饰性 emoji，并让已选/已猜选手可点击查看资料。
+- Changes:
+  - 规则统一为“游戏规则 / 属性判定 / 赛区划分”，只保留位置、混合位置、战队/自由身三类玩家判定，以及欧洲、独联体、北美、南美、亚洲、大洋洲、中东非洲七个赛区。
+  - 删除 `player_overrides.json`、人工订正、数据来源、队伍别名归一化和中国地区内部比较等维护实现说明；这些规则仍保留在代码与项目文档中，不再对玩家展示。
+  - 首页赛区数量改为读取当前七项 meta；状态板的维护基准改成玩家提示。
+  - 顶栏右侧只显示“选手库 650 人 / 更新于 2026-07-19”，删除 AI 模型别名；桌面横排、移动端右侧两行。
+  - 清理随机匹配、每日/无限模式、重赛、AI 回放、纠错、搜索事件、偷看谜底、每日分享等位置的 Unicode emoji/pictogram。
+  - 已猜记录的头像和姓名改成可访问按钮；点击后打开独立选手资料卡，显示头像、昵称、真名、位置、国籍/赛区、当前战队、年龄、Major 参赛和冠军数，并提供 Liquipedia/HLTV 外链。
+  - 资料卡支持遮罩、关闭按钮和 Escape 关闭；关闭后键盘焦点返回原选手。候选下拉仍保持点击即猜，避免交互冲突。
+- Verification:
+  - 1440×900 首页/规则/资料卡和 390×844 移动资料卡真实数据视觉回归通过；全页横向溢出为 0。
+  - 自动化确认顶栏 meta 位于桌面最右侧、赛区为 7、禁用维护文案未显示，资料卡 Escape 关闭及焦点恢复有效。
+  - `static/index.html` 与 `static/app.js` Extended Pictographic 扫描为 0；“口径/协议/人工覆盖/模型名”等残留扫描为 0。
+  - 完整 unittest 55/55、Python compileall、`node --check static/app.js` 和 `git diff --check` 全部通过。
+- Next steps:
+  - 本地真实数据预览仍运行于 `http://127.0.0.1:8766`；本轮未提交、推送或部署，等待用户实机确认。
+
+## 2026-07-19 — 首页 Hero 回退与 AI 三档职责重构
+
+- Request:
+  - 删除首页 `home-hero` 展示框，直接保留模式入口和背景。
+  - 解释并修复 Top20 AI 固定首猜 k0nfig、第二手频繁命中的机械体验。
+  - AI 强度重新定义为：下饭完全随机；普通首轮信息增益前五随机、之后由模型自主选择；作弊使用最优求解。
+  - 三档下拉只显示“下饭 / 普通 / 作弊”，提高一分钟局内行动速度，并把 AI 回放改成玩家能读懂的语言。
+- Findings:
+  - 房间只把 99 人 Top20 候选池和公开反馈交给 solver，没有传入实际谜底，不存在答案泄漏。
+  - 原首轮数学最优是 k0nfig：99 人形成 85 种反馈，77 个谜底一次反馈即成为唯一候选；遍历非 k0nfig 谜底，原作弊策略第二手 84/98 局命中，其中 76 局已是唯一候选。
+  - 本地旧 `gpt-5.5-cstrikle` 路由已从 CPA 模型表消失，最近本地对局全部 502 后使用 solver fallback，进一步造成纯脚本体验。
+  - `grok-4.5-cstrikle` 最小工具调用可用，但真实候选决策在 low/medium 下 6–8 秒均超时；同局面 `gpt-5.6-terra` 的 low/medium 分别为 4.27/4.42 秒，并成功返回自主选择和中文理由。
+- Changes:
+  - 整体删除 `home-hero` HTML、专属 CSS、状态节点写入逻辑；模式标题首屏上移。为减少动态偏好增加卡片无动画降级。
+  - 下饭档不读取反馈、不运行 solver、不请求模型，只从当前题库随机选择未猜过的人。
+  - 普通档首轮从信息增益前五随机且不请求模型；后续服务器只提供与全部反馈相符的候选及公开属性，由模型自行选择。候选唯一时直接提交，不再请求。
+  - 普通档每轮只暴露 `submit_guess`，要求附一句中文理由；只调用一次，8 秒超时后从合法候选使用备用人选，不再搜索、聊天或二次请求。
+  - 作弊档全程使用原确定性 solver，保持全局最优和小集合精确求解，不等待模型生成解说。
+  - 回放事件改为“范围如何缩小 / 该档如何选人 / 最终选择 / AI 的一句理由”，前端移除期望剩余、最坏分支、信息熵和排名；回放标题只显示难度，不显示内部模型名。
+  - 本地 `.env` 切换为 `gpt-5.6-terra`，保留 `AI_REASONING_EFFORT=medium`，新增 `AI_DECISION_TIMEOUT_SECONDS=8`；同步更新 `.env.example`、README 和专项报告。
+- Verification:
+  - 完整 unittest 58/58；新增下饭不调用模型、普通开局前五随机、普通候选内自主选择/超时备用、作弊不等待模型、状态文案不泄露人名等覆盖。
+  - Python compileall、`node --check static/app.js`、四份关键 JSON、`git diff --check` 全部通过。
+  - 真实 CPA 普通档 smoke：`gpt-5.6-terra` medium 4.42 秒选择 friberg，并返回自然语言理由。
+  - 本地 `http://127.0.0.1:8766` 返回 200，meta 为 650 人、AI=`gpt-5.6-terra`；首页不含 `home-hero`，三档短标签和无数学回放文案均已加载。
+  - 1440×900 与 390×844 无动画视觉回归通过，三张模式卡完整显示。
+- Next steps:
+  - 本轮按当前请求只在本地修改并保持预览运行，没有提交、推送或部署；待用户实机体验普通档速度和选择风格后再发布。
+
+## 2026-07-19 — AI 生产路由与两分钟局可行性调查
+
+- Request:
+  - 评估 grok 4.5 是否仍值得作为普通难度模型、function calling 是否为硬要求、个人 Codex/ChatGPT 账号是否适合公开站点，以及春川 `chatgpt2api` 免费号池能否替代。
+  - 判断标准对局统一改为两分钟能否缓解 AI 行动过慢。
+- Findings:
+  - grok 4.5 的最小工具调用约 4.33 秒，但携带真实候选资料的普通档决策在 6–8 秒内仍会超时；问题主要在上游模型链路，延长整局只能容纳等待，不能改善单次响应。
+  - 项目已实现 `AI_TOOLS_MODE=text`，普通档不强制要求 function calling；模型可返回严格 JSON，服务端仍会校验选手是否位于合法候选集。
+  - 春川 CPA 当前启用 1 个 Codex 账号和 35 个 xAI 账号；`_orig_codexcli` 下 10 份文件是留档，不参与当前路由。
+  - 春川 `chatgpt2api` 与 CPA 是独立服务，当前镜像为 1.4.1；其十几个免费 ChatGPT 网页账号不是 Codex API 账号。该项目文本接口并非完整通用代理，文档仅明确支持网页搜索类工具，不保证任意自定义 function tool。
+  - `chatgpt2api` 属于官网逆向链路，项目自身明确警告不要用于商业、批量或规模化自动调用，并提示账号可能受限或封禁；不适合作为公开游戏的唯一生产后端。
+  - 当前 AI 循环首轮等待 0.8 秒、每手间隔约 1–1.5 秒；普通档最坏还包含每手最多 8 秒的模型等待。8 次猜测在极端情况下可能超过 60 秒，因此标准局改成 120 秒有实际价值，但不应被视作供应商延迟修复。
+- Changes:
+  - 本轮仅完成本地代码、春川容器与上游项目文档的只读调查；未修改业务代码、服务器配置或账号池。
+- Verification:
+  - 核对本地普通档同时具备 native tools 与正文 JSON 两条协议；候选合法性由服务端 `_allowed_guess_pages` 检查。
+  - 核对春川 `chatgpt2api`、`cli-proxy-api`、CPA 管理面板和 Caddy 容器均在运行；确认已加载账号类型和镜像版本。
+- Next steps:
+  - 推荐将标准对局改为 120 秒，并保留 8 秒单轮超时和备用候选。
+  - 生产环境优先使用独立、可限额的正式 API/专用账号；`chatgpt2api` 只适合低流量实验或故障备用，不承载公开主流量。
+
+## 2026-07-20 — 两分钟标准局与 chatgpt2api 门槛实测
+
+- Request:
+  - 用户接受前述方案，要求实际尝试两分钟标准局、正文 JSON 协议和春川 `chatgpt2api` 免费号池。
+- Changes:
+  - 标准房间由服务端固定为 120 秒；旧客户端即使提交 60 秒也会被纠正。前端标准难度说明和提交值同步改为 2 分钟；自定义房仍保留不限时与 1/2/3 分钟。
+  - 新增 `scripts/benchmark_text_provider.py`：不读取项目 `.env`，从指定 JSON 配置读取密钥且不打印；用真实 `compare()` 反馈自动构造歧义候选，要求正文 JSON，并校验提交是否位于白名单。
+  - README 增加两分钟规则和隔离基准用法；专项 AI 报告记录实测数据和停止条件。
+- Benchmark:
+  - 春川 `chatgpt2api` 当前有 14 个网页账号，实例暴露 `gpt-5-mini`、`gpt-5-3-mini`、`gpt-5-5-mini` 等文本别名。
+  - `gpt-5-mini` 1/1 在 8 秒超时。
+  - `gpt-5-5-mini` 6 局中 4 局成功、2 局超时；成功响应均为合法候选 JSON，耗时约 5.82–8.04 秒。
+  - `gpt-5-3-mini` 3 局中 2 局成功、1 局超时；把输入压到 8 人短名单后又连续 3/3 超时。
+  - 正文 JSON 协议可行，但 8 秒内稳定率不够；瓶颈主要在上游首包/账号调度，不是 function calling 或候选文本长度，因此没有扩到 100 局，也没有接入生产路由。
+- Production safety:
+  - 生产 CStrikle 仍为 `grok-4.5 / https://cliproxy.estia.moe/v1 / auto / low`，没有使用本地个人 `gpt-5.6-terra`。
+  - 春川临时基准脚本已删除；没有修改 `chatgpt2api` 账号池、CPA 或生产 CStrikle 配置。
+- Verification:
+  - 完整 unittest 60/60；Python compileall、`node --check static/app.js`、`git diff --check` 和旧 1 分钟标准设置扫描通过。
+  - 本地真实服务持续运行于 `http://127.0.0.1:8766`；前端静态资源确认标准难度提交 120 秒。
+- Next steps:
+  - 本轮没有提交、推送或部署。若发布当前改动，生产仍会保留服务器 `.env` 中的 grok 路由；`chatgpt2api` 不建议作为主后端。
+
+## 2026-07-20 — 下饭难度恢复自由 AI
+
+- Request:
+  - 用户明确“下饭随便猜”不是服务端随机抽人，而是恢复项目求解器接入前的玩法：模型读取反馈后，凭自己的 CS 常识自由选择。
+- Historical basis:
+  - `afef9ee` 初版是完整自由 Agent；`36b7443` 保留自由选择，同时增加首轮不搜索、单轮一次搜索和后续步骤强制提交；`65dc558` 才引入求解器指定落子。
+- Changes:
+  - 下饭使用独立提示词与完整历史输入，不调用候选过滤、信息增益或精确求解，也不设置 `_allowed_guess_pages` / `_required_guess`。
+  - 第一轮仅提供聊天和提交工具；获得反馈后可使用一次 DDGS。每轮最多执行 `AI_MAX_STEPS` 次模型动作，第二步强制提交。
+  - 模型可提交任意选手库内且未猜过的人，不要求位于题库或严格反馈候选中；保留正文 JSON 兼容。
+  - 每次模型请求仍受 8 秒上限约束；失败时返回随机题库备用人选，由 Room 保证对局继续。
+  - 普通和作弊难度的现有行为未修改；README 与专项报告已同步。
+- Verification:
+  - 新增下饭反馈输入、候选外自由选择、首轮禁搜、失败兜底测试；完整 unittest 62/62 通过。
+  - Python compileall 与 `git diff --check` 通过。
+  - 真实模型烟测成功：本地 `gpt-5.6-terra` 在 4.38 秒提交 ZywOo，事件包含 usage、reasoning、公开思路和 guess。
+  - 本地真实服务已重启，PID 7792 监听 `http://127.0.0.1:8766`，`/api/meta` 返回 200。
+- Next steps:
+  - 本轮未提交、推送或部署；待用户体验确认后再发布。
+
+## 2026-07-20 — 本地 AI 切回 Grok 4.5
+
+- Request:
+  - 用户要求本地预览停止使用个人 `gpt-5.6-terra`，改走 CPA 的 Grok 4.5；同时明确该路由的上游原生搜索是全局启用且无法关闭的。
+- Changes:
+  - 本地 `.env` 改为 `AI_MODEL=grok-4.5`、`AI_REASONING_EFFORT=low`。
+  - 本地 `AI_SEARCH_ENABLED=0`，只关闭项目额外提供的 DDGS，不能也不会关闭 CPA/Grok 上游原生搜索，避免同一回合叠加两套搜索。
+  - 下饭提示词按项目搜索开关生成；DDGS 关闭时不再要求模型调用不存在的搜索工具，而是使用自身知识及接口自动提供的信息。
+  - 新增关闭项目搜索后不暴露 `ddgs_search` 的回归测试。
+- Verification:
+  - `tests.test_ai_player` 9/9、Python compileall、`git diff --check` 通过。
+  - Grok 4.5 真实下饭烟测成功：7.72 秒提交 s1mple，包含 reasoning、聊天、公开理由和 guess；项目 DDGS 确认为 false。
+  - 本地服务已重启，PID 6640 监听 `http://127.0.0.1:8766`，meta 返回 `ai_model=grok-4.5`。
+- Next steps:
+  - 7.72 秒已非常接近当前 8 秒单请求上限；若实际局内仍频繁触发备用人选，应优先把 Grok 单次上限小幅提高，而不是重新开启 DDGS。
+  - 本轮未提交、推送或部署。
+
+## 2026-07-20 — Grok 4.5 连续超时的 CPA 日志诊断
+
+- Request:
+  - 用户实玩发现 Grok 4.5 每手都超过 8 秒，要求检查本地与 CPA 日志定位原因；本轮只诊断，不修改配置。
+- Findings:
+  - 本地房间 `DDR4` 的 8 手 AI 请求全部失败，记录耗时约 8.66、7.98、8.00、8.02、7.98、8.01、8.02、8.00 秒，没有一手收到模型提交。
+  - CPA 对应 8 个请求分别返回 HTTP 500，代理侧耗时约 7.38–7.70 秒；错误文件的最终上游响应均为 `context canceled`。
+  - 这些请求分别选用了 8 个不同 xAI OAuth 账号，因此不是单一坏账号或账号粘连。
+  - CPA 当前配置对 canonical `grok-4.5` 全局执行 `tools.-1: {type: web_search}`；转发到 Grok Workspace 时，实际工具列表同时包含项目的 `say`、`submit_guess` 和 CPA 注入的 `web_search`、`x_search`。
+  - 每个错误文件都只有 `API REQUEST 1`；虽然 CPA 配置 `request-retry: 3`、最多 6 个凭据，但客户端主动取消会终止整个 context，不会触发换号重试。
+  - 额外用相同七手历史、仅在诊断进程内临时放宽到 30 秒，仍在 30.56 秒超时；CPA 侧单次上游调用持续 29.28 秒后同样记录 `context canceled`。
+- Conclusion:
+  - 根因是 Grok 4.5 强制原生搜索链路的长尾延迟，加上应用端硬截止主动取消；CPA 的 500 是取消后的结果，不是先发生的上游故障。
+  - 8 秒不是稍微偏紧，而是与该路由不兼容；简单提高到 12 秒也无法覆盖已实测超过 30 秒的长尾。
+  - 问题与 solver、项目 DDGS、提示词长度或单个账号无直接关系；第一轮短历史同样出现超时。
+- Changes:
+  - 无业务代码、`.env`、CPA、账号池、生产或本地服务变更。
+- Next steps:
+  - 若坚持 Grok 4.5 全局搜索，只能接受更长且不稳定的 AI 回合，或把 AI 决策改成不阻塞游戏时钟的异步流程。
+  - 面向两分钟对局，更现实的方案是为游戏使用不强制原生搜索的独立路由/模型；不能只把 8 秒机械改成 12 秒。
+
+## 2026-07-20 — CPA Grok 4.5 搜索路由隔离
+
+- Request:
+  - 用户希望普通 Grok 4.5 调用继续使用 CPA 全局 `web_search`，但为 CStrikle 提供一个不注入原生搜索的独立 Grok 4.5 路由。
+- Findings:
+  - CPA v7.2.80 已有 `grok-4.5-cstrikle → grok-4.5` 的 fork alias，但 alias 会先解析为 canonical 模型，原全局 payload 规则仍会命中，因此只建别名不能隔离搜索。
+  - CStrikle 的 AI 请求已经稳定携带 `metadata.client=cstrikle`；CPA 示例配置明确支持 payload `match` / `not-match` 按 JSON 路径筛选。
+- Changes:
+  - 在春川 `/home/ubuntu/docker/cliproxy/config.yaml` 的 Grok 全局搜索注入规则增加 `not-match: metadata.client=cstrikle`。
+  - 修改前备份为 `config.yaml.bak-before-cstrikle-search-split-20260720_005019`，随后重启 `cli-proxy-api`。
+  - 本地 `.env` 模型改为 `grok-4.5-cstrikle`；项目 DDGS 仍关闭，推理强度仍为 low。
+- Verification:
+  - CS 别名请求的 CPA 上游 body 只包含项目 `say` / `submit_guess`，`web_search` 与 `x_search` 均未出现。
+  - 使用普通 `grok-4.5` 且 `metadata.client=route-verification-other` 的对照请求，上游 body 仍包含 `web_search` 和 `x_search`。
+  - `cli-proxy-api` 重启后正常运行；本地服务 PID 2612 监听 `http://127.0.0.1:8766`，meta 返回 `grok-4.5-cstrikle`。
+- Remaining issue:
+  - 搜索隔离解决了超过 30 秒的搜索长尾，但 Grok 4.5 本身对七手完整反馈仍然很慢：8 秒测试失败，临时 20 秒诊断也未完成。
+  - 因此路由拆分已经成功，但不能单独保证当前 8 秒截止下的可用性；下一步需单独优化提示输入/调用方式或更换低延迟模型。
+- Next steps:
+  - 本轮没有推送或部署 CStrikle 代码；CPA 路由和本地预览配置已经生效。
+
+## 2026-07-20 — 三档 AI 聊天与 20 秒回合预算
+
+- Request:
+  - 用户决定 CStrikle Grok 路由保持无搜索，把每轮 AI 等待放宽到 20 秒，并要求下饭、普通、作弊三档都能使用 `say` 在聊天框说话。
+- Changes:
+  - `.env`、`.env.example`、`server/config.py` 默认和当前说明统一为 20 秒。
+  - 下饭最多执行两步模型动作，但两步共享同一个 20 秒 deadline，不会变成最坏 40 秒等待；继续在同一响应中要求 `say + submit_guess`。
+  - 普通反馈局的模型请求由只提供 `submit_guess` 改为同时提供 `say + submit_guess`，要求同一响应完成聊天和候选内选择。
+  - 普通开局与候选唯一路径仍由服务器确定落子，新增一次只暴露 `say` 的聊天调用；聊天失败不改变人选。
+  - 作弊仍完全由 solver 决定猜谁，模型只收到已确定的人选并被强制调用一次 `say`；超时或失败仍提交 solver 结果。
+  - 回放中的“垃圾话”标签改为“AI 聊天”。
+- Reasons:
+  - 之前聊天框没有 AI 消息，是因为下饭请求在模型返回工具调用前全部被 8 秒截止取消；前端聊天框和 `on_say` 广播链路没有损坏。
+  - 将固定落子与聊天解耦，能让普通/作弊参与聊天，同时防止模型改写求解结果。
+- Verification:
+  - 完整 unittest 64/64、Python compileall、`node --check static/app.js`、`git diff --check` 通过。
+  - 无搜索 `grok-4.5-cstrikle` 三档并行真实首轮烟测全部成功：
+    - 下饭 11.78 秒，猜 s1mple，聊天 1 条；
+    - 普通 14.12 秒，猜 k0nfig，聊天 1 条；
+    - 作弊 7.13 秒，猜 k0nfig，聊天 1 条。
+  - 三档均无 model/chat error；普通与作弊的猜测仍来自原有服务器/solver 路径。
+- Next steps:
+  - 本轮未提交、推送或部署；本地预览重启后可直接体验。
+
+## 2026-07-20 — 当前版本发布
+
+- Request:
+  - 用户接受暂时继续使用无搜索 Grok 路由，要求将当前累计改动推送到私有 GitHub 仓库并部署到春川 ARM。
+- Release scope:
+  - 包含此前已完成的选手数据规则与修正、标准局两分钟、AI 三档策略、玩家化回放、20 秒共享决策预算、三档聊天、UI 与规则说明更新，以及隔离的文本模型基准脚本。
+  - 本地 `.env` 已确认由 `.gitignore` 排除；生产密钥、反馈数据和日志不进入 Git，也不会被部署归档覆盖。
+- Pre-deploy verification:
+  - 秘密信息扫描没有发现实际 API Key、Bearer Token 或私钥。
+  - 完整 unittest 64/64 通过。
+  - Python compileall、`node --check static/app.js` 和 `git diff --check` 通过。
+  - 审阅新增基准脚本时修正异常分支引用未定义变量的问题。
+- Deployment plan:
+  - 提交并推送 `main` 后从精确提交生成归档；部署前备份生产源码和 `.env`，保留运行数据。
+  - 生产非秘密 AI 配置设为 `grok-4.5-cstrikle`、项目 DDGS 关闭、low、auto、20 秒。
+- Next steps:
+  - 完成 Git 推送、春川容器重建和公开站点验收后，在本节补充提交、备份与生产验证结果。
