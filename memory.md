@@ -954,5 +954,15 @@
 - Deployment plan:
   - 提交并推送 `main` 后从精确提交生成归档；部署前备份生产源码和 `.env`，保留运行数据。
   - 生产非秘密 AI 配置设为 `grok-4.5-cstrikle`、项目 DDGS 关闭、low、auto、20 秒。
+- Deployment result:
+  - 发布提交 `3fa4ffa`（`Improve AI modes and game experience`）已推送到 `origin/main`，并从该精确提交生成归档部署。
+  - 旧生产目录完整保留在 `/home/ubuntu/docker/backups/cstrikle-before-3fa4ffa-20260720-013239`，其中包含原 `.env`、compose、源码、反馈与日志。
+  - 新目录复制原生产 `.env` 和反馈数据，只更新非秘密项：`AI_MODEL=grok-4.5-cstrikle`、`AI_SEARCH_ENABLED=0`、`AI_REASONING_EFFORT=low`、`AI_TOOLS_MODE=auto`、`AI_DECISION_TIMEOUT_SECONDS=20`。
+- Production verification:
+  - `cstrikle` 容器重建后为 healthy；启动日志无错误。
+  - 容器内与公开 `https://cs2.estia.moe/api/meta` 均返回 200、650 名选手、AI 模型 `grok-4.5-cstrikle`。
+  - 公开首页与静态脚本返回 200；确认 `FribergCS2`、标准局 120 秒和“AI 聊天”新文案已上线。
+  - 旧目录与新目录的反馈文件数一致，生产反馈挂载保留。
+  - 生产容器真实 AI 烟测 11.07 秒完成，事件为 decision/say/guess，证明无搜索 Grok 路由、聊天工具和猜测链路可用。
 - Next steps:
-  - 完成 Git 推送、春川容器重建和公开站点验收后，在本节补充提交、备份与生产验证结果。
+  - 继续观察 Grok 的真实长尾延迟；当前 20 秒超时和合法猜测兜底可保证对局继续，但长期仍应寻找更稳定、低延迟且成本可控的专用渠道。
