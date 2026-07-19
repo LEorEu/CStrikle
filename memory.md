@@ -661,3 +661,23 @@
   - 提交前差异秘密模式扫描为 0。
 - Next steps:
   - 提交推送并按完整备份、精确 Git 归档、生产健康与公网关键样例验收流程部署。
+
+## 2026-07-19 — 自由身与队伍归一化生产发布
+
+- Request:
+  - 将新的正式阵容/自由身规则、教练角色分离和队伍别名防回归改动推送并部署到春川 ARM。
+- Deployment:
+  - 功能提交 `8866c951059f365ca8b450e1a479ae1826cfaf5e` 已推送 `origin/main`。
+  - 精确 Git 归档 SHA-256=`efa244f8d83e23146adf9914ca88fd0e3468680aa02cbe522def4f1f9225ed24`，服务器接收哈希一致。
+  - 部署前完整回滚包为 `/home/ubuntu/cstrikle-pre-8866c95-20260719-192239.tar.gz`，SHA-256=`6fa9cc813a129e8c906e08032d81f86b60de9e804e1606682215c3b493d3d231`。
+  - staging 目录原子切换后重建容器；新镜像 `sha256:efbeac0f6629ce100dd193f109d882f4be0089a98b35d69e9216012874874fff`。
+  - `.env`、`feedback/` 与 `deploy.log` 均保留；上传归档和旧 staging 目录已清理。
+- Verification:
+  - 生产容器 `running/healthy`、RestartCount=0，近 10 分钟日志中 traceback/exception/error 计数为 0。
+  - 容器内共 650 名可搜索、645 名可出题、276 名当前正式阵容选手。
+  - nota=自由身/Rifler，BELCHONOKK=TDK/Rifler，gla1ve=自由身/Coach，Xyp9x/Attacker=自由身/Rifler。
+  - s1mple 与 Senzu 均规范为 `BC.Game`，共用 `/img/teams/BC_Game_am.png`，不存在同队双身份。
+  - 公网首页返回 200，标题为 `FribergCS2 — 猜 CS 职业哥`；`/api/meta` 返回新数据库时间 `2026-07-19T19:11:20+08:00`、650/645/7 的搜索/答案/stub 统计。
+  - 本轮未改 AI 配置；部署前备份、部署后 `.env` 和容器三处 `AI_MODEL` 均为 `grok-4.5`。
+- Next steps:
+  - 无；若后续接入 HLTV 阵容同步，继续让 Liquipedia 负责完整重建、HLTV 负责低频差异审核与人工覆盖建议。
