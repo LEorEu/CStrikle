@@ -699,4 +699,12 @@
   - 全库 30 名明确当前主教练保留战队；非主教练 staff 带 team 为 0；650 名可搜索、645 名可出题、276 名正式阵容选手，位置未知数为 0。
   - 完整 unittest 55/55、Python compileall、JavaScript 语法、JSON 解析和 `git diff --check` 全部通过。
 - Next steps:
-  - 提交推送后，按完整备份、精确 Git 归档和公网关键样例验收流程重新部署春川 ARM。
+  - 无；该修正已推送并部署。
+- Deployment:
+  - 功能提交 `d07a876c252c277fc31795fbb269242183c29c14` 已推送 `origin/main`。
+  - 精确 Git 归档大小 44,632,805 字节，SHA-256=`5ad297c6b0fc4cc01a3ab5ea05fe8dbb3e14fb894ccb379537c50dfa8cc4fde9`。
+  - 部署前完整回滚包为 `/home/ubuntu/cstrikle-pre-d07a876-20260719-195303.tar.gz`，SHA-256=`a3f9ad7558d8b277277b63f3a792b51ada7f65b570e5ba25e028a0844cda4c04`。
+  - 新镜像 `sha256:0f5eb3fcb5e6e7e1f3b828c7239f6e1eb6c1544e5e031b4db5a0752314a7f302`；容器 running/healthy、RestartCount=0，近 10 分钟错误日志为 0。
+  - 公网首页 200，`/api/meta` 为 650 名可搜索、645 名可出题、7 个排除 stub，数据时间 `2026-07-19T19:45:48+08:00`。
+  - 生产容器核验 30 名明确主教练带队、276 名正式阵容选手，非主教练 staff 带 team 为 0；关键十二名结果与本地一致。
+  - `.env`、feedback 和 deploy.log 保留；AI 模型部署前后均为 `grok-4.5`；上传归档和旧展开目录已清理。
