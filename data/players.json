@@ -1,7 +1,7 @@
 {
  "generated_at": "2026-07-23T07:34:37+00:00",
  "source": "liquipedia.net (CC-BY-SA 3.0) + blast.tv puzzle identity list",
- "count": 649,
+ "count": 650,
  "players": [
   {
    "page": "Dosia",
@@ -37466,6 +37466,25 @@
     "igl",
     "entry"
    ],
+   "majors_count": 0,
+   "first_major_year": null,
+   "last_major_year": null,
+   "majors": [],
+   "in_blast_pool": true
+  },
+  {
+   "page": "MachineWJQ",
+   "nickname": "MachineWJQ",
+   "real_name": "Liu Yibo",
+   "country": "China",
+   "region": "Asia",
+   "birth_date": "1996-01-11",
+   "team": "",
+   "status": "Active",
+   "roles": [
+    "caster"
+   ],
+   "game_role": "Rifler",
    "majors_count": 0,
    "first_major_year": null,
    "last_major_year": null,
