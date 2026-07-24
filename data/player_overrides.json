@@ -1,400 +1,421 @@
 {
- "AdreN (Kazakh player)": {
-  "game_role": "Rifler",
-  "team": "",
-  "reason": "Current manager role must not erase his historical playing role."
- },
- "Olofmeister": {
-  "team": "",
-  "reason": "FaZe affiliation is as a streamer, not as a player."
- },
- "S1mple": {
-  "game_role": "AWPer",
-  "reason": "Primary current playing role is AWPer despite mixed Liquipedia role order."
- },
- "Tonyblack": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2019-05-08; teamless coaches fall back to it."
- },
- "Hooch": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-05-28; teamless coaches fall back to it."
- },
- "WaterfaLLZ": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2018-06-22; teamless coaches fall back to it."
- },
- "Svyat": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2019-06-15; teamless coaches fall back to it."
- },
- "FeTiSh": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2014-11-28; teamless coaches fall back to it."
- },
- "Tenzki": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-28; teamless coaches fall back to it."
- },
- "Aizy": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2019-06-09; teamless coaches fall back to it."
- },
- "Gade": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2021-04-08; teamless coaches fall back to it."
- },
- "Devilwalk": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2015-12-08; teamless coaches fall back to it."
- },
- "Golden": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2019-06-26; teamless coaches fall back to it."
- },
- "Friberg": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-22; teamless coaches fall back to it."
- },
- "MaLeK": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2019-08-23; teamless coaches fall back to it."
- },
- "Shara": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-13; teamless coaches fall back to it."
- },
- "SZPERO": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2015-12-11; teamless coaches fall back to it."
- },
- "Furlan": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2015-11-24; teamless coaches fall back to it."
- },
- "Snatchie": {
-  "played_role": "AWPer",
-  "reason": "Playing-era role from Liquipedia revision 2018-06-10; teamless coaches fall back to it."
- },
- "Gob b": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2019-06-14; teamless coaches fall back to it."
- },
- "Spiidi": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2018-05-19; teamless coaches fall back to it."
- },
- "Allu": {
-  "played_role": "AWPer",
-  "reason": "Playing-era role from Liquipedia revision 2019-06-07; teamless coaches fall back to it."
- },
- "XartE": {
-  "played_role": "AWPer",
-  "reason": "Playing-era role from Liquipedia revision 2015-06-29; teamless coaches fall back to it."
- },
- "Polly": {
-  "played_role": "AWPer",
-  "reason": "Playing-era role from Liquipedia revision 2015-06-16; teamless coaches fall back to it."
- },
- "Thomas": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2023-05-01; teamless coaches fall back to it."
- },
- "GuardiaN": {
-  "played_role": "AWPer",
-  "reason": "Playing-era role from Liquipedia revision 2019-05-02; teamless coaches fall back to it."
- },
- "Oskar": {
-  "played_role": "AWPer",
-  "reason": "Playing-era role from Liquipedia revision 2019-04-28; teamless coaches fall back to it."
- },
- "Swag": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2015-11-30; teamless coaches fall back to it."
- },
- "AdreN (American player)": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-30; teamless coaches fall back to it."
- },
- "AbE": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-18; teamless coaches fall back to it."
- },
- "Yel": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2019-05-22; teamless coaches fall back to it."
- },
- "DAVEY": {
-  "played_role": "AWPer",
-  "reason": "Playing-era role from Liquipedia revision 2016-04-29; teamless coaches fall back to it."
- },
- "Yam": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-09-07; teamless coaches fall back to it."
- },
- "Karsa": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2018-06-30; teamless coaches fall back to it."
- },
- "AumaN": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2020-12-06; teamless coaches fall back to it."
- },
- "SANJI": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2019-06-16; teamless coaches fall back to it."
- },
- "Marek": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2025-06-20; teamless coaches fall back to it."
- },
- "MODDII": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-30; teamless coaches fall back to it."
- },
- "Starix": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2017-06-09; teamless coaches fall back to it."
- },
- "LEGIJA": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2017-05-15; teamless coaches fall back to it."
- },
- "Zews": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2017-06-24; teamless coaches fall back to it."
- },
- "Jnt": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2017-04-29; teamless coaches fall back to it."
- },
- "HaRts": {
-  "played_role": "IGL",
-  "reason": "HLTV: founding in-game leader of Clan-Mystik"
- },
- "Hardstyle": {
-  "played_role": "Rifler",
-  "reason": "Career coach; only Major appearance was as emergency stand-in (FACEIT London 2018)"
- },
- "Ryu": {
-  "played_role": "Rifler",
-  "reason": "Career coach (Steve Rattacasa); Major appearance was as stand-in"
- },
- "T.c": {
-  "played_role": "Rifler",
-  "reason": "Former Bravado player until 2016; no recorded specialist role"
- },
- "Dupreeh": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-04; staff/retired fall back to it."
- },
- "Pimp": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-16; staff/retired fall back to it."
- },
- "AcilioN": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-30; staff/retired fall back to it."
- },
- "F0rest": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-11; staff/retired fall back to it."
- },
- "Fifflaren": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-13; staff/retired fall back to it."
- },
- "Zeus (Ukrainian player)": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-22; staff/retired fall back to it."
- },
- "Crush": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2020-06-08; staff/retired fall back to it."
- },
- "GruBy": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-04; staff/retired fall back to it."
- },
- "Hyper (Polish player)": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2018-06-07; staff/retired fall back to it."
- },
- "Denis": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-22; staff/retired fall back to it."
- },
- "DiSTURBED": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-04-12; staff/retired fall back to it."
- },
- "Natu": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2018-05-21; staff/retired fall back to it."
- },
- "STYKO": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-13; staff/retired fall back to it."
- },
- "Maniac": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2018-06-16; staff/retired fall back to it."
- },
- "N0thing": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-05-27; staff/retired fall back to it."
- },
- "Sgares": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-24; staff/retired fall back to it."
- },
- "Zqk": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-03-09; staff/retired fall back to it."
- },
- "SPUNJ": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-17; staff/retired fall back to it."
- },
- "James": {
-  "played_role": "Rifler",
-  "reason": "Playing-era role from Liquipedia revision 2016-03-10; staff/retired fall back to it."
- },
- "CaptainMo": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2016-06-13; staff/retired fall back to it."
- },
- "Detrony": {
-  "played_role": "IGL",
-  "reason": "Playing-era role from Liquipedia revision 2018-06-17; staff/retired fall back to it."
- },
- "Ceh9": {
-  "played_role": "Rifler",
-  "reason": "Na'Vi entry fragger in his playing era"
- },
- "THREAT": {
-  "played_role": "IGL",
-  "reason": "NiP tactician/IGL in his playing era"
- },
- "Keshandr": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "ColoN": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "EXR": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "LOMME": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "SKYTTEN": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "Cype": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "Xelos": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "IoRek": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "Centeks": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "Ultra": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "Prb": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "Skurk": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "SnypeR": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "TopguN": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "Cent": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "DeviaNt": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "Racno": {
-  "played_role": "Rifler",
-  "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
- },
- "Gla1ve": {
-  "game_role": "Coach",
-  "reason": "Current 100 Thieves head coach; head coaches retain their current team while remaining outside the active player roster."
- },
- "S0tF1k": {
-  "played_role": "Rifler",
-  "reason": "Current assistant coach; HLTV career statistics cover 1470 maps with a 7/100 sniping score, identifying his playing-era role as Rifler."
- },
- "NBK-": {
-  "game_role": "Rifler",
-  "team": "",
-  "reason": "Played competitively until 2026; 3DMAX assistant coach since 2026-02 is his first coaching job. Remembered as a player (Rifler)."
- },
- "TiziaN": {
-  "game_role": "Rifler",
-  "team": "",
-  "reason": "Played for BIG until 2023, recently moved to assistant coach; remembered as a support Rifler."
- },
- "Mou": {
-  "game_role": "Coach",
-  "reason": "Current HOTU head coach; head coaches retain their current team and use the Coach game role."
- },
- "Attacker": {
-  "game_role": "Rifler",
-  "team": "",
-  "reason": "Retired 2025-12 and became TYLOO assistant coach; career TYLOO rifler with 6 Majors, not a career coach."
- },
- "AZR": {
-  "game_role": "Coach",
-  "reason": "Current FlyQuest head coach; head coaches retain their current team and use the Coach game role."
- },
- "ErkaSt": {
-  "team": "",
-  "played_role": "Rifler",
-  "reason": "Removed as FlyQuest coach 2025-08 (AZR is his successor); local team data stale. Playing era 2015-2019 as Rifler (low confidence)."
- },
- "SmithZz": {
-  "game_role": "AWPer",
-  "reason": "Remembered as Titan/G2 AWPer (career sniper kills 5434); user decision 2026-07-18, mixed rifle evidence keeps AWPer+Rifler yellow overlap."
- },
- "Stewie2K": {
-  "game_role": "IGL",
-  "reason": "Career IGL per HLTV legacy feature (Cloud9/EG); user decision 2026-07-18. Retired-like, recent stats irrelevant."
- },
- "Xyp9x": {
-  "game_role": "Rifler",
-  "team": "",
-  "reason": "MOUZ assistant coach is a recent staff job like Attacker/NBK-; remembered as Astralis clutch-minister Rifler. User decision 2026-07-18."
- },
- "KrizzeN": {
-  "played_role": "Rifler",
-  "reason": "Current assistant coach; HLTV career profile shows 763 maps with negligible sniper usage, so his playing-era role is Rifler."
- }
+  "AdreN (Kazakh player)": {
+    "game_role": "Rifler",
+    "team": "",
+    "reason": "Current manager role must not erase his historical playing role."
+  },
+  "Olofmeister": {
+    "team": "",
+    "reason": "FaZe affiliation is as a streamer, not as a player."
+  },
+  "S1mple": {
+    "game_role": "AWPer",
+    "reason": "Primary current playing role is AWPer despite mixed Liquipedia role order."
+  },
+  "Tonyblack": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2019-05-08; teamless coaches fall back to it."
+  },
+  "Hooch": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-05-28; teamless coaches fall back to it."
+  },
+  "WaterfaLLZ": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2018-06-22; teamless coaches fall back to it."
+  },
+  "Svyat": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2019-06-15; teamless coaches fall back to it."
+  },
+  "FeTiSh": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2014-11-28; teamless coaches fall back to it."
+  },
+  "Tenzki": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-28; teamless coaches fall back to it."
+  },
+  "Aizy": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2019-06-09; teamless coaches fall back to it."
+  },
+  "Gade": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2021-04-08; teamless coaches fall back to it."
+  },
+  "Devilwalk": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2015-12-08; teamless coaches fall back to it."
+  },
+  "Golden": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2019-06-26; teamless coaches fall back to it."
+  },
+  "Friberg": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-22; teamless coaches fall back to it."
+  },
+  "MaLeK": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2019-08-23; teamless coaches fall back to it."
+  },
+  "Shara": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-13; teamless coaches fall back to it."
+  },
+  "SZPERO": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2015-12-11; teamless coaches fall back to it."
+  },
+  "Furlan": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2015-11-24; teamless coaches fall back to it."
+  },
+  "Snatchie": {
+    "played_role": "AWPer",
+    "reason": "Playing-era role from Liquipedia revision 2018-06-10; teamless coaches fall back to it."
+  },
+  "Gob b": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2019-06-14; teamless coaches fall back to it."
+  },
+  "Spiidi": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2018-05-19; teamless coaches fall back to it."
+  },
+  "Allu": {
+    "played_role": "AWPer",
+    "reason": "Playing-era role from Liquipedia revision 2019-06-07; teamless coaches fall back to it."
+  },
+  "XartE": {
+    "played_role": "AWPer",
+    "reason": "Playing-era role from Liquipedia revision 2015-06-29; teamless coaches fall back to it."
+  },
+  "Polly": {
+    "played_role": "AWPer",
+    "reason": "Playing-era role from Liquipedia revision 2015-06-16; teamless coaches fall back to it."
+  },
+  "Thomas": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2023-05-01; teamless coaches fall back to it."
+  },
+  "GuardiaN": {
+    "played_role": "AWPer",
+    "reason": "Playing-era role from Liquipedia revision 2019-05-02; teamless coaches fall back to it."
+  },
+  "Oskar": {
+    "played_role": "AWPer",
+    "reason": "Playing-era role from Liquipedia revision 2019-04-28; teamless coaches fall back to it."
+  },
+  "Swag": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2015-11-30; teamless coaches fall back to it."
+  },
+  "AdreN (American player)": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-30; teamless coaches fall back to it."
+  },
+  "AbE": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-18; teamless coaches fall back to it."
+  },
+  "Yel": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2019-05-22; teamless coaches fall back to it."
+  },
+  "DAVEY": {
+    "played_role": "AWPer",
+    "reason": "Playing-era role from Liquipedia revision 2016-04-29; teamless coaches fall back to it."
+  },
+  "Yam": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-09-07; teamless coaches fall back to it."
+  },
+  "Karsa": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2018-06-30; teamless coaches fall back to it."
+  },
+  "AumaN": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2020-12-06; teamless coaches fall back to it."
+  },
+  "SANJI": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2019-06-16; teamless coaches fall back to it."
+  },
+  "Marek": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2025-06-20; teamless coaches fall back to it."
+  },
+  "MODDII": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-30; teamless coaches fall back to it."
+  },
+  "Starix": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2017-06-09; teamless coaches fall back to it."
+  },
+  "LEGIJA": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2017-05-15; teamless coaches fall back to it."
+  },
+  "Zews": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2017-06-24; teamless coaches fall back to it."
+  },
+  "Jnt": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2017-04-29; teamless coaches fall back to it."
+  },
+  "HaRts": {
+    "played_role": "IGL",
+    "reason": "HLTV: founding in-game leader of Clan-Mystik"
+  },
+  "Hardstyle": {
+    "played_role": "Rifler",
+    "reason": "Career coach; only Major appearance was as emergency stand-in (FACEIT London 2018)"
+  },
+  "Ryu": {
+    "played_role": "Rifler",
+    "reason": "Career coach (Steve Rattacasa); Major appearance was as stand-in"
+  },
+  "T.c": {
+    "played_role": "Rifler",
+    "reason": "Former Bravado player until 2016; no recorded specialist role"
+  },
+  "Dupreeh": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-04; staff/retired fall back to it."
+  },
+  "Pimp": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-16; staff/retired fall back to it."
+  },
+  "AcilioN": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-30; staff/retired fall back to it."
+  },
+  "F0rest": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-11; staff/retired fall back to it."
+  },
+  "Fifflaren": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-13; staff/retired fall back to it."
+  },
+  "Zeus (Ukrainian player)": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-22; staff/retired fall back to it."
+  },
+  "Crush": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2020-06-08; staff/retired fall back to it."
+  },
+  "GruBy": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-04; staff/retired fall back to it."
+  },
+  "Hyper (Polish player)": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2018-06-07; staff/retired fall back to it."
+  },
+  "Denis": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-22; staff/retired fall back to it."
+  },
+  "DiSTURBED": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-04-12; staff/retired fall back to it."
+  },
+  "Natu": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2018-05-21; staff/retired fall back to it."
+  },
+  "STYKO": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-13; staff/retired fall back to it."
+  },
+  "Maniac": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2018-06-16; staff/retired fall back to it."
+  },
+  "N0thing": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-05-27; staff/retired fall back to it."
+  },
+  "Sgares": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-24; staff/retired fall back to it."
+  },
+  "Zqk": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-03-09; staff/retired fall back to it."
+  },
+  "SPUNJ": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-17; staff/retired fall back to it."
+  },
+  "James": {
+    "played_role": "Rifler",
+    "reason": "Playing-era role from Liquipedia revision 2016-03-10; staff/retired fall back to it."
+  },
+  "CaptainMo": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2016-06-13; staff/retired fall back to it."
+  },
+  "Detrony": {
+    "played_role": "IGL",
+    "reason": "Playing-era role from Liquipedia revision 2018-06-17; staff/retired fall back to it."
+  },
+  "Ceh9": {
+    "played_role": "Rifler",
+    "reason": "Na'Vi entry fragger in his playing era"
+  },
+  "THREAT": {
+    "played_role": "IGL",
+    "reason": "NiP tactician/IGL in his playing era"
+  },
+  "Keshandr": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "ColoN": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "EXR": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "LOMME": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "SKYTTEN": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "Cype": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "Xelos": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "IoRek": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "Centeks": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "Ultra": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "Prb": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "Skurk": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "SnypeR": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "TopguN": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "Cent": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "DeviaNt": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "Racno": {
+    "played_role": "Rifler",
+    "reason": "No recorded historical role on Liquipedia; defaulted to Rifler (low confidence)."
+  },
+  "Gla1ve": {
+    "game_role": "Coach",
+    "reason": "Current 100 Thieves head coach; head coaches retain their current team while remaining outside the active player roster."
+  },
+  "S0tF1k": {
+    "played_role": "Rifler",
+    "reason": "Current assistant coach; HLTV career statistics cover 1470 maps with a 7/100 sniping score, identifying his playing-era role as Rifler."
+  },
+  "NBK-": {
+    "game_role": "Rifler",
+    "team": "",
+    "reason": "Played competitively until 2026; 3DMAX assistant coach since 2026-02 is his first coaching job. Remembered as a player (Rifler)."
+  },
+  "TiziaN": {
+    "game_role": "Rifler",
+    "team": "",
+    "reason": "Played for BIG until 2023, recently moved to assistant coach; remembered as a support Rifler."
+  },
+  "Mou": {
+    "game_role": "Coach",
+    "reason": "Current HOTU head coach; head coaches retain their current team and use the Coach game role."
+  },
+  "Attacker": {
+    "game_role": "Rifler",
+    "team": "",
+    "reason": "Retired 2025-12 and became TYLOO assistant coach; career TYLOO rifler with 6 Majors, not a career coach."
+  },
+  "AZR": {
+    "game_role": "Coach",
+    "reason": "Current FlyQuest head coach; head coaches retain their current team and use the Coach game role."
+  },
+  "ErkaSt": {
+    "team": "",
+    "played_role": "Rifler",
+    "reason": "Removed as FlyQuest coach 2025-08 (AZR is his successor); local team data stale. Playing era 2015-2019 as Rifler (low confidence)."
+  },
+  "SmithZz": {
+    "game_role": "AWPer",
+    "reason": "Remembered as Titan/G2 AWPer (career sniper kills 5434); user decision 2026-07-18, mixed rifle evidence keeps AWPer+Rifler yellow overlap."
+  },
+  "Stewie2K": {
+    "game_role": "IGL",
+    "reason": "Career IGL per HLTV legacy feature (Cloud9/EG); user decision 2026-07-18. Retired-like, recent stats irrelevant."
+  },
+  "Xyp9x": {
+    "game_role": "Rifler",
+    "team": "",
+    "reason": "MOUZ assistant coach is a recent staff job like Attacker/NBK-; remembered as Astralis clutch-minister Rifler. User decision 2026-07-18."
+  },
+  "KrizzeN": {
+    "played_role": "Rifler",
+    "reason": "Current assistant coach; HLTV career profile shows 763 maps with negligible sniper usage, so his playing-era role is Rifler."
+  },
+  "Rain": {
+    "game_role": "Rifler",
+    "reason": "User-confirmed 2026-07-24: Gizmy (joined 100T 2026-07-01, Liquipedia roles igl,rifler) is the current in-game leader; Rain's igl tag is a leftover from his earlier calling stint and Liquipedia currently tags both as igl on the same roster. His weapon role is entry -> Rifler."
+  },
+  "Moseyuh": {
+    "game_role": "Rifler",
+    "reason": "User-confirmed 2026-07-24: Mercury is TYLOO's current IGL (his Liquipedia igl tag appeared 2025-07-15, rev 3166086); Moseyuh's igl tag is a leftover from his earlier calling stint (sole role 'igl' as of 2024-12, rev 3010054, 'igl,rifle' since 2025-07) and was never removed after the handover. Current weapon role is rifle -> Rifler."
+  },
+  "Stavn": {
+    "game_role": "AWPer",
+    "reason": "User-confirmed 2026-07-24: stavn is NIP's AWPer - NIP benched AWPer r1nkle on 2026-04-15 and signed stavn as his replacement (Liquipedia NIP team page); his player infobox has carried rifle,awp (rifle first) unchanged since 2021 across Heroic/Astralis/NIP, so role-order normalization kept Rifler. Snappi is NIP's IGL. HLTV confirmed 2026-07-24: past-3-months 54 maps, Sniping 91/100.",
+    "hltv_profile": "https://www.hltv.org/player/10994/stavn"
+  },
+  "Npl": {
+    "game_role": "Rifler",
+    "reason": "Liquipedia B8 team page audit 2026-07-24: infobox igl field and roster row igl=y both point to alex666 as the sole current IGL; npl called for B8 after his 2025-08-04 permanent move (player-page roles igl,rifle since 2025-08, rev 3191300) but handed calling to alex666 (whose igl tag appeared by 2026-03-31, rev 3352910); npl's roster row carries no igl flag."
+  },
+  "Brollan": {
+    "game_role": "Rifler",
+    "reason": "Liquipedia HEROIC team page audit 2026-07-24: infobox igl field and roster row igl=y both point to Chr1zN (career IGL, joined 2025-11-28 from OG); Brollan's igl tag stems from his MOUZ calling stint (roles igl,entry since 2025-11-18, rev 3273605) and followed him through the 2026-07-07 transfer, but his HEROIC roster row has no igl flag. Entry profile -> Rifler."
+  }
 }

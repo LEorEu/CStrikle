@@ -123,6 +123,10 @@ docker compose ps
 .\.venv\Scripts\python -X utf8 scraper\fetch_images.py   # 照片(600px)/队标/国旗 -> data/img/
 ```
 
+直接跑会立即覆盖正式库;更稳的方式是走 staging(管理页「数据更新」
+就是这么做的,也可手动 `--out data/players.staging.json` 后在管理页
+过目 diff 再发布)。
+
 重启服务生效。选手照片约 40MB;战队图标会自动从 Liquipedia commons
 挑适合深色底的 icon/darkmode 变体。数据与图片署名:Liquipedia
 (CC-BY-SA 3.0),国旗来自 flagcdn。
@@ -142,6 +146,7 @@ Cloudflare 拒绝。维护工具使用本机普通 Chrome 低速访问公开选�
 
 # 查看并编辑 .cache/hltv/role_review.json：
 # 只有人工确认后才给对应条目填写 decision，例如 "IGL" 或 "Rifler"
+# (也可以不手编 JSON,直接在管理页「HLTV 审核」标签里表单填写)
 
 # 第一次仅预览；确认无误后才实际写入 player_overrides.json
 .\.venv\Scripts\python -X utf8 scripts\sync_hltv_roles.py apply
@@ -155,6 +160,46 @@ Cloudflare 拒绝。维护工具使用本机普通 Chrome 低速访问公开选�
 建议先按队伍或争议名单分批传给 `--players`，稍后重跑会复用成功缓存。
 若本机没有 Chrome，可执行 `python -m playwright install chromium`，并
 传入 `--browser-channel bundled`。
+
+### 管理页面(/admin)
+
+在 `.env` 设置 `ADMIN_TOKEN` 后才存在(未配置时 `/admin` 与
+`/api/admin/*` 一律 404,线上默认关闭);页面首次进入输入口令,
+之后所有管理接口靠 `X-Admin-Token` 头校验:
+
+```ini
+ADMIN_TOKEN=换成随机长口令
+```
+
+浏览器打开 `http://127.0.0.1:8620/admin`,五个标签页:
+
+- **反馈收件箱**:玩家纠错(`feedback.jsonl`)按选手分组展示,一键跳到
+  对应选手编辑;可标记已处理/重开并留备注。处理状态存在同目录的
+  `*.state.json`(按行内容哈希定位),原始 JSONL 永远只追加、不改写
+- **选手编辑**:搜索定位(ID/真实姓名,变音符号折叠)后,对照
+  「爬取值 / 生效值」编辑 override:战队、状态、位置、选手期位置、
+  生日,`reason` 必填。只写 `data/player_overrides.json`(人工修正层),
+  从不改动生成物 `players.json`,scraper 重跑不丢;保存后自动热重载,
+  进行中的对局不受影响,也不用重启进程
+- **数据体检**:缺生日/缺位置/缺照片/缺国籍/年龄异常/非谜底池/
+  同队多指挥(现役阵容 ≥2 个 IGL,交接指挥后上游残留旧标签的典型症状)
+  七类清单,主动发现问题而不是等玩家反馈,点选手直达编辑器
+- **数据更新**:一键触发「完整重建」(全量,约 3 分钟)或「快速刷新」
+  (只更新战队/状态/位置,约 1 分钟),子进程写入
+  `data/players.staging.json` 并实时看日志,不碰正式库;跑完展示与
+  现库的逐字段 diff(新增/移除/转会等变动),人工过目后「发布」——
+  自动备份 `players.json.bak`、替换正式库并热重载。staging 人数比现库
+  骤降 20% 以上时(上游页面异常的典型症状)拒绝发布,需二次确认。
+  「补齐图片」按钮增量抓新选手照片/队标,完成后自动重载
+- **HLTV 审核**:把 `role_review.json` 表单化——逐条查看证据
+  (HLTV 主页链接、近三月地图数、Sniping 百分比、IGL 新闻)后填
+  decision,再「预览 apply / 写入 overrides」,复用脚本的保护逻辑
+  (已有人工角色默认跳过,替换需显式勾选),写入后自动热重载;
+  `collect` 采集本身仍需本机 Chrome 在命令行跑
+
+只读容器部署时,线上直改 override 需把 `data/player_overrides.json`
+所在目录挂成可写卷(反馈状态文件跟随 `FEEDBACK_PATH`);不挂也可以
+本地改完随镜像/卷发布,管理页会明确报写入失败。
 
 ## 结构
 
@@ -172,5 +217,6 @@ server/game.py            反馈比对 + 单人对局
 server/rooms.py           对战房间 + WebSocket + 整局限时 + AI 调度
 server/ai_player.py       LLM agent(native/text 双协议 + 全程转录)
 server/main.py            FastAPI 入口
-static/                   前端(原生 JS 单页,无构建)
+server/admin.py           管理页接口(反馈收件箱/override 编辑/体检/热重载)
+static/                   前端(原生 JS 单页,无构建;admin.* 为管理页)
 ```

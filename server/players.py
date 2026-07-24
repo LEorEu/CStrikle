@@ -281,7 +281,7 @@ class PlayerDB:
         for rec in raw["players"]:
             merged = dict(rec)
             override = overrides.get(str(rec.get("page", "")).casefold(), {})
-            for key in ("team", "status", "game_role"):
+            for key in ("team", "status", "game_role", "birth_date"):
                 if key in override:
                     merged[key] = override[key]
             merged["majors"] = apply_major_results(

@@ -64,6 +64,22 @@
           "url": "https://www.hltv.org/stats/players/16149/machinewjq"
         }
       ]
+    },
+    "Stavn": {
+      "hltv_id": 10994,
+      "slug": "stavn",
+      "nickname": "stavn",
+      "real_name": "Martin Lund",
+      "aliases": [],
+      "role_evidence": []
+    },
+    "Npl": {
+      "hltv_id": 21708,
+      "slug": "npl",
+      "nickname": "npl",
+      "real_name": "Andrii Kukharskyi",
+      "aliases": [],
+      "role_evidence": []
     }
   }
 }

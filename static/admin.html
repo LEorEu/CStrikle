@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>CSTRIKLE · 管理</title>
+<link rel="icon" href="/static/favicon.jpg">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/admin.css">
+</head>
+<body class="admin-body">
+
+<header>
+  <h1>CSTRIKLE<span class="sub">ADMIN</span></h1>
+  <div class="meta">
+    <span id="metaDb">--</span>
+    <span id="metaCount">--</span>
+    <button id="btnReload" class="mini-btn" title="重新加载 players.json / overrides / 图片索引">重载数据库</button>
+    <button id="btnLogout" class="mini-btn" title="清除本机保存的管理口令">退出</button>
+  </div>
+</header>
+
+<main>
+  <!-- 口令 -->
+  <section id="viewLogin" class="hidden">
+    <div class="login-box">
+      <h2>管理口令</h2>
+      <p class="dim">输入服务端 ADMIN_TOKEN 配置的口令。</p>
+      <form id="loginForm">
+        <input id="loginToken" type="password" placeholder="ADMIN_TOKEN" autocomplete="current-password">
+        <button type="submit">进入</button>
+      </form>
+      <p id="loginErr" class="err hidden"></p>
+    </div>
+  </section>
+
+  <div id="viewMain" class="hidden">
+    <nav class="admin-tabs">
+      <button data-tab="feedback" class="on">反馈收件箱 <span id="fbBadge" class="badge hidden"></span></button>
+      <button data-tab="players">选手编辑</button>
+      <button data-tab="health">数据体检</button>
+      <button data-tab="update">数据更新 <span id="stgBadge" class="badge hidden"></span></button>
+      <button data-tab="hltv">HLTV 审核 <span id="hltvBadge" class="badge hidden"></span></button>
+    </nav>
+
+    <!-- 反馈 -->
+    <section id="tab-feedback">
+      <div class="bar">
+        <label><input type="checkbox" id="fbShowResolved"> 显示已处理</label>
+        <button id="fbRefresh" class="mini-btn">刷新</button>
+      </div>
+      <div id="fbList"></div>
+    </section>
+
+    <!-- 选手 -->
+    <section id="tab-players" class="hidden">
+      <div class="bar">
+        <input id="pSearch" placeholder="搜索 ID / 真实姓名 / page,回车确认" autocomplete="off">
+      </div>
+      <div id="pResults"></div>
+      <div id="pEditor" class="hidden"></div>
+    </section>
+
+    <!-- 体检 -->
+    <section id="tab-health" class="hidden">
+      <div class="bar">
+        <span class="dim">主动发现缺失/异常数据,点选手可跳到编辑器。</span>
+        <button id="hRefresh" class="mini-btn">刷新</button>
+      </div>
+      <div id="hList"></div>
+    </section>
+
+    <!-- 数据更新:staging + diff + 发布 -->
+    <section id="tab-update" class="hidden">
+      <div class="bar">
+        <button id="jobBuild" class="mini-btn" title="Liquipedia 全量重建 -> staging,约 3 分钟">完整重建</button>
+        <button id="jobRefresh" class="mini-btn" title="只刷新战队/状态/位置 -> staging,较快">快速刷新</button>
+        <button id="jobImages" class="mini-btn" title="增量补选手照片/队标/国旗(直接生效,与 staging 无关)">补齐图片</button>
+        <span class="dim">抓取写入 staging,人工过目 diff 后再发布;发布前自动备份 players.json.bak</span>
+        <button id="stgRefresh" class="mini-btn">刷新</button>
+      </div>
+      <div id="jobBox" class="hidden">
+        <div class="job-head"><span id="jobTitle"></span></div>
+        <pre id="jobLog"></pre>
+      </div>
+      <div id="stgBox"></div>
+    </section>
+
+    <!-- HLTV 角色审核 -->
+    <section id="tab-hltv" class="hidden">
+      <div class="bar">
+        <label><input type="checkbox" id="hltvOnlyPending" checked> 只看未决</label>
+        <label title="默认保护已有人工角色,勾选后允许替换"><input type="checkbox" id="hltvReplace"> 替换已有 override</label>
+        <button id="hltvPreview" class="mini-btn">预览 apply</button>
+        <button id="hltvWrite" class="mini-btn">写入 overrides</button>
+        <button id="hltvRefresh" class="mini-btn">刷新</button>
+      </div>
+      <pre id="hltvApplyOut" class="hidden"></pre>
+      <div id="hltvList"></div>
+    </section>
+  </div>
+</main>
+
+<div id="toast" class="hidden"></div>
+<script src="/static/admin.js"></script>
+</body>
+</html>

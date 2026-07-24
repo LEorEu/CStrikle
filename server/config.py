@@ -54,5 +54,10 @@ FEEDBACK_RATE_WINDOW_SECONDS = max(
     60, int(os.getenv("FEEDBACK_RATE_WINDOW_SECONDS", "600"))
 )
 
+# 管理页面:设置 ADMIN_TOKEN 后 /admin 与 /api/admin/* 才存在,
+# 否则一律 404(线上默认关闭)。编辑写 data/player_overrides.json,
+# 只读容器部署时需把该文件所在目录挂成可写卷才能在线上直改。
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
+
 # 调试:开启后暴露 /api/room/{code}/debug_answer(仅本地测试用)
 DEBUG = os.getenv("CSTRIKLE_DEBUG", "0") not in ("0", "false", "")

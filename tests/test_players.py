@@ -11,7 +11,9 @@ class PlayerDatabaseTests(unittest.TestCase):
         cls.db = PlayerDB()
 
     def test_unresolved_stubs_are_removed(self):
-        self.assertEqual(self.db.excluded_stubs, 7)
+        # 空壳条目(除昵称外全空)必须被剔除;具体数量随数据快照浮动,
+        # 不做硬编码 —— 2026-07 重跑后上游已能全部解析,允许为 0。
+        self.assertTrue(all(p.is_searchable for p in self.db.players))
         pages = set(self.db.by_page)
         self.assertNotIn("ALEX", pages)
         self.assertNotIn("AdreN", pages)

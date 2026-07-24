@@ -13,4 +13,9 @@ progress.md
 
 # runtime player feedback
 data/feedback.jsonl
+data/feedback.state.json
 feedback/
+
+# admin staging / promote artifacts
+data/players.staging.json
+data/players.json.bak

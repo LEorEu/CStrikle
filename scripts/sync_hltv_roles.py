@@ -613,9 +613,17 @@ def collect_one(
 ) -> dict:
     candidate = mapped_candidate(local, stable_map)
     match_reason = "使用已人工确认的稳定映射"
+    search_error = None
     if not candidate:
-        candidates = collector.search_players(local.get("nickname") or local["page"])
-        candidate, match_reason = choose_candidate(local, candidates)
+        try:
+            candidates = collector.search_players(
+                local.get("nickname") or local["page"]
+            )
+            candidate, match_reason = choose_candidate(local, candidates)
+        except RuntimeError as exc:
+            # 搜索页被拒不能中断整批采集；按人记录错误，交给熔断器统计。
+            candidate, match_reason = None, f"HLTV 搜索失败：{exc}"
+            search_error = str(exc)
     base = {
         "local_page": local.get("page"),
         "nickname": local.get("nickname"),
@@ -641,6 +649,7 @@ def collect_one(
         "error": None,
     }
     if not candidate:
+        base["error"] = search_error
         base["suggestion"] = {
             "suggested_role": None,
             "confidence": "manual",

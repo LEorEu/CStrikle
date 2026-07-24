@@ -528,7 +528,7 @@ def unresolved_blast_titles(pool: dict, blast: list[dict]) -> list[str]:
 
 
 # ------------------------------------------------------------------ main
-def build(include_blast: bool = True):
+def build(include_blast: bool = True, out: Path | None = None):
     DATA.mkdir(exist_ok=True)
     with httpx.Client(headers={"User-Agent": UA, "Accept-Encoding": "gzip"},
                       timeout=60) as client:
@@ -635,18 +635,19 @@ def build(include_blast: bool = True):
             miss += 1
             print(f"  ! no page for blast player: {t}")
 
-    out = {
+    out_doc = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "source": "liquipedia.net (CC-BY-SA 3.0) + blast.tv puzzle identity list",
         "count": len(players),
         "players": players,
     }
-    path = DATA / "players.json"
-    path.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    path = out or (DATA / "players.json")
+    path.write_text(json.dumps(out_doc, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"done: {len(players)} players -> {path}  (dups merged: {dup}, missing: {miss})")
 
 
-def refresh_existing(path: Path = DATA / "players.json") -> None:
+def refresh_existing(path: Path = DATA / "players.json",
+                     out: Path | None = None) -> None:
     """Refresh current role/team fields without rebuilding Major/manual records."""
     raw = json.loads(path.read_text(encoding="utf-8"))
     players = raw.get("players")
@@ -684,7 +685,8 @@ def refresh_existing(path: Path = DATA / "players.json") -> None:
 
     raw["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     raw["players"] = refreshed
-    path.write_text(
+    target = out or path
+    target.write_text(
         json.dumps(raw, ensure_ascii=False, indent=1),
         encoding="utf-8",
     )
@@ -705,11 +707,18 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="refresh current team/status/roles while preserving existing records",
     )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="write result to this path instead of data/players.json "
+             "(staging workflow: --out data/players.staging.json)",
+    )
     args = parser.parse_args(argv)
     if args.refresh_existing:
-        refresh_existing()
+        refresh_existing(out=args.out)
     else:
-        build(include_blast=not args.no_blast)
+        build(include_blast=not args.no_blast, out=args.out)
 
 
 if __name__ == "__main__":

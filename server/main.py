@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config
+from .admin import build_admin_router
 from .game import Game, normalize_settings
 from .players import REGIONS, PlayerDB
 from .rooms import RoomStore
@@ -23,6 +24,7 @@ app = FastAPI(title="cstrikle")
 
 db = PlayerDB()
 rooms = RoomStore(db)
+app.include_router(build_admin_router(db))
 games: dict[str, tuple[float, Game]] = {}
 _ai_room_attempts: dict[str, deque[float]] = {}
 _feedback_attempts: dict[str, deque[float]] = {}
