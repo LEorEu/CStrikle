@@ -127,9 +127,26 @@ docker compose ps
 就是这么做的,也可手动 `--out data/players.staging.json` 后在管理页
 过目 diff 再发布)。
 
-重启服务生效。选手照片约 40MB;战队图标会自动从 Liquipedia commons
+重启服务生效。选手照片约 24MB;战队图标会自动从 Liquipedia commons
 挑适合深色底的 icon/darkmode 变体。数据与图片署名:Liquipedia
 (CC-BY-SA 3.0),国旗来自 flagcdn。
+
+### 图片投递
+
+- **尺寸不缩**:结算揭晓卡按 240px 渲染,高分屏要 480px,所以照片保持
+  600px 源尺寸
+- **PNG 照片自动转同尺寸 WebP**:Liquipedia 常给抠图 PNG,照片内容用
+  无损格式存等于白扔几百 KB(最大一张 935KB → 56KB);四分之三真的带
+  透明背景,所以只能转 WebP 不能转 JPEG。`fetch_images.py` 下载后就转,
+  老库补转一次用 `scraper/convert_photos_webp.py`(需要 Pillow,见
+  `requirements-maintenance.txt`;`scraper/` 不进运行时镜像)
+- **URL 带内容哈希**:`server/players.py` 的 `_img()` 给每个图片地址加
+  `?v=<内容哈希>`,配 `Cache-Control: immutable` 永久缓存。哈希按
+  (大小, mtime) 缓存但取自内容,所以重新部署把时间戳刷了也不会让全站
+  图片缓存失效——只有图真的换了 URL 才变。裸地址(不带 `?v=`)只给一天,
+  免得换了同名图片的人被钉死在旧版本
+- `.webp` 必须在 `server/main.py` 显式 `mimetypes.add_type`:slim 镜像
+  没有 `/etc/mime.types`,Python 自带映射到 3.12 都还不认它
 
 ### HLTV 角色审核（本地维护）
 

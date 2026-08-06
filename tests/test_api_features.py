@@ -19,6 +19,42 @@ class ApiFeatureTests(unittest.TestCase):
         main._match_results.clear()
         main._feedback_attempts.clear()
 
+    # ------------------------------------------------------- image cache
+    def test_image_urls_carry_content_version(self):
+        players = self.client.get("/api/players").json()
+        players = players["players"] if isinstance(players, dict) else players
+        photos = [p["photo"] for p in players if p.get("photo")]
+        self.assertTrue(photos)
+        self.assertTrue(all("?v=" in u for u in photos), photos[:3])
+
+    def test_versioned_images_are_cached_immutably(self):
+        players = self.client.get("/api/players").json()
+        players = players["players"] if isinstance(players, dict) else players
+        photo = next(p["photo"] for p in players if p.get("photo"))
+        path, _, query = photo.partition("?")
+
+        # 带版本号:内容变了 URL 就会变,所以可以永久缓存
+        r = self.client.get(photo)
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("immutable", r.headers["cache-control"])
+        # slim 镜像没有 mime.types,.webp 不显式注册就会发成 octet-stream
+        self.assertTrue(r.headers["content-type"].startswith("image/"),
+                        r.headers["content-type"])
+
+        # 不带版本号的裸地址不能永久缓存,否则换了同名图片的人会被钉死
+        r = self.client.get(path)
+        self.assertEqual(r.status_code, 200)
+        self.assertNotIn("immutable", r.headers["cache-control"])
+        self.assertIn("max-age", r.headers["cache-control"])
+
+    def test_photo_library_has_no_oversized_files(self):
+        # 照片是 HTTP/2 单连接上的大头,一张几百 KB 的图会把同批小图全堵住
+        from server import players as players_mod
+
+        big = [p for p in (players_mod.IMG_DIR / "players").iterdir()
+               if p.is_file() and p.stat().st_size > 200_000]
+        self.assertEqual(big, [], f"照片过大: {[p.name for p in big]}")
+
     # ------------------------------------------------------------ top20
     def test_meta_exposes_top20_pool_size(self):
         sizes = self.client.get("/api/meta").json()["pool_sizes"]

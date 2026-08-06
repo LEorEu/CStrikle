@@ -1,2 +1,5 @@
 -r requirements.txt
 playwright>=1.55,<2
+# scraper/fetch_images.py 把 PNG 照片转成同尺寸 WebP;scraper/ 不进运行时
+# 镜像,所以服务端不需要 Pillow
+Pillow>=11,<13

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Player database loading, indexing and pool filtering."""
+import hashlib
 import json
 import unicodedata
 from datetime import date
@@ -16,6 +17,7 @@ def _fold(s: str) -> str:
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "players.json"
 IMAGES_PATH = Path(__file__).resolve().parent.parent / "data" / "images.json"
+IMG_DIR = Path(__file__).resolve().parent.parent / "data" / "img"
 OVERRIDES_PATH = Path(__file__).resolve().parent.parent / "data" / "player_overrides.json"
 HLTV_MAP_PATH = Path(__file__).resolve().parent.parent / "data" / "hltv_player_map.json"
 TOP20_PATH = Path(__file__).resolve().parent.parent / "data" / "hltv_top20.json"
@@ -61,8 +63,35 @@ CHINA_COUNTRY_LABELS = {
 }
 
 
+# 图片 URL 的内容版本号。哈希按 (大小, mtime) 缓存:重新部署/重抓时文件
+# 时间戳常常变而内容没变,那时只是重算一次哈希,URL 保持不变,浏览器缓存
+# 不会被无谓作废;内容真变了哈希才变,URL 随之变化,新图立刻生效。
+# 缓存是模块级的,管理页热重载不会重新读盘。
+_IMG_VERSIONS: dict[tuple[str, int, int], str] = {}
+
+
+def _img_version(path: Path) -> str:
+    try:
+        st = path.stat()
+    except OSError:
+        return ""
+    key = (str(path), st.st_size, st.st_mtime_ns)
+    version = _IMG_VERSIONS.get(key)
+    if version is None:
+        try:
+            digest = hashlib.blake2b(path.read_bytes(), digest_size=5)
+        except OSError:
+            return ""
+        version = digest.hexdigest()
+        _IMG_VERSIONS[key] = version
+    return version
+
+
 def _img(rel: str | None) -> str | None:
-    return f"/img/{rel}" if rel else None
+    if not rel:
+        return None
+    version = _img_version(IMG_DIR / rel)
+    return f"/img/{rel}?v={version}" if version else f"/img/{rel}"
 
 
 def _age(birth_date: str, today: date) -> int | None:

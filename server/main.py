@@ -2,6 +2,7 @@
 """cstrikle server: REST + WebSocket + static frontend."""
 import json
 import logging
+import mimetypes
 import secrets
 import threading
 import time
@@ -412,11 +413,37 @@ async def room_ws(ws: WebSocket, code: str, token: str = ""):
 
 
 # ---------------------------------------------------------------- static
+# python-slim 里没有 /etc/mime.types,而 Python 自带的映射表到 3.12 都还
+# 不认 .webp,不注册的话选手照片会以 application/octet-stream 发出去。
+mimetypes.add_type("image/webp", ".webp")
+
+
+class VersionedStatic(StaticFiles):
+    """图片带缓存头。Starlette 的 StaticFiles 只发 ETag/Last-Modified,不发
+    Cache-Control,浏览器只能按启发式(过期时间 = 文件年龄的 10%)猜,于是
+    刚更新过的文件每次都要回源验证——一次数据更新就能让每行猜测多等几百毫秒。
+
+    players.py 给图片 URL 带了内容哈希 `?v=`,内容变了 URL 就变,所以带
+    版本号的请求可以永久缓存;不带的(直接访问 /img/x.jpg)只给一天,免得
+    某天换了同名图片的人被钉死在旧版本上。"""
+
+    IMMUTABLE = "public, max-age=31536000, immutable"
+    VERSIONED_ONLY = "public, max-age=86400"
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        response = super().file_response(full_path, stat_result, scope,
+                                         status_code)
+        versioned = b"v=" in scope.get("query_string", b"")
+        response.headers["Cache-Control"] = (
+            self.IMMUTABLE if versioned else self.VERSIONED_ONLY)
+        return response
+
+
 static_dir = ROOT / "static"
 img_dir = ROOT / "data" / "img"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 if img_dir.exists():
-    app.mount("/img", StaticFiles(directory=img_dir), name="img")
+    app.mount("/img", VersionedStatic(directory=img_dir), name="img")
 
 
 @app.get("/")

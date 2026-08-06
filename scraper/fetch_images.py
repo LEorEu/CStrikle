@@ -21,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import httpx
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from scraper.build_db import API, RATE_SECONDS, UA, api_get  # noqa: E402
@@ -171,6 +172,49 @@ def get_thumb_urls(client, filenames, width=256):
     return out
 
 
+# 选手照片:Liquipedia 给的常是抠图 PNG,照片内容用无损格式存等于白扔几百 KB
+# (全库最大的一张 935KB,转 WebP 后 56KB,同尺寸看不出差别)。不能转 JPEG——
+# 四分之三的 PNG 真的带透明背景,转了会变成黑底方块。只处理照片:队标和国旗
+# 本来就只有几 KB,转换省不下什么,却会让所有人的缓存失效。
+PHOTO_WEBP_QUALITY = 82
+
+
+def photo_to_webp(path: Path) -> Path:
+    """PNG 照片就地转同尺寸 WebP,返回最终路径(非 PNG 或转换无收益则原样返回)。"""
+    if path.suffix.lower() != ".png" or not path.exists():
+        return path
+    dest = path.with_suffix(".webp")
+    try:
+        with Image.open(path) as im:
+            has_alpha = im.mode in ("RGBA", "LA") or (
+                im.mode == "P" and "transparency" in im.info)
+            im.convert("RGBA" if has_alpha else "RGB").save(
+                dest, "WEBP", quality=PHOTO_WEBP_QUALITY, method=6)
+    except Exception as e:
+        print(f"  ! webp convert failed {path.name}: {e}")
+        dest.unlink(missing_ok=True)
+        return path
+    if dest.stat().st_size >= path.stat().st_size:
+        dest.unlink(missing_ok=True)      # 极少数已经很小的图,转了反而更大
+        return path
+    path.unlink()
+    return dest
+
+
+def photos_to_webp(players_map: dict) -> dict:
+    """把 players_map 里的 PNG 全部转成 WebP,返回更新后的映射。"""
+    out, saved = {}, 0
+    for page, rel in players_map.items():
+        path = IMG / rel
+        new = photo_to_webp(path)
+        if new != path:
+            saved += 1
+        out[page] = f"players/{new.name}"
+    if saved:
+        print(f"  converted {saved} png photos to webp")
+    return out
+
+
 def download_all(jobs, headers):
     """jobs: [(url, dest_path)] -> set of dest paths that exist afterwards."""
     ok = set()
@@ -236,6 +280,11 @@ def main():
             continue
         ext = ".png" if ".png" in url.lower() else ".jpg"
         dest = IMG / "players" / (slug(page) + ext)
+        converted = dest.with_suffix(".webp")
+        if ext == ".png" and converted.exists():
+            # 上一轮已经转过 WebP,别再把同一张 PNG 重抓一遍
+            players_map[page] = f"players/{converted.name}"
+            continue
         jobs.append((url, dest))
         players_map[page] = f"players/{dest.name}"
     shutil.rmtree(IMG / "teams", ignore_errors=True)   # 变体可能更换,全量重下
@@ -261,6 +310,7 @@ def main():
         flags_map[country] = f"flags/{iso.lower()}.png"
 
     done = download_all(jobs, headers)
+    players_map = photos_to_webp(players_map)
     players_map = {k: v for k, v in players_map.items() if (IMG / v).exists()}
     teams_map = {k: v for k, v in teams_map.items() if (IMG / v).exists()}
     flags_map = {k: v for k, v in flags_map.items() if (IMG / v).exists()}

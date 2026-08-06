@@ -206,7 +206,8 @@ class PlayerDatabaseTests(unittest.TestCase):
         self.assertEqual(mainland.brief()["country"], "中国")
         self.assertEqual(hong_kong.brief()["country"], "中国香港")
         self.assertEqual(taiwan.full()["country"], "中国台湾")
-        self.assertEqual(mainland.flag, "/img/flags/cn.png")
+        # 图片 URL 带内容哈希(?v=),这里只关心三地共用同一面旗
+        self.assertEqual(mainland.flag.split("?")[0], "/img/flags/cn.png")
         self.assertEqual(hong_kong.flag, mainland.flag)
         self.assertEqual(taiwan.flag, mainland.flag)
 
