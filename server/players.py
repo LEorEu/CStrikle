@@ -133,6 +133,13 @@ class Player:
 
     @property
     def is_head_coach(self) -> bool:
+        # 人工层显式指定 Coach 时以人工为准:上游把人挂成助教/无角色,
+        # 但公认就是这队主教练的情况(S0tF1k@Spirit),否则会被下面
+        # 的 team_resolution 判成非主教练而清空战队,变成"自由身教练"。
+        # game_role 只有 override 能填 Coach——played_role 回退永远
+        # 只产出 IGL/AWPer/Rifler,不会误触发。
+        if self.game_role == "Coach":
+            return True
         if self.team_resolution:
             return self.team_resolution in {
                 "single_current_head_coach_team",

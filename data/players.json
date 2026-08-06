@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-23T07:34:37+00:00",
+ "generated_at": "2026-08-06T03:02:22+00:00",
  "source": "liquipedia.net (CC-BY-SA 3.0) + blast.tv puzzle identity list",
  "count": 650,
  "players": [
@@ -949,19 +949,12 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2002-4-29",
-   "team": "TDK",
-   "source_team": "TDK",
+   "team": "1w Team",
+   "source_team": "1w Team",
    "current_team_history": [
     {
-     "period": "2025-07-28 — Present",
-     "team": "BetBoom Team",
-     "details": [
-      "Inactive"
-     ]
-    },
-    {
-     "period": "2026-01-17 — Present",
-     "team": "TDK",
+     "period": "2026-08-01 — Present",
+     "team": "1w Team",
      "details": []
     }
    ],
@@ -1086,12 +1079,12 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2001-6-15",
-   "team": "TDK",
-   "source_team": "TDK",
+   "team": "1w Team",
+   "source_team": "1w Team",
    "current_team_history": [
     {
-     "period": "2026-01-17 — Present",
-     "team": "TDK",
+     "period": "2026-08-01 — Present",
+     "team": "1w Team",
      "details": []
     }
    ],
@@ -1906,10 +1899,10 @@
      ]
     }
    ],
-   "team_resolution": "no_current_head_coach_team",
+   "team_resolution": "staff_role:assistant coach",
    "status": "Active",
    "roles": [
-    "coach"
+    "assistant coach"
    ],
    "majors_count": 2,
    "first_major_year": 2018,
@@ -2314,10 +2307,16 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2000-01-03",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "Butterfly (Russian team)",
+   "source_team": "Butterfly (Russian team)",
+   "current_team_history": [
+    {
+     "period": "2026-08-01 — Present",
+     "team": "Butterfly (Russian team)",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "rifle"
@@ -2519,17 +2518,9 @@
    "region": "CIS",
    "birth_date": "1999-11-24",
    "team": "",
-   "source_team": "Virtus.pro",
-   "current_team_history": [
-    {
-     "period": "2026-02-04 — Present",
-     "team": "Virtus.pro",
-     "details": [
-      "Inactive"
-     ]
-    }
-   ],
-   "team_resolution": "no_current_player_roster",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "igl",
@@ -2664,18 +2655,16 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2000-12-21",
-   "team": "",
-   "source_team": "Virtus.pro",
+   "team": "PARIVISION",
+   "source_team": "PARIVISION",
    "current_team_history": [
     {
-     "period": "2026-02-14 - Present",
-     "team": "Virtus.pro",
-     "details": [
-      "Inactive"
-     ]
+     "period": "2026-07-29 — Present",
+     "team": "PARIVISION",
+     "details": []
     }
    ],
-   "team_resolution": "no_current_player_roster",
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "lurk"
@@ -2835,10 +2824,16 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2001-11-13",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "lavked",
+   "source_team": "lavked",
+   "current_team_history": [
+    {
+     "period": "2026-06-?? — Present",
+     "team": "lavked",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "entry"
@@ -3209,19 +3204,12 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2003-03-03",
-   "team": "TDK",
-   "source_team": "TDK",
+   "team": "1w Team",
+   "source_team": "1w Team",
    "current_team_history": [
     {
-     "period": "2026-02-14 — Present",
-     "team": "Virtus.pro",
-     "details": [
-      "Inactive"
-     ]
-    },
-    {
-     "period": "2026-07-17 — Present",
-     "team": "TDK",
+     "period": "2026-08-01 — Present",
+     "team": "1w Team",
      "details": []
     }
    ],
@@ -3364,14 +3352,21 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2002-09-10",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "K27 Academy",
+   "source_team": "K27 Academy",
+   "current_team_history": [
+    {
+     "period": "2026-08-01 — Present",
+     "team": "K27 Academy",
+     "details": [
+      "Coach"
+     ]
+    }
+   ],
+   "team_resolution": "single_current_head_coach_team",
    "status": "Active",
    "roles": [
-    "rifle",
-    "igl"
+    "coach"
    ],
    "majors_count": 1,
    "first_major_year": 2025,
@@ -3683,8 +3678,8 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2004-01-14",
-   "team": "TDK",
-   "source_team": "TDK",
+   "team": "1w Team",
+   "source_team": "1w Team",
    "current_team_history": [
     {
      "period": "2026-06-17 — Present",
@@ -3694,9 +3689,11 @@
      ]
     },
     {
-     "period": "2026-07-17 — Present",
-     "team": "TDK",
-     "details": []
+     "period": "2026-08-01 — Present",
+     "team": "1w Team",
+     "details": [
+      "Loan"
+     ]
     }
    ],
    "team_resolution": "single_current_player_roster",
@@ -7464,16 +7461,8 @@
    "region": "Europe",
    "birth_date": "1991-4-7",
    "team": "",
-   "source_team": "ALGO Esports",
-   "current_team_history": [
-    {
-     "period": "2026-04-30 — Present",
-     "team": "ALGO Esports",
-     "details": [
-      "Head of CS"
-     ]
-    }
-   ],
+   "source_team": "",
+   "current_team_history": [],
    "team_resolution": "staff_role:coach manager",
    "status": "Active",
    "roles": [
@@ -13490,16 +13479,10 @@
    "country": "Ukraine",
    "region": "CIS",
    "birth_date": "1993-7-2",
-   "team": "FAVBET Team",
-   "source_team": "Favbet Team",
-   "current_team_history": [
-    {
-     "period": "2024-05-20 — Present",
-     "team": "FAVBET Team",
-     "details": []
-    }
-   ],
-   "team_resolution": "single_current_player_roster",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "igl",
@@ -13716,18 +13699,10 @@
    "country": "Ukraine",
    "region": "CIS",
    "birth_date": "1992-08-12",
-   "team": "ALGO Esports",
-   "source_team": "ALGO Esports",
-   "current_team_history": [
-    {
-     "period": "2025-04-16 — Present",
-     "team": "ALGO Esports",
-     "details": [
-      "Coach"
-     ]
-    }
-   ],
-   "team_resolution": "single_current_head_coach_team",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "no_current_head_coach_team",
    "status": "Active",
    "roles": [
     "coach"
@@ -13825,16 +13800,8 @@
    "region": "CIS",
    "birth_date": "1995-08-12",
    "team": "",
-   "source_team": "FAVBET Team",
-   "current_team_history": [
-    {
-     "period": "2025-01-13 — Present",
-     "team": "FAVBET Team",
-     "details": [
-      "Analyst"
-     ]
-    }
-   ],
+   "source_team": "",
+   "current_team_history": [],
    "team_resolution": "staff_role:analyst",
    "status": "Active",
    "roles": [
@@ -17519,13 +17486,18 @@
    "country": "Germany",
    "region": "Europe",
    "birth_date": "1998-11-28",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "Nordic Partners Gaming",
+   "source_team": "Nordic Partners Gaming",
+   "current_team_history": [
+    {
+     "period": "2026-07-27 — Present",
+     "team": "Nordic Partners Gaming",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
-    "igl",
     "rifle"
    ],
    "majors_count": 2,
@@ -18735,18 +18707,10 @@
    "country": "Kazakhstan",
    "region": "CIS",
    "birth_date": "1994-5-18",
-   "team": "PARIVISION",
-   "source_team": "PARIVISION",
-   "current_team_history": [
-    {
-     "period": "2026-06-17 — Present",
-     "team": "PARIVISION",
-     "details": [
-      "Stand-in"
-     ]
-    }
-   ],
-   "team_resolution": "single_current_player_roster",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "rifle"
@@ -19021,16 +18985,18 @@
    "country": "Kazakhstan",
    "region": "CIS",
    "birth_date": "1999-01-01",
-   "team": "1w Team",
+   "team": "",
    "source_team": "1w Team",
    "current_team_history": [
     {
-     "period": "2026-02-18 — Present",
-     "team": "1w Team",
-     "details": []
+     "period": "2026-07-31 — Present",
+     "team": "1win Team",
+     "details": [
+      "Inactive"
+     ]
     }
    ],
-   "team_resolution": "single_current_player_roster",
+   "team_resolution": "no_current_player_roster",
    "status": "Active",
    "roles": [
     "igl",
@@ -21324,16 +21290,10 @@
    "country": "Lithuania",
    "region": "Europe",
    "birth_date": "1997-11-5",
-   "team": "ALGO Esports",
-   "source_team": "ALGO Esports",
-   "current_team_history": [
-    {
-     "period": "2025-04-16 — Present",
-     "team": "ALGO Esports",
-     "details": []
-    }
-   ],
-   "team_resolution": "single_current_player_roster",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "rifle",
@@ -22290,7 +22250,7 @@
    "source_team": "GenOne",
    "current_team_history": [
     {
-     "period": "2026-03-?? — Present",
+     "period": "2026-07-22 — Present",
      "team": "GenOne",
      "details": []
     }
@@ -22298,6 +22258,7 @@
    "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
+    "igl",
     "rifle"
    ],
    "majors_count": 4,
@@ -23124,18 +23085,16 @@
    "country": "Belarus",
    "region": "CIS",
    "birth_date": "2001-12-31",
-   "team": "",
-   "source_team": "Nemiga Gaming",
+   "team": "ex-RUBY",
+   "source_team": "ex-RUBY",
    "current_team_history": [
     {
-     "period": "2026-07-17 — Present",
-     "team": "Nemiga Gaming",
-     "details": [
-      "Inactive"
-     ]
+     "period": "2026-07-?? — Present",
+     "team": "ex-RUBY",
+     "details": []
     }
    ],
-   "team_resolution": "no_current_player_roster",
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "support",
@@ -29162,10 +29121,16 @@
    "country": "Brazil",
    "region": "South America",
    "birth_date": "1997-7-3",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "Galorys",
+   "source_team": "Galorys",
+   "current_team_history": [
+    {
+     "period": "2026-07-24 — Present",
+     "team": "Galorys",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "entry"
@@ -29435,12 +29400,12 @@
    "country": "Brazil",
    "region": "South America",
    "birth_date": "1994-7-21",
-   "team": "Fake do Biru",
-   "source_team": "Fake do Biru",
+   "team": "Galorys",
+   "source_team": "Galorys",
    "current_team_history": [
     {
-     "period": "2025-10-08 — Present",
-     "team": "Fake do Biru",
+     "period": "2026-07-24 — Present",
+     "team": "Galorys",
      "details": []
     }
    ],
@@ -37290,13 +37255,20 @@
    "country": "Hong Kong",
    "region": "Asia",
    "birth_date": "1999-07-25",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "no_current_head_coach_team",
+   "team": "Morningstar",
+   "source_team": "Morningstar",
+   "current_team_history": [
+    {
+     "period": "2026-08-03 — Present",
+     "team": "Morningstar",
+     "details": [
+      "Coach"
+     ]
+    }
+   ],
+   "team_resolution": "single_current_head_coach_team",
    "status": "Active",
    "roles": [
-    "entry",
     "coach"
    ],
    "majors_count": 2,
@@ -37489,7 +37461,10 @@
    "first_major_year": null,
    "last_major_year": null,
    "majors": [],
-   "in_blast_pool": true
+   "in_blast_pool": true,
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "staff_role:caster"
   }
  ]
 }

@@ -102,6 +102,29 @@ def team_igl_conflicts(players) -> list:
     return out
 
 
+# 判定"这是一套真在打的首发",而不是残缺的历史队史
+MIN_ROSTER = 4
+
+
+def teams_without_igl(players) -> list:
+    """现役阵容一个 IGL 都没有:上游漏标指挥的典型症状。
+    和 team_igl_conflicts 对称——那个查交接后残留的旧标签(≥2 个指挥),
+    这个查压根没人被标成指挥。后者不主动列出来的话,只能靠人工恰好
+    认识这队才发现(Magisk@BC.Game 就是这么撞见的)。
+    返回整套阵容而不只是"缺的那个人",因为指挥是谁只能人工判断。"""
+    by_team: dict[str, list] = {}
+    for p in players:
+        if p.is_active and p.team:
+            by_team.setdefault(p.team, []).append(p)
+    out = []
+    for team in sorted(by_team, key=str.lower):
+        group = by_team[team]
+        if len(group) >= MIN_ROSTER and not any(
+                p.primary_role == "IGL" for p in group):
+            out.extend(group)
+    return out
+
+
 def _hltv_mod():
     """scripts/sync_hltv_roles.py 顶层只有标准库,playwright 是懒加载,
     服务端 import 它复用 apply 的保护逻辑是安全的。"""
@@ -577,7 +600,7 @@ def build_admin_router(db) -> APIRouter:
         cats = {"missing_birth_date": [], "missing_role": [],
                 "missing_photo": [], "missing_country": [],
                 "age_anomaly": [], "not_game_ready": [],
-                "team_igl_conflict": []}
+                "team_igl_conflict": [], "team_no_igl": []}
         for p in db.players:
             b = None            # 懒构建,多数选手一项不缺
             def brief():
@@ -600,6 +623,8 @@ def build_admin_router(db) -> APIRouter:
                 cats["not_game_ready"].append(brief())
         cats["team_igl_conflict"] = [
             _admin_brief(p, False) for p in team_igl_conflicts(db.players)]
+        cats["team_no_igl"] = [
+            _admin_brief(p, False) for p in teams_without_igl(db.players)]
         return {"categories": cats,
                 "counts": {k: len(v) for k, v in cats.items()},
                 "player_count": len(db.players)}

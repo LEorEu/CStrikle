@@ -349,8 +349,10 @@
     "reason": "Current 100 Thieves head coach; head coaches retain their current team while remaining outside the active player roster."
   },
   "S0tF1k": {
+    "team": "Team Spirit",
+    "game_role": "Coach",
     "played_role": "Rifler",
-    "reason": "Current assistant coach; HLTV career statistics cover 1470 maps with a 7/100 sniping score, identifying his playing-era role as Rifler."
+    "reason": "Liquipedia 把他挂成 Team Spirit 的 Assistant Coach(2026-06-04 起),上游没有给 Spirit 记主教练;人工确认他就是公众认知里 Spirit 的教练,本库只有 coach 会显示为教练并保留战队,故固定为 Coach@Team Spirit。played_role 保留原有的 Rifler(HLTV 1470 张地图、狙击占比 7/100)。"
   },
   "NBK-": {
     "game_role": "Rifler",
@@ -417,5 +419,9 @@
   "Brollan": {
     "game_role": "Rifler",
     "reason": "Liquipedia HEROIC team page audit 2026-07-24: infobox igl field and roster row igl=y both point to Chr1zN (career IGL, joined 2025-11-28 from OG); Brollan's igl tag stems from his MOUZ calling stint (roles igl,entry since 2025-11-18, rev 3273605) and followed him through the 2026-07-07 transfer, but his HEROIC roster row has no igl flag. Entry profile -> Rifler."
+  },
+  "Magisk": {
+    "game_role": "IGL",
+    "reason": "人工确认 Magisk 是 BC.Game 的 IGL(HLTV 可核实);Liquipedia infobox 只写了 Rifler,导致 BC.Game 全队查不到指挥。IGL 默认持步枪,role_set 仍为 {IGL}。"
   }
 }

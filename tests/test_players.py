@@ -59,13 +59,20 @@ class PlayerDatabaseTests(unittest.TestCase):
             self.assertEqual(player.primary_role, "Coach")
             self.assertFalse(player.is_active)
         # Liquipedia 顶层可能仍写 coach；当前队史是 Assistant Coach 时不能误判。
-        s0tf1k = self.db.lookup("S0tF1k")
+        # KrizzeN 是纯 assistant coach，kaze 是顶层 coach + 队史无主教练记录。
+        krizzen = self.db.lookup("KrizzeN")
         kaze = self.db.lookup("kaze")
-        self.assertFalse(s0tf1k.is_head_coach)
-        self.assertEqual((s0tf1k.team, s0tf1k.primary_role), ("", "Rifler"))
+        self.assertFalse(krizzen.is_head_coach)
+        self.assertEqual((krizzen.team, krizzen.primary_role), ("", "Rifler"))
         self.assertFalse(kaze.is_head_coach)
         self.assertEqual((kaze.team, kaze.primary_role), ("", "AWPer"))
         self.assertEqual(self.db.lookup("natu").team, "")
+        # 但人工层显式指定 Coach 时以人工为准:上游只把 S0tF1k 记成 Spirit 的
+        # Assistant Coach,人工确认他就是这队公认的教练,override 必须能推翻
+        # 上面那条规则,否则会退化成"自由身教练"。
+        s0tf1k = self.db.lookup("S0tF1k")
+        self.assertTrue(s0tf1k.is_head_coach)
+        self.assertEqual((s0tf1k.team, s0tf1k.primary_role), ("Spirit", "Coach"))
 
     def test_primary_role_inference_mechanism(self):
         # 断言推断"机制"而非具体选手的争议结论(SmithZz/pashaBiceps 该是狙还是
@@ -187,7 +194,7 @@ class PlayerDatabaseTests(unittest.TestCase):
         self.assertEqual((nota.team or "", nota.primary_role), ("", "Rifler"))
         self.assertEqual(
             (belchonokk.team, belchonokk.primary_role),
-            ("TDK", "Rifler"),
+            ("1win", "Rifler"),
         )
         self.assertEqual((xyp9x.team or "", xyp9x.primary_role), ("", "Rifler"))
 

@@ -141,6 +141,16 @@
 .h-sec .cnt { color: var(--t); font-family: var(--disp); }
 .h-sec .desc { color: var(--faint); font-size: 12px; margin-left: auto; }
 .h-body { padding: 6px 14px 12px; border-top: 1px solid var(--line); }
+/* 按队分组的体检项:队名起一行,后面跟这队的全员 chip */
+.h-group {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0 4px;
+  padding: 5px 0; border-bottom: 1px solid var(--line);
+}
+.h-group:last-child { border-bottom: 0; }
+.h-team {
+  min-width: 150px; font-family: var(--disp); font-size: 12px;
+  letter-spacing: 1px; color: var(--t);
+}
 
 /* toast */
 #toast {

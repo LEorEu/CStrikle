@@ -323,6 +323,7 @@ async function openEditor(page) {
 
 /* --------------------------------------------------------- health */
 const H_META = {
+  team_no_igl: ["现役阵容无指挥", "整队没人被标成 IGL,多半是上游漏标;按队列出全员,人工挑出该标的那个"],
   team_igl_conflict: ["同队多指挥", "同一现役阵容 2 个以上 IGL,多半是交接指挥后上游残留的旧标签"],
   missing_birth_date: ["缺生日", "无法算年龄,进不了谜底池"],
   missing_role: ["缺位置", "primary_role 无法归一化"],
@@ -331,6 +332,42 @@ const H_META = {
   age_anomaly: ["年龄异常", "小于 14 或大于 48,多半是生日数据错误"],
   not_game_ready: ["非谜底池", "可被搜索/猜测,但不会成为谜底"],
 };
+
+/* 按队分组展示的类别:问题的单位是"一套阵容"而不是单个选手,
+   平铺成一串 chip 就看不出谁和谁是一队的了。 */
+const H_GROUPED = new Set(["team_no_igl", "team_igl_conflict"]);
+
+function hChip(p) {
+  return `
+    <span class="chip" data-page="${esc(p.page)}">
+      ${p.photo ? `<img src="${esc(p.photo)}" alt="">` : ""}
+      ${esc(p.nickname)}
+      <span class="dim">${esc(p.role || "")}</span>
+    </span>`;
+}
+
+function hBody(key, list) {
+  if (!list.length) return `<span class="dim">全部正常</span>`;
+  if (!H_GROUPED.has(key)) {
+    return list.map(p => `
+      <span class="chip" data-page="${esc(p.page)}">
+        ${p.photo ? `<img src="${esc(p.photo)}" alt="">` : ""}
+        ${esc(p.nickname)}
+        <span class="dim">${esc(p.team || "")}</span>
+      </span>`).join("");
+  }
+  const teams = new Map();
+  list.forEach(p => {
+    const t = p.team || "—";
+    if (!teams.has(t)) teams.set(t, []);
+    teams.get(t).push(p);
+  });
+  return [...teams].map(([team, ps]) => `
+    <div class="h-group">
+      <span class="h-team">${esc(team)}</span>
+      ${ps.map(hChip).join("")}
+    </div>`).join("");
+}
 
 async function loadHealth() {
   $("#hList").innerHTML = `<p class="dim">统计中...</p>`;
@@ -342,14 +379,7 @@ async function loadHealth() {
         <details class="h-sec" ${list.length && list.length <= 30 ? "open" : ""}>
           <summary><span class="cnt">${list.length}</span> ${title}
             <span class="desc">${desc}</span></summary>
-          <div class="h-body">
-            ${list.length ? list.map(p => `
-              <span class="chip" data-page="${esc(p.page)}">
-                ${p.photo ? `<img src="${esc(p.photo)}" alt="">` : ""}
-                ${esc(p.nickname)}
-                <span class="dim">${esc(p.team || "")}</span>
-              </span>`).join("") : `<span class="dim">全部正常</span>`}
-          </div>
+          <div class="h-body">${hBody(k, list)}</div>
         </details>`;
     }).join("");
     $$("#hList .chip").forEach(c =>

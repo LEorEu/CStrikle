@@ -193,7 +193,7 @@ class AdminApiTests(unittest.TestCase):
         d = self.client.get("/api/admin/health", headers=self.h).json()
         for key in ("missing_birth_date", "missing_role", "missing_photo",
                     "missing_country", "age_anomaly", "not_game_ready",
-                    "team_igl_conflict"):
+                    "team_igl_conflict", "team_no_igl"):
             self.assertIn(key, d["categories"])
             self.assertEqual(d["counts"][key], len(d["categories"][key]))
         self.assertGreater(d["player_count"], 500)
@@ -218,6 +218,44 @@ class AdminApiTests(unittest.TestCase):
         ]
         got = {p.page for p in admin.team_igl_conflicts(players)}
         self.assertEqual(got, {"A", "B"})
+
+    def test_teams_without_igl_pure(self):
+        from server.players import Player
+
+        def mk(page, team, roles, status="Active"):
+            return Player({"page": page, "nickname": page, "country": "X",
+                           "team": team, "status": status, "roles": roles})
+
+        def roster(prefix, team, roles_list, **kw):
+            return [mk(f"{prefix}{i}", team, r, **kw)
+                    for i, r in enumerate(roles_list)]
+
+        players = [
+            # T1:5 人首发没有任何 igl -> 整队都该报
+            *roster("A", "T1", [["rifle"], ["awp"], ["entry"],
+                                ["support"], ["lurker"]]),
+            # T2:同样 5 人但有指挥 -> 正常
+            *roster("B", "T2", [["igl"], ["awp"], ["entry"],
+                                ["support"], ["lurker"]]),
+            # T3:只有 3 个现役,残缺队史不算首发
+            *roster("C", "T3", [["rifle"], ["awp"], ["entry"]]),
+            # T4:4 人现役 + 教练;教练不占阵容位,仍算无指挥
+            *roster("D", "T4", [["rifle"], ["awp"], ["entry"], ["support"]]),
+            mk("D_coach", "T4", ["coach"]),
+            # T5:够 4 人但全退役 -> 不算
+            *roster("E", "T5", [["rifle"], ["awp"], ["entry"], ["support"]],
+                    status="Retired"),
+            # 自由身不参与分组
+            mk("F", "", ["rifle"]),
+        ]
+        got = admin.teams_without_igl(players)
+        self.assertEqual({p.team for p in got}, {"T1", "T4"})
+        # 报的是整套阵容,不是单个人——指挥是谁只能人工判断
+        self.assertEqual({p.page for p in got if p.team == "T1"},
+                         {"A0", "A1", "A2", "A3", "A4"})
+        # 教练不在现役阵容里,不该混进待判定的名单
+        self.assertEqual({p.page for p in got if p.team == "T4"},
+                         {"D0", "D1", "D2", "D3"})
 
 
 def _fake_doc(*recs):
