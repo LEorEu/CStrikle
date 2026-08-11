@@ -1,11 +1,13 @@
 import json
+import os
+import re
 import tempfile
 import unittest
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from server import main
+from server import assets, main
 
 
 class ApiFeatureTests(unittest.TestCase):
@@ -18,6 +20,35 @@ class ApiFeatureTests(unittest.TestCase):
         main._match_waiters.clear()
         main._match_results.clear()
         main._feedback_attempts.clear()
+
+    # ------------------------------------------------------- html assets
+    def test_page_html_versions_its_scripts_and_is_not_cached(self):
+        r = self.client.get("/")
+        self.assertIn("no-cache", r.headers["cache-control"])
+        for name in ("app.js", "countries.js"):
+            self.assertRegex(r.text, rf"/static/{re.escape(name)}\?v=[0-9a-f]+")
+
+    def test_editing_only_a_stylesheet_still_bumps_its_version(self):
+        """版本号必须跟着资源自己变。
+
+        HTML 不动、只改 CSS 是最常见的改法;如果替换结果按 HTML 的 mtime
+        缓存,页面会一直发旧版本号,浏览器就一直吃旧样式(改了不生效)。
+        """
+        css = Path(main.__file__).resolve().parent.parent / "static" / "_vtest.css"
+        html = Path(tempfile.mkdtemp()) / "t.html"
+        html.write_text('<link rel="stylesheet" href="/static/_vtest.css">',
+                        encoding="utf-8")
+        try:
+            css.write_text("a{color:red}", encoding="utf-8")
+            first = assets.versioned_html(html).body.decode()
+            css.write_text("a{color:blue}", encoding="utf-8")
+            os.utime(css, ns=(css.stat().st_atime_ns,
+                              css.stat().st_mtime_ns + 10_000_000))
+            second = assets.versioned_html(html).body.decode()
+        finally:
+            css.unlink(missing_ok=True)
+        self.assertRegex(first, r"_vtest\.css\?v=[0-9a-f]+")
+        self.assertNotEqual(first, second)
 
     # ------------------------------------------------------- image cache
     def test_image_urls_carry_content_version(self):

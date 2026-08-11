@@ -102,6 +102,14 @@ function switchTab(tab) {
   if (tab === "hltv") loadHltv();
   if (tab === "players" && !$("#pResults").innerHTML) doSearch();
 }
+
+/* ---------------------------------------------------------- 弹窗
+   <dialog> 原生就有遮罩、ESC 关闭和焦点锁定,自己拿 div 拼一套只会更差。 */
+function openModal(dlg) { if (!dlg.open) dlg.showModal(); }
+$$("dialog.admin-modal [data-close]").forEach(b =>
+  b.addEventListener("click", () => b.closest("dialog").close()));
+/* 故意不做「点遮罩关闭」:这两个弹窗里都是填了一半的表单(reason 还是必填),
+   一次手滑就得重打一遍。关闭走 ✕ / 取消 / ESC 三条明确的路。 */
 $$(".admin-tabs button").forEach(b =>
   b.addEventListener("click", () => switchTab(b.dataset.tab)));
 
@@ -182,26 +190,31 @@ $("#fbShowResolved").addEventListener("change", renderFeedback);
 $("#fbRefresh").addEventListener("click", loadFeedback);
 
 /* -------------------------------------------------------- players */
+const PAGE_SIZE = 50;
+let pOffset = 0;                 // 当前页在结果里的起点
 let searchTimer = null;
+/* 搜索词一变就回到第一页,否则「翻到第 8 页再改词」会落在空页上 */
 $("#pSearch").addEventListener("input", () => {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(doSearch, 250);
+  searchTimer = setTimeout(() => doSearch(0), 250);
 });
-$("#pSearch").addEventListener("keydown", ev => { if (ev.key === "Enter") doSearch(); });
+$("#pSearch").addEventListener("keydown", ev => { if (ev.key === "Enter") doSearch(0); });
 
-async function doSearch() {
+async function doSearch(offset = pOffset) {
   const q = $("#pSearch").value.trim();
   try {
-    // 空搜索 = 浏览整库(limit=0);照片走 loading="lazy",650 行也不会
-    // 一进页面就并发几百个图片请求。
-    const d = await api(`/players?q=${encodeURIComponent(q)}&limit=${q ? 30 : 0}`);
+    // 照片走 loading="lazy",翻页时不会一次并发几十个图片请求。
+    const d = await api(`/players?q=${encodeURIComponent(q)}` +
+                        `&limit=${PAGE_SIZE}&offset=${Math.max(0, offset)}`);
+    pOffset = d.offset;
     if (!d.players.length) {
       $("#pResults").innerHTML = `<p class="dim">没有匹配的选手。</p>`;
+      $("#pPager").innerHTML = "";
       return;
     }
     $("#pResults").innerHTML = `
-      <p class="dim p-count">${q ? `匹配 ${d.total} 人${d.total > d.players.length
-          ? `,显示前 ${d.players.length}` : ""}` : `全部 ${d.total} 人`}</p>
+      <p class="dim p-count">${q ? `匹配 ${d.total} 人` : `全部 ${d.total} 人`}
+        · 第 ${pOffset + 1}–${pOffset + d.players.length} 条 · 按名气排序</p>
       <table class="p-table">
         <tr><th></th><th>ID</th><th>姓名</th><th>国籍</th><th>战队</th>
             <th>位置</th><th>年龄</th><th>Major</th><th></th></tr>
@@ -222,7 +235,24 @@ async function doSearch() {
       </table>`;
     $$("#pResults tr.row").forEach(tr =>
       tr.addEventListener("click", () => openEditor(tr.dataset.page)));
+    renderPager(d.total);
   } catch (e) { toast("搜索失败: " + e.message, true); }
+}
+
+function renderPager(total) {
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const cur = Math.floor(pOffset / PAGE_SIZE);
+  if (pages <= 1) { $("#pPager").innerHTML = ""; return; }
+  $("#pPager").innerHTML = `
+    <button class="mini-btn" data-to="${pOffset - PAGE_SIZE}"
+      ${cur === 0 ? "disabled" : ""}>← 上一页</button>
+    <span class="dim">第 ${cur + 1} / ${pages} 页</span>
+    <button class="mini-btn" data-to="${pOffset + PAGE_SIZE}"
+      ${cur >= pages - 1 ? "disabled" : ""}>下一页 →</button>`;
+  $$("#pPager button").forEach(b => b.addEventListener("click", () => {
+    doSearch(Number(b.dataset.to));
+    $("#pResults").scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
 }
 
 /* ------------------------------------------------ 人工新增选手
@@ -273,10 +303,9 @@ function newPlayerForm(rec = null) {
         <button type="button" class="mini-btn" id="mCancel">取消</button>
       </div>
     </form>`;
-  box.classList.remove("hidden");
-  box.scrollIntoView({ behavior: "smooth", block: "start" });
+  openModal($("#dlgNew"));
 
-  $("#mCancel").addEventListener("click", () => box.classList.add("hidden"));
+  $("#mCancel").addEventListener("click", () => $("#dlgNew").close());
   $("#mForm").addEventListener("submit", async ev => {
     ev.preventDefault();
     const f = new FormData(ev.target);
@@ -301,8 +330,9 @@ function newPlayerForm(rec = null) {
                     { method: "PUT", body: JSON.stringify(body) })
         : await api("/manual", { method: "POST", body: JSON.stringify(body) });
       renderMeta(await api("/reload", { method: "POST" }));
-      box.classList.add("hidden");
+      $("#dlgNew").close();
       toast(rec ? "已保存并重载" : "已新增并重载");
+      doSearch();
       openEditor(d.page);
     } catch (e) { toast((rec ? "保存" : "新增") + "失败: " + e.message, true); }
   });
@@ -323,6 +353,7 @@ async function uploadPhoto(page, file) {
               { method: "PUT", body: JSON.stringify({ data, filename: file.name }) });
     renderMeta(await api("/reload", { method: "POST" }));
     toast("照片已更新");
+    doSearch();
     openEditor(page);
   } catch (e) { toast("上传失败: " + e.message, true); }
 }
@@ -332,7 +363,6 @@ async function openEditor(page) {
   try { d = await api("/players/" + encodeURIComponent(page)); }
   catch (e) { toast("加载选手失败: " + e.message, true); return; }
   const ef = d.effective, sc = d.scraped, ov = d.override || {};
-  $("#pSearch").value = ef.nickname;
 
   const roleSel = (name, values, cur) => `
     <select name="${name}">
@@ -412,8 +442,8 @@ async function openEditor(page) {
           <div class="msg">${esc(e.message)}</div>
         </div>`).join("") : `<p class="dim">暂无</p>`}
     </div>`;
-  $("#pEditor").classList.remove("hidden");
-  $("#pEditor").scrollIntoView({ behavior: "smooth", block: "start" });
+  openModal($("#dlgEditor"));
+  $("#pEditor").scrollTop = 0;    // 滚动条在内层 div 上,见 admin.css
 
   $("#ovForm").addEventListener("submit", async ev => {
     ev.preventDefault();
@@ -439,6 +469,7 @@ async function openEditor(page) {
       const m = await api("/reload", { method: "POST" });
       renderMeta(m);
       toast("已保存并重载");
+      doSearch();               // 列表里那一行也跟着变,不用手动刷新
       openEditor(page);
     } catch (e) { toast("保存失败: " + e.message, true); }
   });
@@ -453,6 +484,7 @@ async function openEditor(page) {
       await api(`/players/${encodeURIComponent(page)}/photo`, { method: "DELETE" });
       renderMeta(await api("/reload", { method: "POST" }));
       toast("已删除并重载");
+      doSearch();
       openEditor(page);
     } catch (e) { toast("删除失败: " + e.message, true); }
   });
@@ -469,8 +501,9 @@ async function openEditor(page) {
     try {
       await api("/manual/" + encodeURIComponent(page), { method: "DELETE" });
       renderMeta(await api("/reload", { method: "POST" }));
-      $("#pEditor").classList.add("hidden");
+      $("#dlgEditor").close();
       toast("已删除并重载");
+      doSearch();
     } catch (e) { toast("删除失败: " + e.message, true); }
   });
 
@@ -482,6 +515,7 @@ async function openEditor(page) {
       const m = await api("/reload", { method: "POST" });
       renderMeta(m);
       toast("已删除并重载");
+      doSearch();
       openEditor(page);
     } catch (e) { toast("删除失败: " + e.message, true); }
   });

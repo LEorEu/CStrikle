@@ -485,9 +485,9 @@ def build_admin_router(db) -> APIRouter:
 
     # ------------------------------------------------------------- players
     @guarded.get("/players")
-    def search_players(q: str = "", limit: int = 30):
+    def search_players(q: str = "", limit: int = 30, offset: int = 0):
         """q 为空时返回整库(按名气排序),让「选手编辑」一进去就有列表可翻,
-        不必先想出一个搜索词。"""
+        不必先想出一个搜索词;offset 给前端翻页用,六百多人一次铺完没法看。"""
         q = q.strip()
         overrides = {k.casefold() for k in _load_overrides()}
         if q:
@@ -500,9 +500,11 @@ def build_admin_router(db) -> APIRouter:
             hits = list(db.players)
         hits.sort(key=db._fame, reverse=True)
         total = len(hits)
+        offset = max(0, min(offset, total))
+        hits = hits[offset:]
         if limit > 0:
             hits = hits[:limit]
-        return {"total": total, "players": [
+        return {"total": total, "offset": offset, "players": [
             _admin_brief(p, p.page.casefold() in overrides) for p in hits]}
 
     @guarded.get("/players/{page}")

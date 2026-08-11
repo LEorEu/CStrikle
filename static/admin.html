@@ -59,9 +59,8 @@
         <input id="pSearch" placeholder="搜索 ID / 真实姓名 / page,回车确认" autocomplete="off">
         <button id="pNewBtn" class="mini-btn" title="手工加人(彩蛋/上游查不到的人),写人工层,爬虫重建不会丢">＋ 新增选手</button>
       </div>
-      <div id="pNew" class="hidden"></div>
       <div id="pResults"></div>
-      <div id="pEditor" class="hidden"></div>
+      <div id="pPager"></div>
     </section>
 
     <!-- 体检 -->
@@ -103,6 +102,19 @@
     </section>
   </div>
 </main>
+
+<!-- 选手编辑 / 人工新增走弹窗:列表是主视图,改完关掉就回到原来的滚动位置,
+     不会像内联面板那样把表格顶得到处跑。两个可以叠(在编辑器里改人工资料)。 -->
+<!-- 类名别叫 .modal:style.css 里已经有一个同名的全屏遮罩(游戏页的 AI 回放),
+     那条规则没有 [open] 限定,会把关着的 dialog 也显示出来。 -->
+<dialog id="dlgEditor" class="admin-modal">
+  <button type="button" class="admin-modal-x" data-close aria-label="关闭">✕</button>
+  <div id="pEditor"></div>
+</dialog>
+<dialog id="dlgNew" class="admin-modal narrow">
+  <button type="button" class="admin-modal-x" data-close aria-label="关闭">✕</button>
+  <div id="pNew"></div>
+</dialog>
 
 <div id="toast" class="hidden"></div>
 <script src="/static/countries.js"></script>

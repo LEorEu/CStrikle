@@ -637,6 +637,30 @@ class ManualPlayerTests(unittest.TestCase):
         self.assertGreaterEqual(min(p["majors_count"] for p in capped["players"]),
                                 max(p["majors_count"] for p in d["players"][-5:]))
 
+    def test_paging_walks_the_list_without_gaps_or_repeats(self):
+        """翻页必须是同一个排序上的切片:漏人或重人比不分页更糟。"""
+        full = self.client.get("/api/admin/players?q=&limit=0",
+                               headers=self.h).json()
+        walked = []
+        for off in range(0, 150, 50):
+            d = self.client.get(f"/api/admin/players?q=&limit=50&offset={off}",
+                                headers=self.h).json()
+            self.assertEqual(d["offset"], off)
+            self.assertEqual(d["total"], full["total"])
+            walked += d["players"]
+        self.assertEqual(walked, full["players"][:150])
+
+    def test_offset_past_the_end_returns_empty_not_error(self):
+        """越界翻页(改了搜索词还停在第 8 页)只该翻出空页。"""
+        d = self.client.get("/api/admin/players?q=&limit=50&offset=999999",
+                            headers=self.h).json()
+        self.assertEqual(d["players"], [])
+        self.assertEqual(d["offset"], d["total"])
+        neg = self.client.get("/api/admin/players?q=&limit=5&offset=-10",
+                              headers=self.h).json()
+        self.assertEqual(neg["offset"], 0)
+        self.assertEqual(len(neg["players"]), 5)
+
     def test_edit_manual_record(self):
         self.client.post("/api/admin/manual", headers=self.h, json=self._body())
         r = self.client.put("/api/admin/manual/jabitch", headers=self.h,

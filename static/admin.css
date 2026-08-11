@@ -91,12 +91,48 @@
 .chip img { width: 20px; height: 20px; object-fit: cover; }
 .chip:hover { background: var(--panel3); }
 
-/* 编辑器 */
-#pEditor {
-  background: var(--panel); border: 1px solid var(--line); clip-path: var(--chamfer);
-  padding: 22px 24px; margin-top: 6px;
+/* 翻页 */
+#pPager {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  margin: 4px 0 20px; font-size: 12px;
 }
-.ed-head { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+#pPager button[disabled] { opacity: .35; cursor: default; }
+#pPager button[disabled]:hover { background: var(--panel2); }
+
+/* 弹窗外壳:编辑器和人工新增表单都装在里面
+   —— dialog 自带遮罩/ESC/焦点锁,只需要给它上皮肤。
+   别用 .modal 这个类名:style.css 里已经有一个(游戏页的 AI 回放遮罩),
+   它无条件 display:flex,会让关着的 dialog 也画出来。 */
+dialog.admin-modal {
+  width: min(940px, 94vw); max-height: 88vh; padding: 0;
+  /* style.css 的 `* { margin: 0 }` 会顶掉 UA 给 dialog 的 margin:auto,
+     不写回来弹窗就贴在视口左上角 */
+  inset: 0; margin: auto;
+  background: var(--panel); color: var(--fg); border: 1px solid var(--line);
+  box-shadow: 0 18px 50px rgba(0,0,0,.55);
+  overflow: hidden;
+}
+/* 挂在 [open] 上,关闭时才落回 UA 的 display:none */
+dialog.admin-modal[open] {
+  /* 滚动条挂在内层,✕ 才能钉在角上不随内容滚走 */
+  display: flex; flex-direction: column;
+}
+dialog.admin-modal > div { overflow: auto; }
+dialog.admin-modal.narrow { width: min(720px, 94vw); }
+dialog.admin-modal::backdrop { background: rgba(4,7,12,.74); }
+.admin-modal-x {
+  position: absolute; top: 8px; right: 10px; z-index: 2;
+  background: none; border: none; color: var(--dim);
+  font-size: 16px; line-height: 1; padding: 6px 8px; cursor: pointer;
+}
+.admin-modal-x:hover { color: var(--fg); }
+
+/* 编辑器 */
+#pEditor, #pNew { padding: 22px 24px; }
+.ed-head {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+  padding-right: 26px;            /* 给弹窗右上角的 ✕ 让位 */
+}
 .ed-head img.photo { width: 64px; height: 64px; object-fit: cover; }
 .ed-head .who .nick { font: 700 20px var(--disp); letter-spacing: 1px; }
 .ed-head .who .real { color: var(--dim); font-size: 13px; }
@@ -222,11 +258,8 @@
 
 /* 人工层:新增选手表单 / 照片上传 / 失效 override */
 .tag-manual { color: var(--ct); font-size: 11px; }
-.m-form {
-  background: var(--panel2); border: 1px solid var(--line);
-  padding: 14px 16px; margin-bottom: 14px; clip-path: var(--chamfer-sm);
-}
-.m-title { font: 14px var(--disp); margin-bottom: 12px; }
+/* 表单已经在弹窗里了,再套一层面板底色就是框中框 */
+.m-title { font: 14px var(--disp); margin-bottom: 14px; padding-right: 24px; }
 .m-title code { color: var(--ct); }
 .m-grid {
   display: grid; gap: 10px 14px;
