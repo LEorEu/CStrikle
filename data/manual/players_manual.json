@@ -22,6 +22,27 @@
       "source_team": "",
       "current_team_history": [],
       "team_resolution": "staff_role:caster"
+    },
+    {
+      "page": "Jab Jabich",
+      "nickname": "Jab Jabich",
+      "real_name": "Jab Jabich",
+      "country": "Russia",
+      "region": "CIS",
+      "birth_date": "",
+      "team": "Spirit",
+      "source_team": "Spirit",
+      "current_team_history": [],
+      "team_resolution": "manual",
+      "status": "Active",
+      "roles": [],
+      "game_role": "Coach",
+      "majors_count": 1,
+      "first_major_year": null,
+      "last_major_year": null,
+      "majors": [],
+      "in_blast_pool": false,
+      "manual_reason": "https://www.hltv.org/coach/26381/jab-jabich"
     }
   ]
 }
