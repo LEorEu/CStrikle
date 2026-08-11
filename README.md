@@ -247,9 +247,19 @@ git add data/manual && git commit -m "Pull manual layer from prod"
 ```
 
 `compose.yaml` 里对应两处:`./data/manual:/app/data/manual` 可写卷,
-以及 `user: "1000:1000"`——镜像里的进程是 uid 999(app),而卷目录是宿主
-`ubuntu`(1000) 建的,不覆盖运行身份就会写不进去(报 `Read-only file
-system` 之外的 `Permission denied`)。
+以及 `user: "${APP_UID:-1000}:${APP_GID:-1000}"`——镜像里的进程是
+uid 999(app),而卷目录是宿主用户建的,不覆盖运行身份就写不进去。
+**宿主 uid 各机不同**(春川那台 `ubuntu` 是 1001,不是常见的 1000),
+部署前先看一眼再写进 `.env`:
+
+```bash
+stat -c "%u:%g" data/manual        # -> 1001:1001
+echo "APP_UID=1001
+APP_GID=1001" >> .env
+```
+
+对不上时的表现是写入报 `Permission denied`(而不是只读卷的
+`Read-only file system`),管理页会把这个错误原样显示出来。
 
 **「数据更新」标签在生产环境不可用**:Dockerfile 不 COPY `scraper/`
 (镜像不带爬虫和它的依赖),三个抓取任务会直接报「启动失败」。全库刷新

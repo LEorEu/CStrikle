@@ -7,9 +7,11 @@ services:
     env_file:
       - .env
     read_only: true
-    # 镜像里的进程用 uid 999(app),但可写卷是宿主 ubuntu(1000) 建的目录。
-    # 以宿主用户跑,容器写卷和本机 rsync 就是同一个 uid,不用来回 chown。
-    user: "1000:1000"
+    # 镜像里的进程用 uid 999(app),但可写卷是宿主用户建的目录。以宿主用户
+    # 跑,容器写卷和本机 rsync 就是同一个 uid,不用来回 chown。宿主 uid 各机
+    # 不同(春川那台 ubuntu 是 1001,不是常见的 1000),所以从 .env 取,
+    # 对不上的表现是写入报 Permission denied 而不是 Read-only file system。
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     tmpfs:
       - /tmp
     volumes:
