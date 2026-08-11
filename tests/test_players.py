@@ -1,5 +1,9 @@
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
+from server import players
 from server.game import GREEN, compare
 from server.players import ANSWER_ROLES, Player, PlayerDB
 from server.rankings import normalize_team_name
@@ -52,7 +56,7 @@ class PlayerDatabaseTests(unittest.TestCase):
             ("zhokiNg", "TYLOO"),
             ("mou", "HOTU"),
             ("AZR", "FlyQuest"),
-            ("jR", "Inner Circle"),
+            ("jR", "IC Esports"),      # 队史行仍是旧名 Inner Circle,靠别名归一
         ):
             player = self.db.lookup(nickname)
             self.assertEqual(player.team, team)
@@ -165,6 +169,25 @@ class PlayerDatabaseTests(unittest.TestCase):
         }
         self.assertEqual(conflicts, {})
 
+    def test_renamed_org_collapses_to_its_current_name(self):
+        """IC Esports 之前分裂成两支队:Liquipedia 把 Inner Circle Esports
+        重定向到 IC Esports,但 jR 的队史行仍写着旧名 Inner Circle。缩写改名
+        跨不过 normalize_team_name(它只吃掉 team/gaming/esports 这类词,
+        innercircle 和 ic 不会归一),所以只能靠快照里的别名表兜住。"""
+        ranking = self.db.ranking
+        for name in ("IC Esports", "Inner Circle", "Inner Circle Esports"):
+            self.assertEqual(ranking.canonical_name(name), "IC Esports", name)
+        self.assertEqual(
+            [p.team for p in self.db.players if p.team == "Inner Circle"], [])
+
+    def test_every_ranking_alias_points_at_a_listed_team(self):
+        """别名的目标不在 teams 列表里时会被静默丢弃,别名等于没写——
+        和失效 override 一样是不报错的静默失败,所以这里守住。"""
+        ranking = self.db.ranking
+        dangling = {alias: target for alias, target in ranking.aliases.items()
+                    if ranking.canonical_name(target) is None}
+        self.assertEqual(dangling, {})
+
     def test_cologne_2026_falcons_players_receive_champion_placement(self):
         nicknames = ("m0NESY", "kyousuke", "karrigan", "TeSeS", "NiKo")
         for nickname in nicknames:
@@ -215,6 +238,60 @@ class PlayerDatabaseTests(unittest.TestCase):
         taiwan_cell = compare(taiwan, mainland)[0]
         self.assertEqual(taiwan_cell["state"], GREEN)
         self.assertEqual(taiwan_cell["value"], "中国台湾")
+
+
+class ManualLayerTests(unittest.TestCase):
+    """人工层(新增选手 / override)与爬虫生成物的合并规则。"""
+
+    def _db(self, tmp, scraped, manual):
+        data = Path(tmp) / "players.json"
+        data.write_text(json.dumps({"generated_at": "", "players": scraped}),
+                        encoding="utf-8")
+        players.MANUAL_PLAYERS_PATH = Path(tmp) / "manual.json"
+        players.MANUAL_PLAYERS_PATH.write_text(
+            json.dumps({"players": manual}), encoding="utf-8")
+        return PlayerDB(data)
+
+    def setUp(self):
+        self._old = (players.MANUAL_PLAYERS_PATH, players.OVERRIDES_PATH,
+                     players.LEGACY_OVERRIDES_PATH)
+
+    def tearDown(self):
+        (players.MANUAL_PLAYERS_PATH, players.OVERRIDES_PATH,
+         players.LEGACY_OVERRIDES_PATH) = self._old
+
+    def _rec(self, page, **kw):
+        rec = {"page": page, "nickname": page, "country": "Denmark",
+               "birth_date": "1998-01-01", "roles": ["rifle"], "status": "Active"}
+        rec.update(kw)
+        return rec
+
+    def test_manual_player_is_appended(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = self._db(tmp, [self._rec("A")], [self._rec("Egg")])
+            self.assertEqual(sorted(db.by_page), ["A", "Egg"])
+            self.assertTrue(db.by_page["Egg"].is_manual)
+            self.assertFalse(db.by_page["A"].is_manual)
+
+    def test_manual_record_replaces_scraped_page_in_place(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = self._db(tmp,
+                          [self._rec("A"), self._rec("B"), self._rec("C")],
+                          [self._rec("B", team="Manual FC")])
+            self.assertEqual([p.page for p in db.players], ["A", "B", "C"])
+            self.assertEqual(db.by_page["B"].team, "Manual FC")
+            self.assertTrue(db.by_page["B"].is_manual)
+
+    def test_overrides_fall_back_to_pre_migration_path(self):
+        """老位置的 player_overrides.json 仍然认——找不到就当零条人工修正,
+        会一次性作废上百条已确认结论。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            players.OVERRIDES_PATH = Path(tmp) / "manual" / "overrides.json"
+            players.LEGACY_OVERRIDES_PATH = Path(tmp) / "legacy.json"
+            players.LEGACY_OVERRIDES_PATH.write_text(
+                json.dumps({"A": {"game_role": "AWPer"}}), encoding="utf-8")
+            db = self._db(tmp, [self._rec("A")], [])
+            self.assertEqual(db.by_page["A"].primary_role, "AWPer")
 
 
 if __name__ == "__main__":

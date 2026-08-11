@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """管理页接口:鉴权开关 / 反馈收件箱 / override 编辑 / 热重载 / 体检 /
 staging 发布 / 维护任务 / HLTV 审核。"""
+import base64
 import json
 import sys
 import tempfile
@@ -193,10 +194,21 @@ class AdminApiTests(unittest.TestCase):
         d = self.client.get("/api/admin/health", headers=self.h).json()
         for key in ("missing_birth_date", "missing_role", "missing_photo",
                     "missing_country", "age_anomaly", "not_game_ready",
-                    "team_igl_conflict", "team_no_igl"):
+                    "team_igl_conflict", "team_no_igl", "orphan_override"):
             self.assertIn(key, d["categories"])
             self.assertEqual(d["counts"][key], len(d["categories"][key]))
         self.assertGreater(d["player_count"], 500)
+
+    def test_orphan_override_flagged(self):
+        """override 以 page 名为键,上游改页名后会静默失效——必须报出来。"""
+        from server.players import Player
+
+        roster = [Player({"page": "Rain", "nickname": "rain", "country": "X"})]
+        self.assertEqual(
+            admin.orphan_overrides(roster, {"Rain": {"game_role": "Rifler"}}), [])
+        out = admin.orphan_overrides(
+            roster, {"Rain (Norwegian player)": {"game_role": "Rifler"}})
+        self.assertEqual([o["key"] for o in out], ["Rain (Norwegian player)"])
 
     def test_team_igl_conflicts_pure(self):
         from server.players import Player
@@ -303,11 +315,15 @@ class StagingTests(unittest.TestCase):
 
     def test_staging_missing_then_promote_roundtrip(self):
         old_data = players.DATA_PATH
+        old_manual = players.MANUAL_PLAYERS_PATH
         with tempfile.TemporaryDirectory() as tmp:
             cur_path = Path(tmp) / "players.json"
             cur_doc = _fake_doc(_rec("A"), _rec("B"))
             cur_path.write_text(json.dumps(cur_doc), encoding="utf-8")
             players.DATA_PATH = cur_path
+            # 人工新增层始终会并进任何 players.json,这里要一起隔离,
+            # 否则真实的彩蛋选手会混进这套 2 人假数据里。
+            players.MANUAL_PLAYERS_PATH = Path(tmp) / "manual.json"
             try:
                 d = self.client.get("/api/admin/staging", headers=self.h).json()
                 self.assertFalse(d["exists"])
@@ -355,6 +371,7 @@ class StagingTests(unittest.TestCase):
                 self.assertEqual(r.status_code, 404)
             finally:
                 players.DATA_PATH = old_data
+                players.MANUAL_PLAYERS_PATH = old_manual
                 self.client.post("/api/admin/reload", headers=self.h)
         d = self.client.get("/api/admin/ping", headers=self.h).json()
         self.assertGreater(d["player_count"], 500)
@@ -503,6 +520,140 @@ class HltvReviewTests(unittest.TestCase):
                 admin.HLTV_REVIEW_PATH = old_review
                 players.OVERRIDES_PATH = old_ov
                 self.client.post("/api/admin/reload", headers=self.h)
+
+
+class ManualPlayerTests(unittest.TestCase):
+    """人工新增选手 + 头像上传。两者都只写 data/manual/,爬虫重建不受影响。"""
+
+    TOKEN = "test-admin-token"
+    # 只看魔数、不解码,所以合法头 + 垃圾负载就够测通路
+    PNG = b"\x89PNG\r\n\x1a\n" + b"fake-payload"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.client = TestClient(main.app)
+
+    def setUp(self):
+        self._old_token = main.config.ADMIN_TOKEN
+        main.config.ADMIN_TOKEN = self.TOKEN
+        self.h = {"X-Admin-Token": self.TOKEN}
+        self._tmp = tempfile.TemporaryDirectory()
+        tmp = Path(self._tmp.name)
+        self._old = (players.MANUAL_PLAYERS_PATH, players.MANUAL_IMAGES_PATH,
+                     players.MANUAL_IMG_DIR)
+        players.MANUAL_PLAYERS_PATH = tmp / "players_manual.json"
+        players.MANUAL_IMAGES_PATH = tmp / "images_manual.json"
+        players.MANUAL_IMG_DIR = tmp / "img"
+        self.client.post("/api/admin/reload", headers=self.h)
+
+    def tearDown(self):
+        (players.MANUAL_PLAYERS_PATH, players.MANUAL_IMAGES_PATH,
+         players.MANUAL_IMG_DIR) = self._old
+        self.client.post("/api/admin/reload", headers=self.h)
+        main.config.ADMIN_TOKEN = self._old_token
+        self._tmp.cleanup()
+
+    def _body(self, **kw):
+        body = {"nickname": "jabitch", "real_name": "Jab Frog",
+                "country": "Denmark", "birth_date": "1998-04-01",
+                "team": "Green Dragon", "game_role": "Coach",
+                "roles": ["coach"], "reason": "彩蛋选手"}
+        body.update(kw)
+        return body
+
+    def test_create_reload_delete_roundtrip(self):
+        r = self.client.post("/api/admin/manual", headers=self.h,
+                             json=self._body())
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["record"]["region"], "Europe")   # 国籍推赛区
+
+        self.client.post("/api/admin/reload", headers=self.h)
+        d = self.client.get("/api/admin/players/jabitch", headers=self.h).json()
+        self.assertEqual(d["effective"]["role"], "Coach")
+        self.assertTrue(d["effective"]["manual"])
+        self.assertTrue(d["effective"]["game_ready"])   # 四项齐全,能当谜底
+        self.assertEqual(d["scraped"]["country"], "Denmark")  # 回落到人工原始记录
+        listed = self.client.get("/api/admin/manual", headers=self.h).json()
+        self.assertEqual([p["page"] for p in listed["players"]], ["jabitch"])
+
+        r = self.client.delete("/api/admin/manual/jabitch", headers=self.h)
+        self.assertEqual(r.status_code, 200)
+        self.client.post("/api/admin/reload", headers=self.h)
+        self.assertEqual(
+            self.client.get("/api/admin/players/jabitch",
+                            headers=self.h).status_code, 404)
+
+    def test_generated_players_json_untouched(self):
+        """新增只写人工层——这正是 MachineWJQ 当初被整库重建冲掉的教训。"""
+        before = players.DATA_PATH.read_bytes()
+        self.client.post("/api/admin/manual", headers=self.h, json=self._body())
+        self.assertEqual(players.DATA_PATH.read_bytes(), before)
+        self.assertTrue(players.MANUAL_PLAYERS_PATH.exists())
+
+    def test_duplicate_and_validation(self):
+        r = self.client.post("/api/admin/manual", headers=self.h,
+                             json=self._body(nickname="s1mple", page="S1mple"))
+        self.assertEqual(r.status_code, 409)
+        for bad, field in ((self._body(reason=""), "reason"),
+                           (self._body(roles=["frog"]), "roles"),
+                           (self._body(birth_date="1998/04/01"), "birth_date"),
+                           (self._body(game_role="Frogger"), "game_role")):
+            r = self.client.post("/api/admin/manual", headers=self.h, json=bad)
+            self.assertEqual(r.status_code, 400, field)
+
+    def test_edit_manual_record(self):
+        self.client.post("/api/admin/manual", headers=self.h, json=self._body())
+        r = self.client.put("/api/admin/manual/jabitch", headers=self.h,
+                            json=self._body(team="Blue Dragon", reason="改队"))
+        self.assertEqual(r.status_code, 200)
+        self.client.post("/api/admin/reload", headers=self.h)
+        d = self.client.get("/api/admin/players/jabitch", headers=self.h).json()
+        self.assertEqual(d["effective"]["team"], "Blue Dragon")
+        self.assertEqual(
+            self.client.put("/api/admin/manual/nobody", headers=self.h,
+                            json=self._body()).status_code, 404)
+
+    def test_photo_upload_and_delete(self):
+        self.client.post("/api/admin/manual", headers=self.h, json=self._body())
+        self.client.post("/api/admin/reload", headers=self.h)
+        payload = base64.b64encode(self.PNG).decode()
+
+        r = self.client.put("/api/admin/players/jabitch/photo", headers=self.h,
+                            json={"data": payload})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["rel"], "players/jabitch.png")
+        self.assertTrue((players.MANUAL_IMG_DIR / "players/jabitch.png").exists())
+
+        self.client.post("/api/admin/reload", headers=self.h)
+        d = self.client.get("/api/admin/players/jabitch", headers=self.h).json()
+        self.assertTrue(d["effective"]["photo"].startswith("/img-manual/"))
+        self.assertIn("?v=", d["effective"]["photo"])   # 内容哈希照样带上
+
+        r = self.client.delete("/api/admin/players/jabitch/photo", headers=self.h)
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse((players.MANUAL_IMG_DIR / "players/jabitch.png").exists())
+        self.assertEqual(
+            self.client.delete("/api/admin/players/jabitch/photo",
+                               headers=self.h).status_code, 404)
+
+    def test_photo_rejects_non_images(self):
+        self.client.post("/api/admin/manual", headers=self.h, json=self._body())
+        self.client.post("/api/admin/reload", headers=self.h)
+        for data in ("not-base64!!",
+                     base64.b64encode(b"GIF89a whatever").decode(),
+                     base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"x" * (2 << 20)).decode(),
+                     ""):
+            r = self.client.put("/api/admin/players/jabitch/photo",
+                                headers=self.h, json={"data": data})
+            self.assertEqual(r.status_code, 400, data[:20])
+
+    def test_photo_overrides_scraped_photo(self):
+        """人工照片对爬取来的选手同样生效,优先级更高。"""
+        self.client.put("/api/admin/players/S1mple/photo", headers=self.h,
+                        json={"data": base64.b64encode(self.PNG).decode()})
+        self.client.post("/api/admin/reload", headers=self.h)
+        d = self.client.get("/api/admin/players/S1mple", headers=self.h).json()
+        self.assertTrue(d["effective"]["photo"].startswith("/img-manual/"))
 
 
 if __name__ == "__main__":

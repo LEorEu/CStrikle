@@ -219,3 +219,42 @@
   padding: 5px 6px; font-size: 12px;
 }
 #hltvApplyOut { max-height: 260px; }
+
+/* 人工层:新增选手表单 / 照片上传 / 失效 override */
+.tag-manual { color: var(--ct); font-size: 11px; }
+.m-form {
+  background: var(--panel2); border: 1px solid var(--line);
+  padding: 14px 16px; margin-bottom: 14px; clip-path: var(--chamfer-sm);
+}
+.m-title { font: 14px var(--disp); margin-bottom: 12px; }
+.m-title code { color: var(--ct); }
+.m-grid {
+  display: grid; gap: 10px 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.m-grid label { display: flex; flex-direction: column; gap: 4px;
+  font-size: 12px; color: var(--dim); }
+.m-grid input, .m-grid select {
+  background: var(--bg2); border: 1px solid var(--line);
+  color: var(--fg); padding: 6px 8px; font-size: 13px;
+}
+.m-grid input[readonly] { color: var(--faint); }
+.m-roles { margin-top: 12px; font-size: 12px; color: var(--dim); }
+/* 全局 label 是 block,不显式改成 inline 的话九个标签会各占一行 */
+.m-roles .rt {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin: 4px 12px 0 0; color: var(--fg);
+}
+.m-form > label.dim { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
+.m-hint { margin-top: 10px; font-size: 12px; }
+.ed-photo, .ed-manual {
+  display: flex; gap: 10px; align-items: center;
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(42,53,71,.5);
+}
+.ed-photo .as-label { display: inline-block; }
+.ed-manual .del {
+  background: none; border: 1px solid var(--red); color: var(--red);
+  padding: 4px 12px; font-size: 12px; cursor: pointer;
+}
+.h-orphan { padding: 4px 0; font-size: 12px; }
+.h-orphan code { color: var(--red); margin-right: 10px; }

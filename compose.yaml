@@ -7,11 +7,18 @@ services:
     env_file:
       - .env
     read_only: true
+    # 镜像里的进程用 uid 999(app),但可写卷是宿主 ubuntu(1000) 建的目录。
+    # 以宿主用户跑,容器写卷和本机 rsync 就是同一个 uid,不用来回 chown。
+    user: "1000:1000"
     tmpfs:
       - /tmp
     volumes:
       # 玩家纠错反馈落盘(配合 .env 的 FEEDBACK_PATH=/data/feedback/feedback.jsonl)
       - ./feedback:/data/feedback
+      # 人工层:override / 人工新增选手 / 后台上传的照片。这是管理页唯一
+      # 写盘的地方,也是唯一以线上为准的数据——生成物(players.json、
+      # images.json、img/)仍由本地爬虫产出、随镜像发布,两边各有权威源。
+      - ./data/manual:/app/data/manual
     security_opt:
       - no-new-privileges:true
     networks:

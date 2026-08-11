@@ -111,7 +111,7 @@ docker compose ps
   + 每届参赛记录)+ 各选手 infobox(生日/国籍/战队/位置/状态)
   + blast.tv 官方 Counter-Strikle 的 390 现役选手名单
 - 位置先按 Liquipedia infobox 的角色顺序归一化，再由
-  `data/player_overrides.json` 保存人工确认的历史/争议结论；IGL 与
+  `data/manual/player_overrides.json` 保存人工确认的历史/争议结论；IGL 与
   AWPer/Rifler 的武器角色会分开取证，不能仅凭标签或一个统计值硬覆盖
 - 难度分层:简单=Major≥4 次或现役常客;常规=Major≥2 或 blast 现役名单;
   困难=全部
@@ -195,13 +195,24 @@ ADMIN_TOKEN=换成随机长口令
   `*.state.json`(按行内容哈希定位),原始 JSONL 永远只追加、不改写
 - **选手编辑**:搜索定位(ID/真实姓名,变音符号折叠)后,对照
   「爬取值 / 生效值」编辑 override:战队、状态、位置、选手期位置、
-  生日,`reason` 必填。只写 `data/player_overrides.json`(人工修正层),
+  生日,`reason` 必填。只写 `data/manual/player_overrides.json`(人工修正层),
   从不改动生成物 `players.json`,scraper 重跑不丢;保存后自动热重载,
   进行中的对局不受影响,也不用重启进程
+- **新增选手**(选手编辑页的「＋ 新增选手」):手工加人,用于彩蛋选手或
+  上游查不到的人。写 `data/manual/players_manual.json`,加载时并入选手库
+  ——**不能直接写 `players.json`**,那是生成物,下一次整库重建会把人冲掉
+  (MachineWJQ 就这么丢过一次,见 `52f0b5f`)。进谜底池需要 ID + 国籍 +
+  生日 + 位置四项齐全,缺任意一项只能被搜到、不会被抽中
+- **头像上传**(编辑器底部):≤2MB 的 JPEG/PNG/WebP,存进
+  `data/manual/img/` 并记在 `images_manual.json`,优先级高于爬取的图,
+  对人工新增和爬取来的选手都生效。服务端只校验魔数和体积(运行时镜像
+  没有 Pillow),不缩放,建议仍上传 600px 源图
 - **数据体检**:缺生日/缺位置/缺照片/缺国籍/年龄异常/非谜底池/
   同队多指挥(现役阵容 ≥2 个 IGL,交接指挥后上游残留旧标签的典型症状)/
-  现役阵容无指挥(≥4 人首发一个 IGL 都没有,上游漏标指挥的典型症状)
-  八类清单,主动发现问题而不是等玩家反馈,点选手直达编辑器。
+  现役阵容无指挥(≥4 人首发一个 IGL 都没有,上游漏标指挥的典型症状)/
+  失效的 override(条目以 Liquipedia page 名为键,上游改页名后会静默失效,
+  人工结论悄悄回退,没有任何报错)九类清单,主动发现问题而不是等玩家反馈,
+  点选手直达编辑器。
   两项指挥检查按队分组展示整套阵容——指挥是谁只能人工判断,
   列全员才好挑;不做「无主教练」检查,上游教练覆盖率太低(约 2/3
   的现役队都查不到主教练),报出来只是噪音
@@ -218,9 +229,31 @@ ADMIN_TOKEN=换成随机长口令
   (已有人工角色默认跳过,替换需显式勾选),写入后自动热重载;
   `collect` 采集本身仍需本机 Chrome 在命令行跑
 
-只读容器部署时,线上直改 override 需把 `data/player_overrides.json`
-所在目录挂成可写卷(反馈状态文件跟随 `FEEDBACK_PATH`);不挂也可以
-本地改完随镜像/卷发布,管理页会明确报写入失败。
+### 两个权威源:人工层 vs 生成物
+
+容器根文件系统只读,只有两个可写卷。`data/manual/` 是管理页唯一写盘的
+地方,也是唯一**以线上为准**的数据:
+
+| | 文件 | 权威方 | 流向 |
+|---|---|---|---|
+| 人工层 | `data/manual/`(override、人工新增选手、上传的照片) | **线上** | 改完从服务器拉回仓库 |
+| 生成物 | `players.json`、`images.json`、`img/` | **本地**(爬虫产物) | 推送 + 重建镜像 |
+
+两边各有唯一权威源,所以正常流程不会互相覆盖。线上改完后拉回:
+
+```bash
+rsync -av oracle-arm:/home/ubuntu/docker/cstrikle/data/manual/ data/manual/
+git add data/manual && git commit -m "Pull manual layer from prod"
+```
+
+`compose.yaml` 里对应两处:`./data/manual:/app/data/manual` 可写卷,
+以及 `user: "1000:1000"`——镜像里的进程是 uid 999(app),而卷目录是宿主
+`ubuntu`(1000) 建的,不覆盖运行身份就会写不进去(报 `Read-only file
+system` 之外的 `Permission denied`)。
+
+**「数据更新」标签在生产环境不可用**:Dockerfile 不 COPY `scraper/`
+(镜像不带爬虫和它的依赖),三个抓取任务会直接报「启动失败」。全库刷新
+始终在本地跑,过 staging 发布后连同镜像一起部署。
 
 ## 结构
 
@@ -233,11 +266,18 @@ data/players.json         选手库(生成物,约 650+ 人)
 data/hltv_player_map.json 已人工确认的本地 page -> HLTV ID 映射
 data/images.json          图片索引(生成物)
 data/img/                 照片/队标/国旗(生成物)
+data/manual/              人工层(可写卷,线上为准):player_overrides.json
+                          人工修正 / players_manual.json 人工新增选手 /
+                          images_manual.json + img/ 后台上传的照片
 server/players.py         选手库加载/筛选/名字解析
 server/game.py            反馈比对 + 单人对局
 server/rooms.py           对战房间 + WebSocket + 整局限时 + AI 调度
 server/ai_player.py       LLM agent(native/text 双协议 + 全程转录)
 server/main.py            FastAPI 入口
-server/admin.py           管理页接口(反馈收件箱/override 编辑/体检/热重载)
-static/                   前端(原生 JS 单页,无构建;admin.* 为管理页)
+server/admin.py           管理页接口(反馈收件箱/override 编辑/新增选手/
+                          头像上传/体检/热重载)
+server/regions.py         国籍 -> 赛区(server 与 scraper 共用)
+static/                   前端(原生 JS 单页,无构建;admin.* 为管理页;
+                          style2.css 为「新版 UI」转播风皮肤,页头按钮切换,
+                          偏好存 localStorage,旧版样式不受影响)
 ```

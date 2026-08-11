@@ -11,6 +11,8 @@ players.json,因此与 scraper 重跑完全兼容;改完调 /api/admin/reload
 反馈处理状态存放在 feedback.jsonl 旁边的 *.state.json,按行内容哈希
 定位条目,原始 JSONL 永远只追加、不改写。
 """
+import base64
+import binascii
 import hashlib
 import json
 import re
@@ -27,6 +29,7 @@ from pydantic import BaseModel
 
 from . import config
 from . import players as players_mod
+from .regions import region_of
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -125,6 +128,15 @@ def teams_without_igl(players) -> list:
     return out
 
 
+def orphan_overrides(players, overrides: dict) -> list:
+    """匹配不到任何选手的 override 条目。override 以 Liquipedia page 名为
+    键,上游一旦改页名(Rain -> Rain (Norwegian player)),这条人工结论就
+    静默失效——没有报错,只是某个角色某天"自己变回去了"。所以主动列出来。"""
+    pages = {str(p.page).casefold() for p in players}
+    return [{"key": k, "override": v} for k, v in overrides.items()
+            if k.casefold() not in pages]
+
+
 def _hltv_mod():
     """scripts/sync_hltv_roles.py 顶层只有标准库,playwright 是懒加载,
     服务端 import 它复用 apply 的保护逻辑是安全的。"""
@@ -194,8 +206,10 @@ def _raw_players() -> dict:
 
 
 def _atomic_write_json(path: Path, data) -> None:
+    # tmp 必须和目标同目录:rename 跨设备会失败,而人工层是独立挂载的卷。
     tmp = path.with_name(path.name + ".tmp")
     try:
+        path.parent.mkdir(parents=True, exist_ok=True)
         tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n",
                        encoding="utf-8")
         tmp.replace(path)
@@ -204,10 +218,26 @@ def _atomic_write_json(path: Path, data) -> None:
 
 
 def _load_overrides() -> dict:
-    p = players_mod.OVERRIDES_PATH
+    p = players_mod.overrides_path()
     if p.exists():
         return json.loads(p.read_text(encoding="utf-8"))
     return {}
+
+
+def _load_manual() -> dict:
+    """人工新增选手表,保留 note 字段原样写回。"""
+    data = players_mod._read_json(players_mod.MANUAL_PLAYERS_PATH)
+    if not isinstance(data, dict):
+        data = {"players": data or []}
+    data.setdefault("players", [])
+    return data
+
+
+def _manual_index(data: dict, page: str) -> int:
+    for i, r in enumerate(data["players"]):
+        if str(r.get("page", "")).casefold() == page.casefold():
+            return i
+    return -1
 
 
 def _override_key(overrides: dict, page: str) -> str:
@@ -284,6 +314,94 @@ class HltvApplyBody(BaseModel):
     replace_existing: bool = False
 
 
+class ManualPlayerBody(BaseModel):
+    """人工新增选手。page 是主键(和 Liquipedia 页名同一个命名空间),
+    新增后由 players.py 在加载时合并,爬虫重建不会冲掉。"""
+    page: str = ""
+    nickname: str
+    real_name: str = ""
+    country: str = ""
+    birth_date: str = ""
+    team: str = ""
+    game_role: str = ""
+    roles: list[str] = []
+    majors_count: int = 0
+    in_blast_pool: bool = False
+    reason: str
+
+
+class PhotoBody(BaseModel):
+    """照片走 base64 而不是 multipart:multipart 要额外装 python-multipart,
+    为了一年传几张彩蛋头像给生产镜像加依赖不划算。"""
+    filename: str = ""
+    data: str                            # 纯 base64 或 data:image/...;base64,
+
+
+# 头像上传:运行时镜像里没有 Pillow(只在 requirements-maintenance.txt),
+# 所以只认魔数和体积,不解码、不缩放。结算卡按 240px 渲染、2x 屏 480px,
+# 建议仍然上传 600px 源图。
+PHOTO_MAX_BYTES = 2 * 1024 * 1024
+PHOTO_MAGIC = ((b"\xff\xd8\xff", "jpg"), (b"\x89PNG\r\n\x1a\n", "png"))
+UNSAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]")
+
+
+def _photo_ext(blob: bytes) -> str:
+    for magic, ext in PHOTO_MAGIC:
+        if blob.startswith(magic):
+            return ext
+    if blob[:4] == b"RIFF" and blob[8:12] == b"WEBP":
+        return "webp"
+    raise HTTPException(400, "只支持 JPEG / PNG / WebP 图片")
+
+
+def _decode_photo(data: str) -> bytes:
+    raw = data.split(",", 1)[-1] if data.startswith("data:") else data
+    try:
+        blob = base64.b64decode(raw, validate=True)
+    except (ValueError, binascii.Error):
+        raise HTTPException(400, "图片不是合法的 base64")
+    if not blob:
+        raise HTTPException(400, "图片为空")
+    if len(blob) > PHOTO_MAX_BYTES:
+        raise HTTPException(400,
+                            f"图片超过 {PHOTO_MAX_BYTES // 1024 // 1024}MB")
+    return blob
+
+
+def _manual_record(body: "ManualPlayerBody", page: str) -> dict:
+    """组装成和 players.json 同构的记录,让下游(Player/前端)无需区分来源。"""
+    country = body.country.strip()
+    roles = [r.strip().lower() for r in body.roles if r.strip()]
+    unknown = [r for r in roles if r not in players_mod.ROLE_LABEL]
+    if unknown:
+        raise HTTPException(400, f"未知 roles: {unknown}")
+    if body.birth_date and not BIRTH_RE.match(body.birth_date):
+        raise HTTPException(400, "birth_date 格式须为 YYYY-MM-DD")
+    if body.game_role and body.game_role not in GAME_ROLE_VALUES:
+        raise HTTPException(400, f"game_role 只能是 {sorted(GAME_ROLE_VALUES)}")
+    return {
+        "page": page,
+        "nickname": body.nickname.strip(),
+        "real_name": body.real_name.strip(),
+        "country": country,
+        "region": region_of(country),
+        "birth_date": body.birth_date.strip(),
+        "team": body.team.strip(),
+        "source_team": body.team.strip(),
+        "current_team_history": [],
+        "team_resolution": "manual",
+        "status": "Active",
+        "roles": roles,
+        "game_role": body.game_role,
+        "majors_count": max(0, body.majors_count),
+        "first_major_year": None,
+        "last_major_year": None,
+        "majors": [],
+        "in_blast_pool": body.in_blast_pool,
+        "manual_reason": body.reason.strip(),
+    }
+
+
 def _admin_brief(p, has_override: bool) -> dict:
     return {
         "page": p.page,
@@ -299,6 +417,7 @@ def _admin_brief(p, has_override: bool) -> dict:
         "photo": p.photo,
         "game_ready": p.is_game_ready,
         "has_override": has_override,
+        "manual": p.is_manual,
     }
 
 
@@ -372,7 +491,12 @@ def build_admin_router(db) -> APIRouter:
         p = db.by_page.get(page)
         if p is None:
             raise HTTPException(404, "选手不存在")
+        # 人工新增的选手不在 players.json 里,「爬取值」一栏改看人工原始记录。
         raw = _raw_players().get(p.page, {})
+        if not raw and p.is_manual:
+            data = _load_manual()
+            i = _manual_index(data, p.page)
+            raw = data["players"][i] if i >= 0 else {}
         overrides = _load_overrides()
         entry = overrides.get(_override_key(overrides, p.page), None)
         fb = [e for e in _feedback_entries()
@@ -387,10 +511,11 @@ def build_admin_router(db) -> APIRouter:
                           "roles": p.roles,
                           "game_role": p.game_role or "",
                           "flag": p.flag,
-                          "team_logo": p.team_logo},
+                          "team_logo": p.team_logo,
+                          "manual_photo": p.page in db.manual_photo_map},
             "scraped": {k: raw.get(k) for k in
                         ("team", "status", "roles", "birth_date", "country",
-                         "majors_count", "in_blast_pool")},
+                         "majors_count", "in_blast_pool", "manual_reason")},
             "override": entry,
             "feedback": fb,
         }
@@ -433,6 +558,101 @@ def build_admin_router(db) -> APIRouter:
             raise HTTPException(404, "该选手没有 override")
         overrides.pop(key)
         _atomic_write_json(players_mod.OVERRIDES_PATH, overrides)
+        return {"ok": True, "page": page}
+
+    # ------------------------------------------------- 人工新增选手
+    # 彩蛋选手/上游查不到的人。写 data/manual/players_manual.json,加载时
+    # 合并——直接塞进 players.json 的话会被下一次整库重建冲掉(MachineWJQ
+    # 就这么丢过一次,见 52f0b5f)。
+    @guarded.get("/manual")
+    def list_manual():
+        pages = {str(r.get("page", "")).casefold()
+                 for r in _load_manual()["players"]}
+        overrides = {k.casefold() for k in _load_overrides()}
+        return {"players": [
+            _admin_brief(p, p.page.casefold() in overrides)
+            for p in db.players if p.page.casefold() in pages]}
+
+    @guarded.post("/manual")
+    def create_manual(body: ManualPlayerBody):
+        page = (body.page or body.nickname).strip()
+        if not page or not body.nickname.strip():
+            raise HTTPException(400, "必须填写昵称")
+        if not body.reason.strip():
+            raise HTTPException(400, "必须填写 reason(新增依据)")
+        if any(p.page.casefold() == page.casefold() for p in db.players):
+            raise HTTPException(409, f"{page} 已存在,请直接编辑或换一个 page")
+        data = _load_manual()
+        if _manual_index(data, page) >= 0:
+            raise HTTPException(409, f"{page} 已在人工新增表里")
+        rec = _manual_record(body, page)
+        data["players"].append(rec)
+        _atomic_write_json(players_mod.MANUAL_PLAYERS_PATH, data)
+        return {"ok": True, "page": page, "record": rec}
+
+    @guarded.put("/manual/{page}")
+    def update_manual(page: str, body: ManualPlayerBody):
+        if not body.reason.strip():
+            raise HTTPException(400, "必须填写 reason(修改依据)")
+        data = _load_manual()
+        i = _manual_index(data, page)
+        if i < 0:
+            raise HTTPException(404, f"{page} 不是人工新增的选手")
+        rec = _manual_record(body, data["players"][i]["page"])
+        data["players"][i] = rec
+        _atomic_write_json(players_mod.MANUAL_PLAYERS_PATH, data)
+        return {"ok": True, "page": rec["page"], "record": rec}
+
+    @guarded.delete("/manual/{page}")
+    def delete_manual(page: str):
+        data = _load_manual()
+        i = _manual_index(data, page)
+        if i < 0:
+            raise HTTPException(404, f"{page} 不是人工新增的选手")
+        real_page = data["players"].pop(i)["page"]
+        _atomic_write_json(players_mod.MANUAL_PLAYERS_PATH, data)
+        # 顺带清掉这个人的人工照片,免得留下引用不到的孤儿文件
+        imgs = players_mod._read_json(players_mod.MANUAL_IMAGES_PATH)
+        rel = imgs.get("players", {}).pop(real_page, None)
+        if rel:
+            _atomic_write_json(players_mod.MANUAL_IMAGES_PATH, imgs)
+            (players_mod.MANUAL_IMG_DIR / rel).unlink(missing_ok=True)
+        return {"ok": True, "page": real_page}
+
+    @guarded.put("/players/{page}/photo")
+    def upload_photo(page: str, body: PhotoBody):
+        """人工照片对所有选手都生效(不止新增的),优先级高于爬取的图。"""
+        p = db.by_page.get(page)
+        if p is None:
+            raise HTTPException(404, "选手不存在")
+        blob = _decode_photo(body.data)
+        ext = _photo_ext(blob)
+        rel = f"players/{UNSAFE_NAME_RE.sub('_', p.page)}.{ext}"
+        dest = players_mod.MANUAL_IMG_DIR / rel
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            tmp = dest.with_name(dest.name + ".tmp")
+            tmp.write_bytes(blob)
+            tmp.replace(dest)
+        except OSError as e:
+            raise HTTPException(500, f"写入照片失败(只读部署?): {e}")
+        imgs = players_mod._read_json(players_mod.MANUAL_IMAGES_PATH)
+        imgs.setdefault("players", {})
+        old = imgs["players"].get(p.page)
+        imgs["players"][p.page] = rel
+        _atomic_write_json(players_mod.MANUAL_IMAGES_PATH, imgs)
+        if old and old != rel:            # 换了扩展名,旧文件不再被引用
+            (players_mod.MANUAL_IMG_DIR / old).unlink(missing_ok=True)
+        return {"ok": True, "page": p.page, "rel": rel, "bytes": len(blob)}
+
+    @guarded.delete("/players/{page}/photo")
+    def delete_photo(page: str):
+        imgs = players_mod._read_json(players_mod.MANUAL_IMAGES_PATH)
+        rel = imgs.get("players", {}).pop(page, None)
+        if not rel:
+            raise HTTPException(404, "该选手没有人工照片")
+        _atomic_write_json(players_mod.MANUAL_IMAGES_PATH, imgs)
+        (players_mod.MANUAL_IMG_DIR / rel).unlink(missing_ok=True)
         return {"ok": True, "page": page}
 
     # -------------------------------------------------------------- reload
@@ -600,7 +820,8 @@ def build_admin_router(db) -> APIRouter:
         cats = {"missing_birth_date": [], "missing_role": [],
                 "missing_photo": [], "missing_country": [],
                 "age_anomaly": [], "not_game_ready": [],
-                "team_igl_conflict": [], "team_no_igl": []}
+                "team_igl_conflict": [], "team_no_igl": [],
+                "orphan_override": []}
         for p in db.players:
             b = None            # 懒构建,多数选手一项不缺
             def brief():
@@ -625,6 +846,7 @@ def build_admin_router(db) -> APIRouter:
             _admin_brief(p, False) for p in team_igl_conflicts(db.players)]
         cats["team_no_igl"] = [
             _admin_brief(p, False) for p in teams_without_igl(db.players)]
+        cats["orphan_override"] = orphan_overrides(db.players, _load_overrides())
         return {"categories": cats,
                 "counts": {k: len(v) for k, v in cats.items()},
                 "player_count": len(db.players)}

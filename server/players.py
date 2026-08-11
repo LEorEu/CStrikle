@@ -18,7 +18,24 @@ def _fold(s: str) -> str:
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "players.json"
 IMAGES_PATH = Path(__file__).resolve().parent.parent / "data" / "images.json"
 IMG_DIR = Path(__file__).resolve().parent.parent / "data" / "img"
-OVERRIDES_PATH = Path(__file__).resolve().parent.parent / "data" / "player_overrides.json"
+
+# 人工层:管理页唯一会写盘的地方,和爬虫生成物(players.json/images.json/img)
+# 分成两个权威源——生成物由本地爬虫产出、随镜像发布;人工层挂可写卷,线上
+# 改完再拉回仓库。目录必须整个可写:_atomic_write_json 用同目录 tmp+rename。
+MANUAL_DIR = Path(__file__).resolve().parent.parent / "data" / "manual"
+OVERRIDES_PATH = MANUAL_DIR / "player_overrides.json"
+MANUAL_PLAYERS_PATH = MANUAL_DIR / "players_manual.json"
+MANUAL_IMAGES_PATH = MANUAL_DIR / "images_manual.json"
+MANUAL_IMG_DIR = MANUAL_DIR / "img"
+# 迁进 data/manual/ 之前的老位置。仍然认它:旧检出/旧卷上找不到新文件时
+# 静默当成"零条人工修正"会把上百条人工结论一次性作废,代价太大。
+LEGACY_OVERRIDES_PATH = Path(__file__).resolve().parent.parent / "data" / "player_overrides.json"
+
+
+def overrides_path() -> Path:
+    if not OVERRIDES_PATH.exists() and LEGACY_OVERRIDES_PATH.exists():
+        return LEGACY_OVERRIDES_PATH
+    return OVERRIDES_PATH
 HLTV_MAP_PATH = Path(__file__).resolve().parent.parent / "data" / "hltv_player_map.json"
 TOP20_PATH = Path(__file__).resolve().parent.parent / "data" / "hltv_top20.json"
 
@@ -87,11 +104,36 @@ def _img_version(path: Path) -> str:
     return version
 
 
-def _img(rel: str | None) -> str | None:
+def _img(rel: str | None, base: Path = IMG_DIR, prefix: str = "/img") -> str | None:
+    """rel 相对 base;人工层照片存在另一个目录、走另一个挂载点(/img-manual),
+    除此之外和生成物照片一样带内容版本号。"""
     if not rel:
         return None
-    version = _img_version(IMG_DIR / rel)
-    return f"/img/{rel}?v={version}" if version else f"/img/{rel}"
+    version = _img_version(base / rel)
+    return f"{prefix}/{rel}?v={version}" if version else f"{prefix}/{rel}"
+
+
+def _manual_img(rel: str | None) -> str | None:
+    return _img(rel, MANUAL_IMG_DIR, "/img-manual")
+
+
+def _read_json(path: Path, default=None):
+    """人工层文件缺失/为空时按默认值处理:全新部署时 data/manual 只是个空卷。"""
+    if not path.exists():
+        return {} if default is None else default
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except ValueError:
+        return {} if default is None else default
+
+
+def manual_records() -> list[dict]:
+    """人工新增的选手(彩蛋/上游查不到的人)。爬虫产物 players.json 会被
+    整库重建覆盖——MachineWJQ 就这么丢过一次——所以这些记录单独存放,
+    在这里合并进来,重建多少次都不会掉。"""
+    data = _read_json(MANUAL_PLAYERS_PATH)
+    recs = data.get("players", []) if isinstance(data, dict) else data
+    return [r for r in recs if isinstance(r, dict) and r.get("page")]
 
 
 def _age(birth_date: str, today: date) -> int | None:
@@ -110,12 +152,13 @@ class Player:
                "first_major_year", "last_major_year", "majors", "in_blast_pool",
                "game_role", "team_resolution")
     __slots__ = _FIELDS + ("photo", "team_logo", "flag", "majors_won",
-                           "hltv_url")
+                           "hltv_url", "is_manual")
 
-    def __init__(self, rec: dict):
+    def __init__(self, rec: dict, is_manual: bool = False):
         for k in self._FIELDS:
             setattr(self, k, rec.get(k))
         self.roles = self.roles or []
+        self.is_manual = is_manual
         self.photo = self.team_logo = self.flag = self.hltv_url = None
         self.majors_won = sum(1 for m in (self.majors or [])
                               if m.get("placement") == "1")
@@ -296,15 +339,13 @@ class PlayerDB:
         self.generated_at = raw.get("generated_at", "")
         self.ranking = TeamRanking()
         self.major_results = load_major_results()
-        if OVERRIDES_PATH.exists():
-            override_raw = json.loads(OVERRIDES_PATH.read_text(encoding="utf-8"))
-            overrides = {k.casefold(): v for k, v in override_raw.items()}
-        else:
-            overrides = {}
+        override_raw = _read_json(overrides_path())
+        overrides = {k.casefold(): v for k, v in override_raw.items()}
         if IMAGES_PATH.exists():
             img = json.loads(IMAGES_PATH.read_text(encoding="utf-8"))
         else:
             img = {}
+        self.manual_photo_map = _read_json(MANUAL_IMAGES_PATH).get("players", {})
         self.photo_map = img.get("players", {})
         self.team_logo_map = img.get("teams", {})
         self.team_logo_by_key = {
@@ -314,7 +355,19 @@ class PlayerDB:
         self.flag_map = img.get("flags", {})
         self.excluded_stubs = 0
         self.players = []
+        # 人工记录同 page 时就地替换爬取记录(保持原顺序),否则追加到末尾。
+        manual = {str(r["page"]).casefold(): r for r in manual_records()}
+        used: set[str] = set()
+        records: list[tuple[dict, bool]] = []
         for rec in raw["players"]:
+            key = str(rec.get("page", "")).casefold()
+            if key in manual:
+                used.add(key)
+                records.append((manual[key], True))
+            else:
+                records.append((rec, False))
+        records += [(r, True) for k, r in manual.items() if k not in used]
+        for rec, is_manual in records:
             merged = dict(rec)
             override = overrides.get(str(rec.get("page", "")).casefold(), {})
             for key in ("team", "status", "game_role", "birth_date"):
@@ -322,7 +375,7 @@ class PlayerDB:
                     merged[key] = override[key]
             merged["majors"] = apply_major_results(
                 merged.get("majors"), self.major_results)
-            p = Player(merged)
+            p = Player(merged, is_manual)
             if p.is_staff and not p.is_head_coach:
                 # 主教练保留当前战队；助教和其他职务显示自由身。
                 p.team = ""
@@ -343,7 +396,9 @@ class PlayerDB:
             self.players.append(p)
         self.answer_players = [p for p in self.players if p.is_game_ready]
         for p in self.players:
-            p.photo = _img(self.photo_map.get(p.page))
+            # 后台上传的照片优先:人工新增的人上游没有图,已有选手换图也走这条。
+            p.photo = (_manual_img(self.manual_photo_map.get(p.page))
+                       or _img(self.photo_map.get(p.page)))
             p.team_logo = _img(
                 self.team_logo_map.get(p.team or "")
                 or self.team_logo_by_key.get(normalize_team_name(p.team or "")))

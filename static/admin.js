@@ -203,13 +203,112 @@ async function doSearch() {
             <td>${esc(p.role)}</td>
             <td>${p.age ?? "?"}</td>
             <td>${p.majors_count}</td>
-            <td>${p.has_override ? `<span class="tag-ov">override</span>` : ""}
+            <td>${p.manual ? `<span class="tag-manual">人工</span>` : ""}
+                ${p.has_override ? `<span class="tag-ov">override</span>` : ""}
                 ${p.game_ready ? "" : `<span class="tag-nr">非谜底</span>`}</td>
           </tr>`).join("")}
       </table>`;
     $$("#pResults tr.row").forEach(tr =>
       tr.addEventListener("click", () => openEditor(tr.dataset.page)));
   } catch (e) { toast("搜索失败: " + e.message, true); }
+}
+
+/* ------------------------------------------------ 人工新增选手
+   写 data/manual/players_manual.json,不碰 players.json——直接塞进生成物
+   的话下一次整库重建就会把人冲掉(MachineWJQ 的教训)。 */
+const ROLE_TAGS = ["igl", "awp", "rifle", "entry", "lurker", "support",
+                   "coach", "analyst", "caster"];
+
+function newPlayerForm(rec = null) {
+  const v = rec || {};
+  const box = $("#pNew");
+  box.innerHTML = `
+    <form id="mForm" class="m-form">
+      <div class="m-title">${rec ? `编辑人工选手 <code>${esc(v.page)}</code>`
+                                 : "新增选手(人工层)"}</div>
+      <div class="m-grid">
+        <label>ID <input name="nickname" required value="${esc(v.nickname ?? "")}"></label>
+        <label>page(主键,留空取 ID)
+          <input name="page" value="${esc(v.page ?? "")}" ${rec ? "readonly" : ""}></label>
+        <label>真实姓名 <input name="real_name" value="${esc(v.real_name ?? "")}"></label>
+        <label>国籍(英文,用于推赛区/国旗)
+          <input name="country" value="${esc(v.country ?? "")}" placeholder="China / Denmark ..."></label>
+        <label>生日 <input name="birth_date" value="${esc(v.birth_date ?? "")}" placeholder="YYYY-MM-DD"></label>
+        <label>战队 <input name="team" value="${esc(v.team ?? "")}"></label>
+        <label>位置
+          <select name="game_role">
+            ${["", "IGL", "AWPer", "Rifler", "Coach"].map(r =>
+              `<option ${v.game_role === r ? "selected" : ""}>${r}</option>`).join("")}
+          </select></label>
+        <label>Major 次数
+          <input name="majors_count" type="number" min="0" value="${v.majors_count ?? 0}"></label>
+      </div>
+      <div class="m-roles">原始 roles 标签:
+        ${ROLE_TAGS.map(r => `<label class="rt"><input type="checkbox" name="roles" value="${r}"
+          ${(v.roles || []).includes(r) ? "checked" : ""}>${r}</label>`).join("")}
+      </div>
+      <label class="dim"><input type="checkbox" name="in_blast_pool"
+        ${v.in_blast_pool ? "checked" : ""}> 计入 blast 现役名单(影响难度分层)</label>
+      <div class="ed-reason">
+        <textarea name="reason" placeholder="reason(必填):加这个人的依据/出处">${esc(v.manual_reason ?? "")}</textarea>
+      </div>
+      <p class="dim m-hint">进谜底池需要:ID + 国籍 + 生日 + 位置 四项齐全;缺任意一项只能被搜到,不会被抽中。</p>
+      <div class="ed-btns">
+        <button type="submit" class="save">${rec ? "保存修改并重载" : "创建并重载"}</button>
+        <button type="button" class="mini-btn" id="mCancel">取消</button>
+      </div>
+    </form>`;
+  box.classList.remove("hidden");
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  $("#mCancel").addEventListener("click", () => box.classList.add("hidden"));
+  $("#mForm").addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const f = new FormData(ev.target);
+    const body = {
+      nickname: (f.get("nickname") || "").trim(),
+      page: (f.get("page") || "").trim(),
+      real_name: (f.get("real_name") || "").trim(),
+      country: (f.get("country") || "").trim(),
+      birth_date: (f.get("birth_date") || "").trim(),
+      team: (f.get("team") || "").trim(),
+      game_role: f.get("game_role") || "",
+      roles: f.getAll("roles"),
+      majors_count: Number(f.get("majors_count") || 0),
+      in_blast_pool: !!f.get("in_blast_pool"),
+      reason: (f.get("reason") || "").trim(),
+    };
+    if (!body.reason) { toast("必须填写 reason", true); return; }
+    try {
+      const d = rec
+        ? await api("/manual/" + encodeURIComponent(v.page),
+                    { method: "PUT", body: JSON.stringify(body) })
+        : await api("/manual", { method: "POST", body: JSON.stringify(body) });
+      renderMeta(await api("/reload", { method: "POST" }));
+      box.classList.add("hidden");
+      toast(rec ? "已保存并重载" : "已新增并重载");
+      openEditor(d.page);
+    } catch (e) { toast((rec ? "保存" : "新增") + "失败: " + e.message, true); }
+  });
+}
+$("#pNewBtn").addEventListener("click", () => newPlayerForm());
+
+/* 头像上传:base64 走 JSON,服务端只校验魔数和大小(生产镜像没有 Pillow)。
+   对所有选手生效,人工照片优先级高于爬取的图。 */
+async function uploadPhoto(page, file) {
+  const data = await new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = () => rej(new Error("读取文件失败"));
+    fr.readAsDataURL(file);
+  });
+  try {
+    await api(`/players/${encodeURIComponent(page)}/photo`,
+              { method: "PUT", body: JSON.stringify({ data, filename: file.name }) });
+    renderMeta(await api("/reload", { method: "POST" }));
+    toast("照片已更新");
+    openEditor(page);
+  } catch (e) { toast("上传失败: " + e.message, true); }
 }
 
 async function openEditor(page) {
@@ -273,6 +372,19 @@ async function openEditor(page) {
       <span class="dim">只写 player_overrides.json,scraper 重跑不会丢</span>
     </div>
     </form>
+    <div class="ed-photo">
+      <label class="mini-btn as-label">上传照片
+        <input type="file" id="phFile" accept="image/jpeg,image/png,image/webp" hidden></label>
+      ${ef.manual_photo ? `<button type="button" class="mini-btn" id="phDel">删除人工照片</button>` : ""}
+      <span class="dim">存进人工层(≤2MB,JPEG/PNG/WebP),优先于爬取的图;建议 600px 源图</span>
+    </div>
+    ${ef.manual ? `
+    <div class="ed-manual">
+      <span class="tag-manual">人工新增</span>
+      <button type="button" class="mini-btn" id="mEdit">编辑资料</button>
+      <button type="button" class="del" id="mDel">删除该选手</button>
+      <span class="dim">这条记录存在人工层,爬虫重建不会覆盖也不会恢复</span>
+    </div>` : ""}
     <div class="ed-fb">
       <h3>该选手的反馈(${d.feedback.length})</h3>
       ${d.feedback.length ? d.feedback.map(e => `
@@ -308,6 +420,38 @@ async function openEditor(page) {
       openEditor(page);
     } catch (e) { toast("保存失败: " + e.message, true); }
   });
+  $("#phFile").addEventListener("change", ev => {
+    const file = ev.target.files[0];
+    if (file) uploadPhoto(page, file);
+  });
+  const phDel = $("#phDel");
+  if (phDel) phDel.addEventListener("click", async () => {
+    if (!confirm(`删除 ${ef.nickname} 的人工照片,回到爬取的图?`)) return;
+    try {
+      await api(`/players/${encodeURIComponent(page)}/photo`, { method: "DELETE" });
+      renderMeta(await api("/reload", { method: "POST" }));
+      toast("已删除并重载");
+      openEditor(page);
+    } catch (e) { toast("删除失败: " + e.message, true); }
+  });
+  const mEdit = $("#mEdit");
+  if (mEdit) mEdit.addEventListener("click", () => newPlayerForm({
+    page: ef.page, nickname: ef.nickname, real_name: ef.real_name,
+    country: ef.country, birth_date: ef.birth_date, team: ef.team,
+    game_role: ef.game_role, roles: ef.roles, majors_count: ef.majors_count,
+    in_blast_pool: sc.in_blast_pool, manual_reason: sc.manual_reason,
+  }));
+  const mDel = $("#mDel");
+  if (mDel) mDel.addEventListener("click", async () => {
+    if (!confirm(`彻底删除人工选手 ${ef.nickname}?照片也会一并清掉。`)) return;
+    try {
+      await api("/manual/" + encodeURIComponent(page), { method: "DELETE" });
+      renderMeta(await api("/reload", { method: "POST" }));
+      $("#pEditor").classList.add("hidden");
+      toast("已删除并重载");
+    } catch (e) { toast("删除失败: " + e.message, true); }
+  });
+
   const del = $("#ovDel");
   if (del) del.addEventListener("click", async () => {
     if (!confirm(`删除 ${ef.nickname} 的 override,回到纯爬取数据?`)) return;
@@ -331,6 +475,7 @@ const H_META = {
   missing_country: ["缺国籍", "国籍反馈维度失效"],
   age_anomaly: ["年龄异常", "小于 14 或大于 48,多半是生日数据错误"],
   not_game_ready: ["非谜底池", "可被搜索/猜测,但不会成为谜底"],
+  orphan_override: ["失效的 override", "override 以 page 名为键,上游改了页名就静默失效,人工结论会悄悄回退"],
 };
 
 /* 按队分组展示的类别:问题的单位是"一套阵容"而不是单个选手,
@@ -348,6 +493,14 @@ function hChip(p) {
 
 function hBody(key, list) {
   if (!list.length) return `<span class="dim">全部正常</span>`;
+  if (key === "orphan_override") {
+    // 这些条目对应不上任何选手,没有 page 可跳转,直接把键和内容摊开
+    return list.map(o => `
+      <div class="h-orphan">
+        <code>${esc(o.key)}</code>
+        <span class="dim">${esc(JSON.stringify(o.override))}</span>
+      </div>`).join("");
+  }
   if (!H_GROUPED.has(key)) {
     return list.map(p => `
       <span class="chip" data-page="${esc(p.page)}">

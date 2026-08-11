@@ -15,6 +15,10 @@ COPY --chown=app:app scripts ./scripts
 COPY --chown=app:app static ./static
 COPY --chown=app:app data ./data
 
+# 人工层挂可写卷;目录先建好,免得只读根文件系统上创建挂载点时出岔子。
+# 权限放开到组+其他用户是因为 compose 用 user: 覆盖了运行身份(见 compose.yaml)。
+RUN mkdir -p /app/data/manual/img && chmod -R 777 /app/data/manual
+
 USER app
 
 EXPOSE 8620

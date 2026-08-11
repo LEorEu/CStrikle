@@ -19,3 +19,6 @@ feedback/
 # admin staging / promote artifacts
 data/players.staging.json
 data/players.json.bak
+
+# 设计参考截图(4.9MB),不进仓库也不进镜像构建上下文
+.design-ref/

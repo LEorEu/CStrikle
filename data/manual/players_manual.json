@@ -1,0 +1,27 @@
+{
+  "note": "人工新增的选手。爬虫产物 players.json 会被整库重建覆盖，这些记录单独存放，由 server/players.py 在加载时合并。",
+  "players": [
+    {
+      "page": "MachineWJQ",
+      "nickname": "MachineWJQ",
+      "real_name": "Liu Yibo",
+      "country": "China",
+      "region": "Asia",
+      "birth_date": "1996-01-11",
+      "team": "",
+      "status": "Active",
+      "roles": [
+        "caster"
+      ],
+      "game_role": "Rifler",
+      "majors_count": 0,
+      "first_major_year": null,
+      "last_major_year": null,
+      "majors": [],
+      "in_blast_pool": true,
+      "source_team": "",
+      "current_team_history": [],
+      "team_resolution": "staff_role:caster"
+    }
+  ]
+}
