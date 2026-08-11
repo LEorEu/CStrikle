@@ -119,6 +119,26 @@ function go(view) {
   }
 }
 
+/* ---------------- 新旧 UI 切换 ---------------- */
+const uiV2 = () => document.documentElement.dataset.ui === "v2";
+function toggleUi() {
+  const next = uiV2() ? "v1" : "v2";
+  document.documentElement.dataset.ui = next;
+  try { localStorage.setItem("fcs2_ui", next); } catch {}
+  $("theme-css").setAttribute("href",
+    next === "v2" ? "/static/style2.css" : "/static/style.css");
+  updateUiToggle();
+  // 幽灵弹夹等 v2 专属结构要跟上当前视图
+  if (soloGame && !$("view-game").classList.contains("hidden")) renderSolo();
+  if (room.state && !$("view-room").classList.contains("hidden")) renderRoom();
+}
+function updateUiToggle() {
+  const b = $("ui-toggle");
+  if (!b) return;
+  b.textContent = uiV2() ? "经典 UI" : "新版 UI";
+  b.title = uiV2() ? "切回经典界面" : "试试新版转播风界面";
+}
+
 /* ---------------- settings widget ---------------- */
 function renderSettings(container, { withGuesses = true, withTimer = false,
                                      onDifficulty = null } = {}) {
@@ -455,6 +475,7 @@ function renderGrid(el, rows) {
 function syncGrid(el, rows) {
   // 只增量追加新行:整格重绘会让头像重载、翻转动画重播,
   // 对手每次行动广播状态时画面就"闪一下"
+  el.querySelectorAll(".grow.ghost").forEach(n => n.remove());
   const rendered = el.childElementCount ? el.childElementCount - 1 : 0;
   if (!el.childElementCount || rendered > rows.length) { renderGrid(el, rows); return; }
   for (let i = rendered; i < rows.length; i++)
@@ -465,6 +486,26 @@ function pipsHtml(used, total) {
   for (let i = 0; i < total; i++)
     h += `<span class="pip${i < used ? " used" : ""}"></span>`;
   return h + "</span>";
+}
+function syncGhosts(el, used, total) {
+  // 新版 UI:剩余猜测画成幽灵空行,棋盘"看得见还剩几发子弹"
+  el.querySelectorAll(".grow.ghost").forEach(n => n.remove());
+  if (!uiV2() || !total) return;
+  let h = "";
+  for (let i = used; i < total; i++)
+    h += `<div class="grow ghost"><div class="cell name"><span class="g-idx">${
+      String(i + 1).padStart(2, "0")}</span></div>${'<div class="cell"></div>'.repeat(6)}</div>`;
+  if (h) el.insertAdjacentHTML("beforeend", h);
+}
+function killfeed(target) {
+  // 新版 UI:猜中瞬间的 killfeed 横幅,结算弹窗出来前先给情绪
+  if (!uiV2() || !target) return;
+  const el = document.createElement("div");
+  el.className = "killfeed";
+  el.innerHTML = `<b>你</b><svg viewBox="0 0 24 24" aria-hidden="true">`
+    + `<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg><b>${esc(target)}</b>`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3400);
 }
 let lastAnswer = null;   // 最近渲染的谜底,供纠错反馈定位选手
 function answerCard(a) {
@@ -577,6 +618,8 @@ function renderSolo() {
   $("game-remaining").innerHTML = pipsHtml(g.guesses.length, g.settings.max_guesses);
   $("game-pool").textContent = `候选 ${g.pool_size} 人`;
   renderGrid($("grid"), g.guesses);
+  syncGhosts($("grid"), g.guesses.length,
+    g.status === "playing" ? g.settings.max_guesses : 0);
   const res = $("game-result");
   const again = $("btn-again");
   if (g.status === "playing") {
@@ -601,6 +644,7 @@ async function soloGuess(p) {
     renderSolo();
     if (soloGame.status !== "playing") {
       const g = soloGame;
+      if (g.status === "won") killfeed(g.answer && g.answer.nickname);
       const btns = (g.mode === "daily"
         ? `<button class="primary" onclick="shareDaily()">复制战绩</button>`
         : `<button class="primary" onclick="overlayAgain()">再来一局</button>`)
@@ -614,11 +658,36 @@ async function soloGuess(p) {
   } catch (e) { toast(e.message); }
 }
 function shareDaily() {
+  // Wordle 式彩色矩阵:颜色本身就是战报,末尾带上入口链接
   const g = soloGame;
-  const map = { green: "■", yellow: "◆", gray: "·" };
-  const lines = g.guesses.map(r => r.cells.map(c => map[c.state]).join(""));
-  const txt = `FribergCS2 ${new Date().toISOString().slice(0, 10)} ${g.status === "won" ? g.guesses.length : "X"}/${g.settings.max_guesses}\n` + lines.join("\n");
-  navigator.clipboard.writeText(txt).then(() => toast("已复制,发给朋友吧"));
+  const map = { green: "🟩", yellow: "🟨", gray: "⬛" };
+  const date = new Date().toISOString().slice(0, 10);
+  const score = g.status === "won" ? g.guesses.length : "X";
+  const txt = [
+    `FribergCS2 每日挑战 ${date} ${score}/${g.settings.max_guesses}`,
+    ...g.guesses.map(r => r.cells.map(c => map[c.state]).join("")),
+    location.origin,
+  ].join("\n");
+  copyText(txt).then(ok =>
+    toast(ok ? "战绩已复制,去嘲讽朋友吧" : "复制失败,浏览器没给剪贴板权限"));
+}
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {}
+  try {           // http 部署或旧浏览器:退回隐藏 textarea + execCommand
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch { return false; }
 }
 
 /* ---------------- versus ---------------- */
@@ -825,6 +894,8 @@ function renderRoom() {
     : opp && opp.rematch_ready ? "对手已准备再来一局" : "对局结束";
   $("room-remaining").innerHTML = pipsHtml(you.rows.length, s.settings.max_guesses);
   syncGrid($("room-grid"), you.rows);
+  syncGhosts($("room-grid"), you.rows.length,
+    s.status === "playing" ? s.settings.max_guesses : 0);
   $("room-guess-input").disabled = s.status !== "playing" || you.status !== "playing";
 
   // opponent panel
@@ -885,6 +956,7 @@ function renderRoom() {
     $("ai-status").classList.add("hidden");
     if (justEnded) {
       const iWon = s.winner === you.name;
+      if (iWon && s.answer) killfeed(s.answer.nickname);
       const kind = iWon ? "win" : s.winner === "draw" ? "draw" : "lose";
       const title = iWon ? "VICTORY" : s.winner === "draw" ? "DRAW" : "DEFEAT";
       const sub = iWon ? "你先猜中了" : s.winner === "draw" ? "谁都没猜出来"
@@ -1175,6 +1247,7 @@ async function init() {
     else renderChat();
   });
   updateStreamerUi();
+  updateUiToggle();
   document.querySelectorAll(".mm-seg button").forEach(b => b.onclick = () => {
     document.querySelectorAll(".mm-seg button").forEach(x => x.classList.remove("on"));
     b.classList.add("on");

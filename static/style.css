@@ -703,3 +703,11 @@ label.chk { display: flex; align-items: center; gap: 8px; color: var(--fg); }
 @media (min-width: 701px) and (max-width: 900px) {
   .mode-cards { grid-template-columns: 1fr; }
 }
+
+/* ---------- 新旧 UI 切换按钮(新版皮肤在 style2.css) ---------- */
+.ui-toggle {
+  flex: none; margin: 0; padding: 6px 13px;
+  font: 700 11px var(--disp); letter-spacing: 2px; color: var(--dim);
+}
+.ui-toggle:hover { color: var(--t); }
+@media (max-width: 700px) { .ui-toggle { padding: 5px 9px; letter-spacing: 1px; } }
