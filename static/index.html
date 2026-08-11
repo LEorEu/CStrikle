@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FribergCS2 — 猜 CS 职业哥</title>
 <link rel="icon" type="image/jpeg" href="/static/favicon.jpg">
-<link id="theme-css" rel="stylesheet" href="/static/style.css">
+<link id="theme-css" rel="stylesheet" href="/static/style.css"
+  data-v1="/static/style.css" data-v2="/static/style2.css">
 <script>
 /* 首屏换肤:在渲染前按本地偏好切样式表,避免闪一下旧皮肤 */
 (function () {
@@ -13,7 +14,8 @@
     var v = localStorage.getItem("fcs2_ui") === "v2" ? "v2" : "v1";
     document.documentElement.dataset.ui = v;
     if (v === "v2")
-      document.getElementById("theme-css").setAttribute("href", "/static/style2.css");
+      var el = document.getElementById("theme-css");
+      el.setAttribute("href", el.dataset.v2);
   } catch (e) {}
 })();
 </script>

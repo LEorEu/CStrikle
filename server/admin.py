@@ -29,6 +29,7 @@ from pydantic import BaseModel
 
 from . import config
 from . import players as players_mod
+from .assets import versioned_html
 from .regions import canonical_country, region_of
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -443,7 +444,7 @@ def build_admin_router(db) -> APIRouter:
     def admin_page():
         if not config.ADMIN_TOKEN:
             raise HTTPException(404, "Not Found")
-        return FileResponse(ROOT / "static" / "admin.html")
+        return versioned_html(ROOT / "static" / "admin.html")
 
     @guarded.get("/ping")
     def ping():

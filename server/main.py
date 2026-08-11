@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from . import config
 from .admin import build_admin_router
+from .assets import versioned_html
 from .game import Game, normalize_settings
 from . import players as players_mod
 from .players import REGIONS, PlayerDB
@@ -442,7 +443,8 @@ class VersionedStatic(StaticFiles):
 
 static_dir = ROOT / "static"
 img_dir = ROOT / "data" / "img"
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+app.mount("/static", VersionedStatic(directory=static_dir), name="static")
 if img_dir.exists():
     app.mount("/img", VersionedStatic(directory=img_dir), name="img")
 # 人工层照片走单独挂载点:它们住在可写卷 data/manual/img 里,不能混进
@@ -454,4 +456,4 @@ app.mount("/img-manual", VersionedStatic(directory=players_mod.MANUAL_IMG_DIR),
 
 @app.get("/")
 def index():
-    return FileResponse(static_dir / "index.html")
+    return versioned_html(static_dir / "index.html")

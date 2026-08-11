@@ -1,8 +1,13 @@
 /* 国籍中文名。index.html 和 admin.html 共用:后台新增选手的国籍下拉
    必须和这里的键完全一致,拼错或大小写不符会同时打掉国旗和赛区判定
-   (server/regions.py 的 REGION 表用同一批键,有测试守住两边同步)。*/
+   (server/regions.py 的 REGION 表用同一批键,有测试守住两边同步)。
+
+   刻意用 window.X = 而不是 const X:浏览器缓存里可能还留着抽出这张表
+   之前的 app.js,它自己声明了 const COUNTRY_CN。两个顶层 const 同名会让
+   第二个脚本整体 SyntaxError,页面直接白屏;属性赋值则可以被旧脚本的
+   const 安全遮蔽,新旧任意组合都能跑。*/
 "use strict";
-const COUNTRY_CN = {
+window.COUNTRY_CN = {
   "Denmark":"丹麦","Sweden":"瑞典","Norway":"挪威","Finland":"芬兰","France":"法国",
   "Germany":"德国","Poland":"波兰","Czech Republic":"捷克","Czechia":"捷克",
   "Slovakia":"斯洛伐克","United Kingdom":"英国","Spain":"西班牙","Portugal":"葡萄牙",

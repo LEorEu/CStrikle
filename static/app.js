@@ -95,8 +95,9 @@ function toggleUi() {
   const next = uiV2() ? "v1" : "v2";
   document.documentElement.dataset.ui = next;
   try { localStorage.setItem("fcs2_ui", next); } catch {}
-  $("theme-css").setAttribute("href",
-    next === "v2" ? "/static/style2.css" : "/static/style.css");
+  // 两张皮肤的地址挂在元素的 data-v1/data-v2 上,服务端已给它们打好版本号
+  const link = $("theme-css");
+  link.setAttribute("href", next === "v2" ? link.dataset.v2 : link.dataset.v1);
   updateUiToggle();
   // 幽灵弹夹等 v2 专属结构要跟上当前视图
   if (soloGame && !$("view-game").classList.contains("hidden")) renderSolo();
