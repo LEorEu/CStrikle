@@ -601,6 +601,42 @@ class ManualPlayerTests(unittest.TestCase):
             r = self.client.post("/api/admin/manual", headers=self.h, json=bad)
             self.assertEqual(r.status_code, 400, field)
 
+    def test_country_is_canonicalised_and_unknown_rejected(self):
+        r = self.client.post("/api/admin/manual", headers=self.h,
+                             json=self._body(country="russia"))
+        self.assertEqual(r.status_code, 200)
+        rec = r.json()["record"]
+        self.assertEqual((rec["country"], rec["region"]), ("Russia", "CIS"))
+        self.client.delete("/api/admin/manual/jabitch", headers=self.h)
+
+        r = self.client.post("/api/admin/manual", headers=self.h,
+                             json=self._body(country="Wakanda"))
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("未知国籍", r.json()["detail"])
+
+    def test_status_is_restricted_to_upstream_values(self):
+        r = self.client.post("/api/admin/manual", headers=self.h,
+                             json=self._body(status="Benched"))
+        self.assertEqual(r.status_code, 400)
+        r = self.client.post("/api/admin/manual", headers=self.h,
+                             json=self._body(status="Retired"))
+        self.assertEqual(r.json()["record"]["status"], "Retired")
+
+    def test_empty_query_lists_the_whole_database(self):
+        """「选手编辑」一进去就该有列表,不必先想出一个搜索词。"""
+        d = self.client.get("/api/admin/players?q=&limit=0",
+                            headers=self.h).json()
+        self.assertEqual(d["total"], len(d["players"]))
+        self.assertGreater(d["total"], 500)
+        capped = self.client.get("/api/admin/players?q=&limit=5",
+                                 headers=self.h).json()
+        self.assertEqual(len(capped["players"]), 5)
+        self.assertEqual(capped["total"], d["total"])
+        # 截断只是取前 N,排序本身(按名气)对两种 limit 完全一致
+        self.assertEqual(capped["players"], d["players"][:5])
+        self.assertGreaterEqual(min(p["majors_count"] for p in capped["players"]),
+                                max(p["majors_count"] for p in d["players"][-5:]))
+
     def test_edit_manual_record(self):
         self.client.post("/api/admin/manual", headers=self.h, json=self._body())
         r = self.client.put("/api/admin/manual/jabitch", headers=self.h,

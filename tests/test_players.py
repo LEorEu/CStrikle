@@ -169,6 +169,31 @@ class PlayerDatabaseTests(unittest.TestCase):
         }
         self.assertEqual(conflicts, {})
 
+    def test_country_tables_stay_in_sync_across_python_and_js(self):
+        """server/regions.py 的赛区表和 static/countries.js 的中文名表必须
+        逐键一致:少了中文名游戏里会显示英文原文,少了赛区则整个人退成
+        Other。两张表分处两种语言,没有测试就只能靠人肉记得同时改。"""
+        import re
+
+        from server.regions import REGION
+        js = (Path(__file__).resolve().parent.parent
+              / "static" / "countries.js").read_text(encoding="utf-8")
+        body = js[js.index("{"):js.rindex("}")]
+        cn = set(re.findall(r'"([^"]+)"\s*:', body))
+        self.assertEqual(cn - set(REGION), set(), "有中文名但没有赛区")
+        self.assertEqual(set(REGION) - cn, set(), "有赛区但没有中文名")
+
+    def test_country_input_is_canonicalised(self):
+        """线上手打过 'russia':大小写不符会同时打掉赛区、国旗和中文名,
+        而且三处都不报错,所以入口必须归一。"""
+        from server.regions import canonical_country, region_of
+
+        self.assertEqual(canonical_country("russia"), "Russia")
+        self.assertEqual(canonical_country("  UNITED STATES "), "United States")
+        self.assertEqual(canonical_country("southkorea"), "South Korea")
+        self.assertIsNone(canonical_country("Wakanda"))
+        self.assertEqual(region_of(canonical_country("russia")), "CIS")
+
     def test_renamed_org_collapses_to_its_current_name(self):
         """IC Esports 之前分裂成两支队:Liquipedia 把 Inner Circle Esports
         重定向到 IC Esports,但 jR 的队史行仍写着旧名 Inner Circle。缩写改名

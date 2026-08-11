@@ -5,6 +5,14 @@ const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g,
   c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
+const cnCountry = c => (typeof COUNTRY_CN === "object" && COUNTRY_CN[c]) || c || "?";
+/* 国籍必须落在 COUNTRY_CN/REGION 的键上,拼错会同时打掉国旗和赛区,
+   所以只给下拉、不给自由输入(线上出现过手打的 "russia")。 */
+const countryOptions = cur => ["", ...Object.keys(COUNTRY_CN)]
+  .map(c => `<option value="${esc(c)}" ${c === cur ? "selected" : ""}>${
+    c ? esc(cnCountry(c)) + " · " + esc(c) : "(未填)"}</option>`).join("");
+const STATUS_OPTIONS = ["Active", "Inactive", "Retired"];
+
 let TOKEN = localStorage.getItem("csk_admin_token") || "";
 let fbCache = [];          // 反馈列表缓存(渲染筛选用)
 
@@ -92,6 +100,7 @@ function switchTab(tab) {
   if (tab === "health") loadHealth();
   if (tab === "update") loadStaging();
   if (tab === "hltv") loadHltv();
+  if (tab === "players" && !$("#pResults").innerHTML) doSearch();
 }
 $$(".admin-tabs button").forEach(b =>
   b.addEventListener("click", () => switchTab(b.dataset.tab)));
@@ -182,23 +191,26 @@ $("#pSearch").addEventListener("keydown", ev => { if (ev.key === "Enter") doSear
 
 async function doSearch() {
   const q = $("#pSearch").value.trim();
-  if (!q) { $("#pResults").innerHTML = ""; return; }
   try {
-    const d = await api("/players?q=" + encodeURIComponent(q));
+    // 空搜索 = 浏览整库(limit=0);照片走 loading="lazy",650 行也不会
+    // 一进页面就并发几百个图片请求。
+    const d = await api(`/players?q=${encodeURIComponent(q)}&limit=${q ? 30 : 0}`);
     if (!d.players.length) {
       $("#pResults").innerHTML = `<p class="dim">没有匹配的选手。</p>`;
       return;
     }
     $("#pResults").innerHTML = `
+      <p class="dim p-count">${q ? `匹配 ${d.total} 人${d.total > d.players.length
+          ? `,显示前 ${d.players.length}` : ""}` : `全部 ${d.total} 人`}</p>
       <table class="p-table">
         <tr><th></th><th>ID</th><th>姓名</th><th>国籍</th><th>战队</th>
             <th>位置</th><th>年龄</th><th>Major</th><th></th></tr>
         ${d.players.map(p => `
           <tr class="row" data-page="${esc(p.page)}">
-            <td>${p.photo ? `<img src="${esc(p.photo)}" alt="">` : ""}</td>
+            <td>${p.photo ? `<img src="${esc(p.photo)}" alt="" loading="lazy">` : ""}</td>
             <td><b>${esc(p.nickname)}</b></td>
             <td class="dim">${esc(p.real_name)}</td>
-            <td>${esc(p.country)}</td>
+            <td>${esc(cnCountry(p.country))}</td>
             <td>${esc(p.team || "自由身")}</td>
             <td>${esc(p.role)}</td>
             <td>${p.age ?? "?"}</td>
@@ -231,10 +243,13 @@ function newPlayerForm(rec = null) {
         <label>page(主键,留空取 ID)
           <input name="page" value="${esc(v.page ?? "")}" ${rec ? "readonly" : ""}></label>
         <label>真实姓名 <input name="real_name" value="${esc(v.real_name ?? "")}"></label>
-        <label>国籍(英文,用于推赛区/国旗)
-          <input name="country" value="${esc(v.country ?? "")}" placeholder="China / Denmark ..."></label>
+        <label>国籍(定赛区与国旗)
+          <select name="country">${countryOptions(v.country ?? "")}</select></label>
         <label>生日 <input name="birth_date" value="${esc(v.birth_date ?? "")}" placeholder="YYYY-MM-DD"></label>
         <label>战队 <input name="team" value="${esc(v.team ?? "")}"></label>
+        <label>状态
+          <select name="status">${STATUS_OPTIONS.map(o =>
+            `<option ${(v.status ?? "Active") === o ? "selected" : ""}>${o}</option>`).join("")}</select></label>
         <label>位置
           <select name="game_role">
             ${["", "IGL", "AWPer", "Rifler", "Coach"].map(r =>
@@ -272,6 +287,7 @@ function newPlayerForm(rec = null) {
       country: (f.get("country") || "").trim(),
       birth_date: (f.get("birth_date") || "").trim(),
       team: (f.get("team") || "").trim(),
+      status: f.get("status") || "Active",
       game_role: f.get("game_role") || "",
       roles: f.getAll("roles"),
       majors_count: Number(f.get("majors_count") || 0),
@@ -329,7 +345,7 @@ async function openEditor(page) {
       ${ef.photo ? `<img class="photo" src="${esc(ef.photo)}" alt="">` : ""}
       <div class="who">
         <div class="nick">${esc(ef.nickname)}</div>
-        <div class="real">${esc(ef.real_name)} · ${esc(ef.country)} · ${esc(ef.region || "?")}</div>
+        <div class="real">${esc(ef.real_name)} · ${esc(cnCountry(ef.country))} · ${esc(ef.region || "?")}</div>
         <div class="dim">page: ${esc(ef.page)}</div>
       </div>
       <div class="facts">
@@ -338,6 +354,9 @@ async function openEditor(page) {
         blast 名单: ${sc.in_blast_pool ? "是" : "否"}
       </div>
     </div>
+    ${ef.manual ? `<div class="ed-hint">这是人工新增的选手 —— 改资料请用下方的
+      <b>编辑资料</b>(写人工记录本身)。下面这张 override 表是叠加在记录之上的,
+      同一个字段改两处只会更乱。</div>` : ""}
     ${d.override ? `<div class="ov-now">当前 override: <code>${esc(JSON.stringify(d.override))}</code></div>` : ""}
     <form id="ovForm">
     <table class="ed-grid">
@@ -347,7 +366,7 @@ async function openEditor(page) {
           <td><input name="team" value="${esc(ov.team ?? "")}" placeholder="填空字符串需勾选下方"></td></tr>
       <tr><td class="f">状态</td>
           <td class="scraped">${esc(sc.status ?? "")}</td><td>${esc(ef.status || "")}</td>
-          <td><input name="status" value="${esc(ov.status ?? "")}"></td></tr>
+          <td>${roleSel("status", STATUS_OPTIONS, ov.status)}</td></tr>
       <tr><td class="f">位置</td>
           <td class="scraped">${esc((sc.roles || []).join(", "))}</td><td>${esc(ef.role)}</td>
           <td>${roleSel("game_role", ["IGL", "AWPer", "Rifler", "Coach"], ov.game_role)}</td></tr>
@@ -409,7 +428,10 @@ async function openEditor(page) {
     }
     const reason = (f.get("reason") || "").trim();
     if (!reason) { toast("必须填写 reason", true); return; }
-    if (!Object.keys(fields).length) { toast("没有要覆盖的字段;如要撤销请点删除", true); return; }
+    if (!Object.keys(fields).length) {
+      toast("上面四个字段至少改一个 —— reason 是这次改动的依据,不能单独保存", true);
+      return;
+    }
     try {
       await api(`/players/${encodeURIComponent(page)}/override`, {
         method: "PUT", body: JSON.stringify({ fields, reason }),

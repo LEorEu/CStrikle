@@ -4,9 +4,9 @@
 安全模型:未配置 ADMIN_TOKEN 时 /admin 与 /api/admin/* 一律 404,
 线上默认关闭;配置后所有接口要求 X-Admin-Token 精确匹配。
 
-编辑只写 data/player_overrides.json(人工修正层),从不改动生成物
-players.json,因此与 scraper 重跑完全兼容;改完调 /api/admin/reload
-原地重载 PlayerDB 生效,不需要重启进程。
+写盘一律落在 data/manual/(人工层:override / 人工新增选手 / 上传的
+照片),从不改动生成物 players.json,因此与 scraper 重跑完全兼容;改完调
+/api/admin/reload 原地重载 PlayerDB 生效,不需要重启进程。
 
 反馈处理状态存放在 feedback.jsonl 旁边的 *.state.json,按行内容哈希
 定位条目,原始 JSONL 永远只追加、不改写。
@@ -29,7 +29,7 @@ from pydantic import BaseModel
 
 from . import config
 from . import players as players_mod
-from .regions import region_of
+from .regions import canonical_country, region_of
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -37,6 +37,9 @@ ROOT = Path(__file__).resolve().parent.parent
 # 牵连派生数据,暂不开放,防止改出不一致。
 EDITABLE_FIELDS = ("team", "status", "game_role", "played_role", "birth_date")
 GAME_ROLE_VALUES = {"IGL", "AWPer", "Rifler", "Coach"}
+# 上游 status 的全部取值。之前 override 编辑器把它做成自由文本框,填错一个
+# 字就静默失效(is_active 只认 "retired"),所以收敛成白名单 + 下拉。
+STATUS_VALUES = {"Active", "Inactive", "Retired"}
 PLAYED_ROLE_VALUES = {"IGL", "AWPer", "Rifler"}
 BIRTH_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -323,6 +326,7 @@ class ManualPlayerBody(BaseModel):
     country: str = ""
     birth_date: str = ""
     team: str = ""
+    status: str = "Active"
     game_role: str = ""
     roles: list[str] = []
     majors_count: int = 0
@@ -371,6 +375,15 @@ def _decode_photo(data: str) -> bytes:
 def _manual_record(body: "ManualPlayerBody", page: str) -> dict:
     """组装成和 players.json 同构的记录,让下游(Player/前端)无需区分来源。"""
     country = body.country.strip()
+    if country:
+        canonical = canonical_country(country)
+        if canonical is None:
+            raise HTTPException(
+                400, f"未知国籍 {country!r};必须用国籍表里的英文写法"
+                     "(表单里改用下拉选择)")
+        country = canonical
+    if body.status and body.status not in STATUS_VALUES:
+        raise HTTPException(400, f"status 只能是 {sorted(STATUS_VALUES)}")
     roles = [r.strip().lower() for r in body.roles if r.strip()]
     unknown = [r for r in roles if r not in players_mod.ROLE_LABEL]
     if unknown:
@@ -390,7 +403,7 @@ def _manual_record(body: "ManualPlayerBody", page: str) -> dict:
         "source_team": body.team.strip(),
         "current_team_history": [],
         "team_resolution": "manual",
-        "status": "Active",
+        "status": body.status or "Active",
         "roles": roles,
         "game_role": body.game_role,
         "majors_count": max(0, body.majors_count),
@@ -471,20 +484,25 @@ def build_admin_router(db) -> APIRouter:
 
     # ------------------------------------------------------------- players
     @guarded.get("/players")
-    def search_players(q: str = ""):
+    def search_players(q: str = "", limit: int = 30):
+        """q 为空时返回整库(按名气排序),让「选手编辑」一进去就有列表可翻,
+        不必先想出一个搜索词。"""
         q = q.strip()
-        if not q:
-            return {"players": []}
-        key = players_mod._fold(q)
         overrides = {k.casefold() for k in _load_overrides()}
-        hits = [p for p in db.players
-                if key in players_mod._fold(p.nickname)
-                or key in players_mod._fold(p.page)
-                or key in players_mod._fold(p.real_name or "")]
+        if q:
+            key = players_mod._fold(q)
+            hits = [p for p in db.players
+                    if key in players_mod._fold(p.nickname)
+                    or key in players_mod._fold(p.page)
+                    or key in players_mod._fold(p.real_name or "")]
+        else:
+            hits = list(db.players)
         hits.sort(key=db._fame, reverse=True)
-        return {"players": [
-            _admin_brief(p, p.page.casefold() in overrides)
-            for p in hits[:30]]}
+        total = len(hits)
+        if limit > 0:
+            hits = hits[:limit]
+        return {"total": total, "players": [
+            _admin_brief(p, p.page.casefold() in overrides) for p in hits]}
 
     @guarded.get("/players/{page}")
     def player_detail(page: str):

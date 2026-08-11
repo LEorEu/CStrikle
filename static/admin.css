@@ -258,3 +258,8 @@
 }
 .h-orphan { padding: 4px 0; font-size: 12px; }
 .h-orphan code { color: var(--red); margin-right: 10px; }
+.p-count { margin: 10px 0 4px; }
+.ed-hint {
+  margin: 10px 0 0; padding: 8px 12px; background: rgba(74,144,217,.10);
+  border: 1px solid var(--ct); font-size: 12px; line-height: 1.7;
+}

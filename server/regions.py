@@ -54,3 +54,15 @@ REGION = {
 
 def region_of(country: str) -> str:
     return REGION.get(country, "Other")
+
+
+_BY_FOLD = {c.casefold().replace(" ", ""): c for c in REGION}
+
+
+def canonical_country(value: str) -> str | None:
+    """把人工输入的国籍对回表里的标准写法,对不上返回 None。
+
+    大小写/空格不符会同时打掉三样东西且都不报错:赛区退成 Other、国旗查不到、
+    前端 COUNTRY_CN 查不到于是显示英文原文(线上真出现过 "russia")。
+    """
+    return _BY_FOLD.get((value or "").casefold().replace(" ", ""))
