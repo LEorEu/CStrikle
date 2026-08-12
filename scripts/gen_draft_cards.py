@@ -4,6 +4,7 @@
     .\.venv\Scripts\python -X utf8 scripts\gen_draft_cards.py            # 只体检,不写盘
     .\.venv\Scripts\python -X utf8 scripts\gen_draft_cards.py --sample NiKo s1mple
     .\.venv\Scripts\python -X utf8 scripts\gen_draft_cards.py --write    # 生成 data/draft_cards.json
+    .\.venv\Scripts\python -X utf8 scripts\gen_draft_cards.py --spec     # 算法规格 -> 贴进 DESIGN_GAMEPLAY.md
 
 设计稿 §16.1 要求「卡牌 RNG 只在生成时跑一次,之后永久固定」。这里不靠保存
 随机状态来实现,而是让生成器**幂等**:每个人的随机数种子取自
@@ -385,6 +386,98 @@ def generate():
     return cards, pending, confirmed
 
 
+# ------------------------------------------------------------------- 规格
+SPEC_BEGIN = "<!-- SPEC:BEGIN 由 scripts/gen_draft_cards.py --spec 生成,勿手改 -->"
+SPEC_END = "<!-- SPEC:END -->"
+
+
+def spec_markdown() -> str:
+    """把全部常量和判定顺序导出成 Markdown,嵌进设计文档。
+
+    手抄一份常量到文档里,迟早会和代码对不上,而且不会有任何报错——这个项目
+    今晚一路修的就是这类静默漂移。所以文档里那一块由本函数生成,
+    `tests/test_draft_cards.py` 会断言两边一字不差。
+    """
+    def tbl(d, keys):
+        rows = []
+        for k in keys:
+            rows.append("| " + str(k) + " | " + " | ".join(str(x) for x in d[k]) + " |")
+        return "\n".join(rows)
+
+    lines = [SPEC_BEGIN, "", f"**CARD_VERSION = `{CARD_VERSION}`**", "",
+             "### 判定顺序", "", "```"]
+    lines += [
+        "1. 位置    played_role(人工层) > primary_role(主游戏) > roles 裸标签",
+        "           三者都拿不到 → 不进卡池(待定);draft_exclude 命中 → 确认排除",
+        "2. 档位    通用通道 与 指挥通道 取更高的一档",
+        "3. 模板    TEMPLATE[位置][档位] 给出四维底板",
+        "4. 修正    corrections() 的增量(见下)",
+        "5. 抖动    档位 ∈ EVIDENCE_GRADES 时为 0;否则火力 ±4、其余 ±3",
+        "           种子 = blake2b(page + CARD_VERSION),同一版本下永远同一张卡",
+        "6. 取整    round() 后夹在 [1, 99]",
+        "7. 覆盖    draft_overrides.json;其中 grade/position 在第 3 步之前生效,",
+        "           四维为直接替换。overall 最后按覆盖后的值重算",
+        "```", "",
+        "### 通用档位(自上而下互斥,取第一个满足的)", "", "```",
+        "G5  HLTV Top20 进过前五",
+        "G4  Top20 上榜 >= 2 次",
+        "G3  上榜 1 次 或 有 Major 冠军 或 打进过 Major 决赛(最好名次 <= 2)",
+        "G3  或 年龄 <= 24 且 当前有队 且 Major >= 3 且 最好名次 <= 8",
+        "G2  Major >= 3 次",
+        "G1  其余",
+        "",
+        "名次取自 majors[].placement。上游只记录前八名,空值即「9 名开外」,",
+        "所以「推不出冠军」是正确结论而不是数据缺失。",
+        "```", "",
+        "### 指挥通道(只上调,不下调)", "", "```",
+        f"igl_score = Σ(冠军 {IGL_TITLE} + 决赛 {IGL_FINAL} + 四强 {IGL_SEMI}) × 年代权重",
+        f"            + 出场次数 × {IGL_APPEARANCE}",
+        "门槛      " + "   ".join(f">= {cut} → G{g}" for cut, g in IGL_GRADE_CUT),
+        "```", "",
+        "### 年代权重(Top20 与指挥通道共用)", "", "```",
+        f"weight(年份) = max({TOP20_RECENCY_FLOOR}, 1 - {TOP20_RECENCY} × (参照年 - 年份))",
+        "参照年 = hltv_top20.json 快照里最新的年份,不用系统当前年——否则每跨一个",
+        "自然年全库数值会集体漂移一次。",
+        "```", "",
+        "### 四维修正 corrections()", "", "```",
+        f"火力   有 Top20 时: min(top20_score / FIRE_ANCHOR[档], 1) × {FIRE_SPREAD}",
+        "       其中 top20_score = 最好一年的名次分 + 其余年份 × " + str(TOP20_DEPTH),
+        f"       名次分 = {TOP20_DECAY} ^ (名次 - 1),再乘年代权重",
+        "       位置为 IGL 时只继承 0.4 倍(避免明星履历 + IGL 模板叠成六边形怪物)",
+        "经验   Major 次数 → 9 × log1p(次数) / log(21)   边际递减",
+        "       每个冠军 +1.5(最多计 4 个)",
+        f"领导   位置为 IGL 时: min(igl_score / LEAD_ANCHOR[档], 1) × {LEAD_SPREAD}",
+        "火力   年龄 <= 22 且档位不在 EVIDENCE_GRADES: +2.5",
+        "稳定   年龄 <= 22: -5(不分档位,打得飘是事实,和证据多少无关)",
+        "```", "",
+        "### 常量", "",
+        "| 常量 | 值 | 作用 |",
+        "|---|---|---|",
+        f"| `FIRE_SPREAD` | {FIRE_SPREAD} | Top20 履历在同档内能拉开的火力幅度 |",
+        f"| `LEAD_SPREAD` | {LEAD_SPREAD} | 团队荣誉在同档内能拉开的领导力幅度 |",
+        f"| `TOP20_DECAY` | {TOP20_DECAY} | 名次分几何衰减,#1=1.00 #5={TOP20_DECAY**4:.2f} #10={TOP20_DECAY**9:.2f} |",
+        f"| `TOP20_DEPTH` | {TOP20_DEPTH} | 非最佳年份的折算权重 |",
+        f"| `TOP20_RECENCY` | {TOP20_RECENCY} | 每早一年的衰减 |",
+        f"| `TOP20_RECENCY_FLOOR` | {TOP20_RECENCY_FLOOR} | 年代权重地板 |",
+        f"| `FIRE_ANCHOR` | {FIRE_ANCHOR} | 拿满 FIRE_SPREAD 所需的年度积分 |",
+        f"| `LEAD_ANCHOR` | {LEAD_ANCHOR} | 拿满 LEAD_SPREAD 所需的指挥分 |",
+        f"| `EVIDENCE_GRADES` | {EVIDENCE_GRADES} | 这些档位不掷骰子 |",
+        "",
+        "锚点是**固定常量**而不是「池内最高分」:按池内最高归一化的话,将来入库一个",
+        "更强的人会让全库旧卡悄悄变数值。改这些值要手动 bump `CARD_VERSION`。", "",
+        "### Grade × Position 模板 (火力/领导/经验/稳定)", "",
+        "| 档 | " + " | ".join(TEMPLATE) + " |",
+        "|---|" + "---|" * len(TEMPLATE),
+    ]
+    for g in (5, 4, 3, 2, 1):
+        lines.append(f"| G{g} | " + " | ".join(
+            "/".join(str(x) for x in TEMPLATE[pos][g]) for pos in TEMPLATE) + " |")
+    lines += ["", "### 位置权重(只用于内部估值 / STEAL 判定,不驱动比赛模拟)", "",
+              "| 位置 | 火力 | 领导 | 经验 | 稳定 |", "|---|---|---|---|---|",
+              tbl(WEIGHT, list(WEIGHT)), "", SPEC_END]
+    return "\n".join(lines)
+
+
 # ------------------------------------------------------------------- 体检
 def audit(cards, pending, confirmed):
     print("=" * 72)
@@ -450,7 +543,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true", help="写出 data/draft_cards.json")
     ap.add_argument("--sample", nargs="*", metavar="ID", help="只看这几个人的卡")
+    ap.add_argument("--spec", action="store_true",
+                    help="打印算法规格(Markdown),嵌进 DESIGN_GAMEPLAY.md")
     args = ap.parse_args()
+
+    if args.spec:
+        print(spec_markdown())
+        return
 
     cards, pending, confirmed = generate()
     if args.sample:
