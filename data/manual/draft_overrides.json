@@ -1,0 +1,23 @@
+{
+  "_note": "Blind Draft 的人工平衡层(设计稿 §21 Algorithm First, Override Last)。只修算法明显违背玩家常识的知名选手,不逐个人工打分。键为 Liquipedia page;可覆盖 firepower/leadership/experience/stability/grade/position。grade 与 position 会在套模板之前生效,其余四维是直接替换。overall 始终由覆盖后的值重新算。",
+  "Donk": {
+    "firepower": 96,
+    "reason": "公式按年度积分只能看到 2024/2025 两个赛季(#1、#2),算出 92 排全库第 5。但他现在就是公认火力第一的步枪手,证据不足是数据窗口太短,不是他不够强——正是 §21 说的算法明显违背玩家常识。"
+  },
+  "M0NESY": {
+    "firepower": 94,
+    "reason": "最好名次 #2、四个赛季全部 2022 年以后,年代衰减一分没吃,公式仍只给 92。公认的当代顶级狙击手,火力应在 dev1ce/NiKo 之上、s1mple 之下。"
+  },
+  "Zonic": {
+    "draft_exclude": true,
+    "reason": "人工判定:以教练身份被记住,选手期履历不足以进卡池。"
+  },
+  "Pita": {
+    "draft_exclude": true,
+    "reason": "人工判定:以教练身份被记住,选手期履历不足以进卡池。"
+  },
+  "Jab Jabich": {
+    "draft_exclude": true,
+    "reason": "彩蛋角色:一只青蛙玩偶,2026 科隆 Major 随 Spirit 以教练身份出场。留在主游戏题库里,不进 Draft 卡池。"
+  }
+}

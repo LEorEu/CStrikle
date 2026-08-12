@@ -346,7 +346,8 @@
   },
   "Gla1ve": {
     "game_role": "Coach",
-    "reason": "Current 100 Thieves head coach; head coaches retain their current team while remaining outside the active player roster."
+    "reason": "Current 100 Thieves head coach; head coaches retain their current team while remaining outside the active player roster. Astralis 时期的传奇指挥(2018 年 HLTV Top20 第 8 位就是以 IGL 身份上榜);Blind Draft 按生涯代表版本取 IGL,主游戏仍显示 100 Thieves 主教练。",
+    "played_role": "IGL"
   },
   "S0tF1k": {
     "team": "Team Spirit",
@@ -366,7 +367,8 @@
   },
   "Mou": {
     "game_role": "Coach",
-    "reason": "Current HOTU head coach; head coaches retain their current team and use the Coach game role."
+    "reason": "Current HOTU head coach; head coaches retain their current team and use the Coach game role. 沿用本库此前的人工结论(AVANGAR 时期的狙击手);现为 HOTU 主教练。",
+    "played_role": "AWPer"
   },
   "Attacker": {
     "game_role": "Rifler",
@@ -375,7 +377,8 @@
   },
   "AZR": {
     "game_role": "Coach",
-    "reason": "Current FlyQuest head coach; head coaches retain their current team and use the Coach game role."
+    "reason": "Current FlyQuest head coach; head coaches retain their current team and use the Coach game role. Renegades/100 Thieves 的澳洲指挥;现为 FlyQuest 主教练,选手期位置固定 IGL。",
+    "played_role": "IGL"
   },
   "ErkaSt": {
     "team": "",
@@ -388,7 +391,8 @@
   },
   "Stewie2K": {
     "game_role": "IGL",
-    "reason": "Career IGL per HLTV legacy feature (Cloud9/EG); user decision 2026-07-18. Retired-like, recent stats irrelevant."
+    "reason": "Career IGL per HLTV legacy feature (Cloud9/EG); user decision 2026-07-18. Retired-like, recent stats irrelevant. 人工复核:确认生涯代表位置为指挥。",
+    "played_role": "IGL"
   },
   "Xyp9x": {
     "game_role": "Rifler",
@@ -422,6 +426,159 @@
   },
   "Magisk": {
     "game_role": "IGL",
-    "reason": "人工确认 Magisk 是 BC.Game 的 IGL(HLTV 可核实);Liquipedia infobox 只写了 Rifler,导致 BC.Game 全队查不到指挥。IGL 默认持步枪,role_set 仍为 {IGL}。"
+    "reason": "人工确认 Magisk 是 BC.Game 的 IGL(HLTV 可核实);Liquipedia infobox 只写了 Rifler,导致 BC.Game 全队查不到指挥。IGL 默认持步枪,role_set 仍为 {IGL}。 Blind Draft 按生涯代表版本取 Astralis 时期的步枪手(2018/2019 连续 Top20 均为步枪);主游戏保留当前 BC.Game 指挥身份。",
+    "played_role": "Rifler"
+  },
+  "Xizt": {
+    "played_role": "IGL",
+    "reason": "NiP 时期的指挥,2013 年 HLTV Top20 第 6 位;现为 NiP 教练,选手期位置固定 IGL。"
+  },
+  "NEO": {
+    "played_role": "Rifler",
+    "reason": "Virtus.pro 的明星步枪手(队内指挥是 TaZ);现为 Astralis 教练,选手期位置固定 Rifler。"
+  },
+  "TaZ": {
+    "played_role": "IGL",
+    "reason": "Virtus.pro 的指挥;现为 BC.Game 教练,选手期位置固定 IGL。"
+  },
+  "B1ad3": {
+    "played_role": "IGL",
+    "reason": "HellRaisers/Team Spirit 时期以战术指挥著称;现为 Natus Vincere 教练,选手期位置固定 IGL。"
+  },
+  "Daps": {
+    "played_role": "IGL",
+    "reason": "NRG/Gen.G 时期的指挥,北美长期 IGL;现为 NRG 教练。"
+  },
+  "Dephh": {
+    "played_role": "IGL",
+    "reason": "Rogue/EG/Complexity 时期的北美-英国系指挥;现为 M80 教练。"
+  },
+  "SEMPHIS": {
+    "played_role": "Rifler",
+    "reason": "Cloud9 时期的步枪手;现为 Voca 教练。"
+  },
+  "HUNDEN": {
+    "played_role": "IGL",
+    "reason": "Tricked/Heroic 体系里的指挥;现为 Sashi 教练。"
+  },
+  "Twistzz": {
+    "played_role": "Rifler",
+    "reason": "人工复核 IGL 候选名单:有 Top20 履历的「IGL」多半是带了一个 igl 标签的枪手,人工确认其生涯代表位置为步枪手。"
+  },
+  "HuNter-": {
+    "played_role": "Rifler",
+    "reason": "人工复核 IGL 候选名单:有 Top20 履历的「IGL」多半是带了一个 igl 标签的枪手,人工确认其生涯代表位置为步枪手。"
+  },
+  "XertioN": {
+    "played_role": "Rifler",
+    "reason": "人工复核 IGL 候选名单:有 Top20 履历的「IGL」多半是带了一个 igl 标签的枪手,人工确认其生涯代表位置为步枪手。"
+  },
+  "Byali": {
+    "played_role": "Rifler",
+    "reason": "人工复核 IGL 候选名单:有 Top20 履历的「IGL」多半是带了一个 igl 标签的枪手,人工确认其生涯代表位置为步枪手。"
+  },
+  "Kjaerbye": {
+    "played_role": "Rifler",
+    "reason": "人工复核 IGL 候选名单:有 Top20 履历的「IGL」多半是带了一个 igl 标签的枪手,人工确认其生涯代表位置为步枪手。"
+  },
+  "Valde": {
+    "played_role": "Rifler",
+    "reason": "人工复核 IGL 候选名单:有 Top20 履历的「IGL」多半是带了一个 igl 标签的枪手,人工确认其生涯代表位置为步枪手。"
+  },
+  "Dennis": {
+    "played_role": "Rifler",
+    "reason": "人工复核 IGL 候选名单:有 Top20 履历的「IGL」多半是带了一个 igl 标签的枪手,人工确认其生涯代表位置为步枪手。"
+  },
+  "FalleN": {
+    "played_role": "IGL",
+    "reason": "人工复核 IGL 候选名单:确认其生涯代表位置为指挥。"
+  },
+  "Dosia": {
+    "played_role": "Rifler",
+    "reason": "冠军阵容多指挥检查:2017 Krakow 夺冠时 Gambit 的指挥是 Zeus,Dosia 是队内步枪手。生涯代表位置取步枪手。"
+  },
+  "Snax": {
+    "played_role": "Rifler",
+    "reason": "冠军阵容多指挥检查:2014 Katowice 夺冠时 Virtus.pro 的指挥是 TaZ,Snax 是队内明星步枪手(当年 HLTV Top20 第 4),2018 年之后才接手指挥。生涯代表位置取步枪手。"
+  },
+  "BlameF": {
+    "played_role": "IGL",
+    "reason": "人工复核 IGL 候选名单:确认其生涯代表位置为指挥。"
+  },
+  "Jame": {
+    "played_role": "IGL",
+    "reason": "人工复核 IGL 候选名单:确认其生涯代表位置为指挥。"
+  },
+  "CadiaN": {
+    "played_role": "IGL",
+    "reason": "人工复核 IGL 候选名单:确认其生涯代表位置为指挥。"
+  },
+  "ApEX": {
+    "played_role": "IGL",
+    "reason": "人工复核 IGL 候选名单:确认其生涯代表位置为指挥。"
+  },
+  "Doto": {
+    "played_role": "Rifler",
+    "reason": "人工确认的选手期位置(现任教练,上游 roles 只剩 coach)。"
+  },
+  "ZhokiNg": {
+    "played_role": "Rifler",
+    "reason": "人工确认的选手期位置(现任教练,上游 roles 只剩 coach)。"
+  },
+  "Freeman": {
+    "played_role": "Rifler",
+    "reason": "人工确认的选手期位置(现任教练,上游 roles 只剩 coach)。"
+  },
+  "Balblna": {
+    "played_role": "Rifler",
+    "reason": "人工确认的选手期位置(现任教练,上游 roles 只剩 coach)。"
+  },
+  "LETN1": {
+    "played_role": "IGL",
+    "reason": "人工确认的选手期位置(现任 MIBR 教练,上游 roles 只剩 coach)。"
+  },
+  "Riskyb0b": {
+    "played_role": "Rifler",
+    "reason": "人工确认的选手期位置(现任 K27 Academy 教练,上游 roles 只剩 coach)。"
+  },
+  "TACO": {
+    "played_role": "Rifler",
+    "reason": "人工复核(冠军阵容多指挥检查):该届夺冠时队内指挥另有其人,他的生涯代表位置是步枪手,后期才接手指挥。"
+  },
+  "Qikert": {
+    "played_role": "Rifler",
+    "reason": "人工复核(冠军阵容多指挥检查):该届夺冠时队内指挥另有其人,他的生涯代表位置是步枪手,后期才接手指挥。"
+  },
+  "Perfecto": {
+    "played_role": "Rifler",
+    "reason": "人工复核(冠军阵容多指挥检查):该届夺冠时队内指挥另有其人,他的生涯代表位置是步枪手,后期才接手指挥。"
+  },
+  "Magixx": {
+    "played_role": "Rifler",
+    "reason": "人工复核(冠军阵容多指挥检查):该届夺冠时队内指挥另有其人,他的生涯代表位置是步枪手,后期才接手指挥。"
+  },
+  "RUSH": {
+    "played_role": "Rifler",
+    "reason": "人工复核(冠军阵容多指挥检查):该届夺冠时队内指挥另有其人,他的生涯代表位置是步枪手,后期才接手指挥。"
+  },
+  "Karrigan": {
+    "played_role": "IGL",
+    "reason": "人工复核:确认生涯代表位置为指挥。"
+  },
+  "Pronax": {
+    "played_role": "IGL",
+    "reason": "人工复核:确认生涯代表位置为指挥。"
+  },
+  "Aleksib": {
+    "played_role": "IGL",
+    "reason": "人工复核:确认生涯代表位置为指挥。"
+  },
+  "Boombl4": {
+    "played_role": "IGL",
+    "reason": "人工复核:确认生涯代表位置为指挥。"
+  },
+  "Chopper": {
+    "played_role": "IGL",
+    "reason": "人工复核:确认生涯代表位置为指挥。"
   }
 }
