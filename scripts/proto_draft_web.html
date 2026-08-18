@@ -1,0 +1,585 @@
+<title>Blind Draft 试玩台</title>
+<style>
+:root{
+  --ground:#EFEDE7; --panel:#FFFFFF; --panel-2:#F5F3ED; --panel-3:#E7E4DB;
+  --ink:#15181D; --ink-2:#5C6371; --ink-3:#8A8F9B;
+  --line:#D9D5CC; --line-2:#C3BEB2;
+  --accent:#A8630F; --accent-soft:#F3E6D2;
+  --good:#3D7A50; --bad:#A8442F; --warn:#9A6B12;
+  --seal:#CFCABD;
+  --shadow:0 1px 2px rgba(21,24,29,.06), 0 10px 28px -18px rgba(21,24,29,.35);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1116; --panel:#171C24; --panel-2:#1E242E; --panel-3:#262E39;
+    --ink:#E6E4DE; --ink-2:#96A0AE; --ink-3:#6B7583;
+    --line:#252D38; --line-2:#333D4A;
+    --accent:#E39B3E; --accent-soft:#2A2113;
+    --good:#5FAE74; --bad:#D2705A; --warn:#D6A64A;
+    --seal:#2C3541;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -20px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1116; --panel:#171C24; --panel-2:#1E242E; --panel-3:#262E39;
+  --ink:#E6E4DE; --ink-2:#96A0AE; --ink-3:#6B7583;
+  --line:#252D38; --line-2:#333D4A;
+  --accent:#E39B3E; --accent-soft:#2A2113;
+  --good:#5FAE74; --bad:#D2705A; --warn:#D6A64A;
+  --seal:#2C3541;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -20px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Microsoft YaHei",sans-serif;
+  font-size:14.5px; line-height:1.55;
+}
+.disp{font-family:"Bahnschrift Condensed","Bahnschrift","DIN Condensed","Oswald",
+      "Segoe UI",system-ui,sans-serif; font-stretch:condensed; letter-spacing:.02em}
+.num{font-family:ui-monospace,"Cascadia Mono",Consolas,"SF Mono",monospace;
+     font-variant-numeric:tabular-nums}
+.eyebrow{font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+         color:var(--ink-3); font-weight:600}
+
+.wrap{max-width:1120px; margin:0 auto; padding:26px 18px 80px;
+      display:flex; flex-direction:column; gap:20px}
+
+header{display:flex; align-items:flex-end; justify-content:space-between;
+       gap:16px 24px; flex-wrap:wrap; border-bottom:2px solid var(--ink); padding-bottom:12px}
+h1{margin:0; font-size:34px; line-height:1; font-weight:600}
+header p{margin:5px 0 0; color:var(--ink-2); font-size:13px; max-width:56ch}
+.seedbox{display:flex; align-items:center; gap:8px; color:var(--ink-3); font-size:12px}
+
+/* ---------------- 状态条 ---------------- */
+.status{display:grid; grid-template-columns:minmax(210px,1fr) auto minmax(240px,1.2fr);
+        gap:18px; align-items:center; background:var(--panel); border:1px solid var(--line);
+        border-radius:5px; padding:13px 16px; box-shadow:var(--shadow)}
+@media (max-width:820px){ .status{grid-template-columns:1fr} }
+.meter{display:flex; flex-direction:column; gap:6px}
+.meter-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.meter-top b{font-size:24px; font-weight:600; line-height:1}
+.track{height:8px; background:var(--panel-3); border-radius:4px; overflow:hidden}
+.fill{height:100%; background:var(--accent); border-radius:4px; transition:width .25s ease}
+.turns{display:flex; gap:5px}
+.pip{width:11px; height:11px; border-radius:2px; background:var(--panel-3);
+     border:1px solid var(--line-2)}
+.pip.used{background:var(--ink-3); border-color:var(--ink-3)}
+.pip.passed{background:transparent; border-color:var(--accent); border-style:dashed}
+.slots{display:flex; gap:7px; flex-wrap:wrap}
+.slot{min-width:76px; padding:5px 8px; border:1px dashed var(--line-2); border-radius:4px;
+      font-size:11.5px; color:var(--ink-3); text-align:center}
+.slot.filled{border-style:solid; border-color:var(--line-2); background:var(--panel-2);
+             color:var(--ink)}
+.slot b{display:block; font-size:13px; font-weight:600}
+
+/* ---------------- 板面 ---------------- */
+.boardhd{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+.boardhd h2{margin:0; font-size:17px; font-weight:600}
+.boardhd span{color:var(--ink-2); font-size:12.5px}
+.board{display:grid; grid-template-columns:repeat(5,1fr); gap:12px}
+@media (max-width:900px){ .board{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))} }
+
+.card{position:relative; display:flex; flex-direction:column; gap:11px; text-align:left;
+      background:var(--panel); border:1px solid var(--line); border-radius:5px;
+      padding:13px 13px 15px; box-shadow:var(--shadow); cursor:pointer; color:inherit;
+      font:inherit; border-top:3px solid var(--accent)}
+.card:hover:not(:disabled){border-color:var(--line-2); transform:translateY(-2px)}
+.card:disabled{cursor:not-allowed; opacity:.42; filter:saturate(.4)}
+.card:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+@media (prefers-reduced-motion:no-preference){ .card{transition:transform .12s ease, border-color .12s ease} }
+.card .kbd{position:absolute; top:9px; right:10px; font-size:10px; color:var(--ink-3);
+           border:1px solid var(--line-2); border-radius:3px; padding:0 4px}
+.price{display:flex; align-items:baseline; gap:7px}
+.price b{font-size:34px; line-height:.9; font-weight:600}
+.price .pos{font-size:11px; letter-spacing:.1em; color:var(--ink-2); font-weight:600;
+            border:1px solid var(--line-2); border-radius:3px; padding:1px 5px}
+.redact{height:13px; border-radius:2px; background:var(--seal);
+        background-image:repeating-linear-gradient(135deg,transparent 0 5px,rgba(0,0,0,.05) 5px 10px)}
+.scout{display:flex; flex-direction:column; gap:5px}
+.srow{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12.5px}
+.srow span{color:var(--ink-2)}
+.stars{letter-spacing:.06em; color:var(--accent); font-size:13px}
+.stars i{color:var(--line-2); font-style:normal}
+.lvl{font-weight:600; font-size:12px}
+.origin{font-size:12px; color:var(--ink-2); border-top:1px solid var(--line); padding-top:8px;
+        display:flex; justify-content:space-between; gap:8px}
+.origin em{font-style:normal; color:var(--accent); font-weight:600}
+
+.actions{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+button.btn{font:inherit; padding:8px 15px; border-radius:4px; border:1px solid var(--line-2);
+           background:var(--panel); color:var(--ink); cursor:pointer}
+button.btn:hover:not(:disabled){border-color:var(--accent); color:var(--accent)}
+button.btn:disabled{opacity:.4; cursor:not-allowed}
+button.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--ground)}
+button.btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.hint{color:var(--ink-3); font-size:12.5px}
+
+/* ---------------- 复盘 ---------------- */
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:5px;
+       box-shadow:var(--shadow)}
+.panel-hd{padding:12px 15px; border-bottom:1px solid var(--line); display:flex;
+          align-items:baseline; gap:10px; flex-wrap:wrap}
+.panel-hd h2{margin:0; font-size:16px; font-weight:600}
+.panel-hd p{margin:0; color:var(--ink-2); font-size:12.5px}
+.panel-bd{padding:15px; display:flex; flex-direction:column; gap:14px}
+.cols{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media (max-width:900px){ .cols{grid-template-columns:1fr} }
+
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse; width:100%; font-size:13px}
+th,td{padding:6px 9px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+         color:var(--ink-3); font-weight:600}
+tbody tr:last-child td{border-bottom:0}
+td.name{font-weight:600}
+
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:10px}
+.tile{background:var(--panel-2); border:1px solid var(--line); border-radius:4px; padding:9px 11px}
+.tile b{display:block; font-size:21px; font-weight:600; line-height:1.1}
+.hero{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap}
+.hero b{font-size:44px; line-height:1; font-weight:600}
+.hero .rank{font-size:15px; color:var(--ink-2)}
+
+.barrow{display:grid; grid-template-columns:44px 1fr 62px; gap:9px; align-items:center;
+        font-size:12.5px}
+.bartrack{height:9px; background:var(--panel-3); border-radius:2px; position:relative}
+.bar{height:100%; background:var(--accent); border-radius:0 4px 4px 0; opacity:.85}
+.barrow.you .bar{opacity:1}
+.barrow.you{color:var(--accent); font-weight:600}
+
+ul.notes{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;
+         font-size:13px}
+ul.notes li{display:flex; justify-content:space-between; gap:10px; padding-bottom:6px;
+            border-bottom:1px dashed var(--line)}
+ul.notes li:last-child{border-bottom:0}
+.pos-good{color:var(--good); font-weight:600}
+.pos-bad{color:var(--bad); font-weight:600}
+details{font-size:12.5px; color:var(--ink-2)}
+summary{cursor:pointer; color:var(--accent)}
+textarea{width:100%; min-height:120px; margin-top:8px; font:12px/1.5 ui-monospace,Consolas,monospace;
+         background:var(--panel-2); color:var(--ink); border:1px solid var(--line);
+         border-radius:4px; padding:8px}
+footer{color:var(--ink-3); font-size:12px; border-top:1px solid var(--line); padding-top:14px}
+footer code{color:var(--ink-2)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">FribergCS2 · 原型 v2</p>
+      <h1 class="disp">Blind Draft 试玩台</h1>
+      <p>预算 <b class="num">$15</b> 招 5 个人，一共 7 轮机会。每轮发 $5–$1 各一张，
+         只给球探报告，不给身份。跳过一轮换一批新牌，钱可以留着。</p>
+    </div>
+    <div class="seedbox num">
+      seed <span id="seedout">–</span>
+      <button class="btn" id="newrun">新开一局</button>
+    </div>
+  </header>
+
+  <section class="status" id="status" aria-label="本局状态">
+    <div class="meter">
+      <div class="meter-top">
+        <span class="eyebrow">剩余预算</span>
+        <b class="num disp" id="money">$15</b>
+      </div>
+      <div class="track"><div class="fill" id="moneyfill" style="width:100%"></div></div>
+    </div>
+    <div class="meter">
+      <span class="eyebrow">机会</span>
+      <div class="turns" id="turns"></div>
+    </div>
+    <div class="meter">
+      <span class="eyebrow">阵容</span>
+      <div class="slots" id="slots"></div>
+    </div>
+  </section>
+
+  <div id="stage"></div>
+
+  <footer>
+    <p>算分全公开：火力 = 最高 ×0.35 + 次高 ×0.25 + 其余三人均值 ×0.40（明星主导）；
+      领导只算队里最强的那个指挥 ×0.70 + 其余四人 ×0.30，没指挥整项 ×0.60；经验、稳定取均值。
+      基础分 = 火力 ×0.40 + 领导 ×0.20 + 经验 ×0.20 + 稳定 ×0.20，没有 AWP 再 −4。
+      默契：真实队友（同一届 Major 同队）每对 +2、同队 ≥5 届再 +1；同国籍每多一人 +1.5；
+      年龄差 ≤5 +2、≥12 −2；两个指挥抢话 −3。</p>
+    <p><b>同价位的卡强度相同、形状不同</b>——火力高的稳定就低，没有免费的午餐，
+      只有「这张形状适不适合我这套阵容」。<b>出场率</b>另有一层加权：没队伍的人和
+      30 岁以上的选手在 $3 以下大幅降权（板面上的占比从 ~55% 压到 ~20%），
+      $5/$4 不打折（那一档没队的正是最好认的传奇），≤24 岁的自由身只打一半折扣。
+      数据来自 <code>data/draft_cards.json</code>（648 张）与 <code>players.json</code>
+      里的真实同队记录（2655 对），与 <code>scripts/proto_draft.py</code> 同一套算法。</p>
+  </footer>
+</div>
+
+<script>
+const D = /*__DATA__*/;
+const CARDS = D.cards;
+CARDS.forEach((c,i)=>c.i=i);
+const PAIR = new Map();
+for (const [i,j,n,team] of D.pairs) PAIR.set(i*1000+j, [n, team]);
+
+const BUDGET = 15, SLOTS = 5, TURNS = 7, TIERS = [5,4,3,2,1];
+const POS = {R:"RIFLER", A:"AWPER", I:"IGL"};
+const W = {R:[.55,.05,.20,.20], A:[.45,.05,.20,.30], I:[.25,.35,.35,.05]};
+const LABEL = {s:"稳定", e:"经验", l:"领导"};
+const LEVEL3 = ["低","中","高"];
+
+/* ---------- 同价位分位:卡面星级就是「在这个价位里的形状」 ---------- */
+const BAND = {};
+for (const g of TIERS) {
+  const grp = CARDS.filter(c=>c.g===g);
+  for (const k of ["f","l","e","s"]) BAND[g+k] = grp.map(c=>c[k]).sort((a,b)=>a-b);
+}
+function bandOf(c, k, levels){
+  const v = BAND[c.g+k]; let lo=0, hi=v.length;
+  while (lo<hi){ const mid=(lo+hi)>>1; if (v[mid] < c[k]) lo=mid+1; else hi=mid; }
+  return Math.min(levels-1, Math.floor(lo*levels/v.length));
+}
+function stars(c){
+  const n = bandOf(c,"f",5)+1;
+  return "★".repeat(n) + (n<5 ? `<i>${"☆".repeat(5-n)}</i>` : "");
+}
+
+/* ---------- 算分:与 proto_draft.py 逐行对应 ---------- */
+function chemistry(r){
+  const notes=[]; let total=0;
+  for (let a=0;a<r.length;a++) for (let b=a+1;b<r.length;b++){
+    const lo=Math.min(r[a].i,r[b].i), hi=Math.max(r[a].i,r[b].i);
+    const hit = PAIR.get(lo*1000+hi);
+    if (!hit) continue;
+    const bonus = 2 + (hit[0]>=5 ? 1 : 0);
+    total += bonus;
+    notes.push([`队友 ${r[a].n} + ${r[b].n} · 同队 ${hit[0]} 届 Major（${hit[1]}）`, bonus]);
+  }
+  const byC = {};
+  for (const c of r) byC[c.c] = (byC[c.c]||0)+1;
+  for (const [country,n] of Object.entries(byC)) if (n>=2){
+    total += 1.5*(n-1); notes.push([`同国籍 ${country} ×${n}`, 1.5*(n-1)]);
+  }
+  const ages = r.map(c=>c.a).filter(Boolean);
+  if (ages.length>=2){
+    const spread = Math.max(...ages)-Math.min(...ages);
+    if (spread<=5){ total+=2; notes.push([`同代 · 年龄差 ${spread} 岁`, 2]); }
+    else if (spread>=12){ total-=2; notes.push([`跨代拼凑 · 年龄差 ${spread} 岁`, -2]); }
+  }
+  const nIgl = r.filter(c=>c.p==="I").length;
+  if (nIgl>=2){ total -= 3*(nIgl-1); notes.push([`${nIgl} 个指挥抢话`, -3*(nIgl-1)]); }
+  return {total, notes};
+}
+const mean = a => a.reduce((x,y)=>x+y,0)/a.length;
+
+function score(r){
+  const f = r.map(c=>c.f).sort((a,b)=>b-a);
+  const fire = f[0]*.35 + f[1]*.25 + mean(f.slice(2))*.40;
+  const igls = r.filter(c=>c.p==="I");
+  let lead;
+  if (igls.length){
+    let best = igls[0];
+    for (const c of igls) if (c.l > best.l) best = c;
+    const others = r.filter(c=>c!==best).map(c=> c.p==="I" ? 25 : c.l);
+    lead = best.l*.70 + mean(others)*.30;
+  } else lead = mean(r.map(c=>c.l))*.60;
+  const exp = mean(r.map(c=>c.e)), stab = mean(r.map(c=>c.s));
+  let base = fire*.40 + lead*.20 + exp*.20 + stab*.20;
+  const noAwp = !r.some(c=>c.p==="A");
+  if (noAwp) base -= 4;
+  const ch = chemistry(r);
+  return {fire, lead, exp, stab, base, noAwp, chem:ch.total, notes:ch.notes,
+          total: base+ch.total, swing:(100-stab)/4};
+}
+
+/* ---------- 发牌 ---------- */
+function mulberry32(a){ return function(){
+  a |= 0; a = a+0x6D2B79F5 | 0;
+  let t = Math.imul(a ^ a>>>15, 1|a);
+  t = t + Math.imul(t ^ t>>>7, 61|t) ^ t;
+  return ((t ^ t>>>14)>>>0)/4294967296;
+};}
+
+/* 出场权重:只改出场率,不改任何卡的数值。没队伍的人和大龄选手在 G3 往下
+   大幅降权(全库 52% 没队、44% 在 30 岁以上,不压的话板面永远是十年前的无名老哥);
+   G5/G4 不打折——那一档没队的是 f0rest、olofmeister、dupreeh,恰恰最好认。
+   ≤24 岁的自由身只打一半折扣:年轻没队的可能正是没被认出来的厉害人。 */
+const FREE_W = {5:1.0, 4:0.8, 3:0.35, 2:0.25, 1:0.20};
+const VET_W  = {5:1.0, 4:0.9, 3:0.50, 2:0.40, 1:0.35};
+function drawWeight(c){
+  let w = 1;
+  if (!c.t){ w *= FREE_W[c.g]; if ((c.a||99) <= 24) w = (w+1)/2; }
+  if ((c.a||0) >= 30) w *= VET_W[c.g];
+  return w;
+}
+/* 带权无放回抽样(Efraimidis–Spirakis):key = u^(1/w),升序排好后从尾部 pop */
+function weightedShuffle(a, rng){
+  a.forEach(c => c._k = Math.pow(rng(), 1/drawWeight(c)));
+  a.sort((x,y)=>x._k - y._k);
+}
+
+let S = null;
+function newRun(seed){
+  const rng = mulberry32(seed);
+  const pool = {};
+  for (const g of TIERS){ pool[g] = CARDS.filter(c=>c.g===g).slice(); weightedShuffle(pool[g], rng); }
+  S = {seed, rng, pool, boards:[], picked:[], left:BUDGET, turn:0, passed:[], done:false, board:null};
+  nextBoard();
+  render();
+}
+function nextBoard(){
+  for (let tries=0; tries<40; tries++){
+    const b = TIERS.map(g=>S.pool[g].pop());
+    const got = new Set(b.map(c=>c.p));
+    if (got.has("A") && got.has("I")){ S.turn++; S.boards.push(b); S.board=b; return; }
+    b.forEach(c=>S.pool[c.g].push(c));                    // 不合格放回去
+    for (const g of TIERS) weightedShuffle(S.pool[g], S.rng);   // 重洗也要带权
+  }
+  const b = TIERS.map(g=>S.pool[g].pop());
+  S.turn++; S.boards.push(b); S.board=b;
+}
+const slotsLeft = () => SLOTS - S.picked.length;
+const turnsLeft = () => TURNS - S.turn + 1;
+const canPass = () => turnsLeft() > slotsLeft();
+const affordable = c => c.g <= S.left - (slotsLeft()-1);
+
+/* ---------- 交互 ---------- */
+function pick(c){
+  if (S.done || !affordable(c)) return;
+  S.picked.push(c); S.left -= c.g;
+  if (S.picked.length===SLOTS){ S.done=true; render(); return; }
+  nextBoard(); render();
+}
+function pass(){
+  if (S.done || !canPass()) return;
+  S.passed.push(S.turn); nextBoard(); render();
+}
+document.addEventListener("keydown", e=>{
+  if (S?.done) return;
+  if (e.key>="1" && e.key<="5"){ const c=S.board[+e.key-1]; if (c) pick(c); }
+  if (e.key.toLowerCase()==="s") pass();
+});
+
+/* ---------- 复盘 ---------- */
+function combos(n,k){
+  const out=[], cur=[];
+  (function go(start){
+    if (cur.length===k){ out.push(cur.slice()); return; }
+    for (let i=start;i<n;i++){ cur.push(i); go(i+1); cur.pop(); }
+  })(0);
+  return out;
+}
+function allLineups(boards){
+  const out=[];
+  for (const pickIdx of combos(boards.length, SLOTS)){
+    const bs = pickIdx.map(i=>boards[i]);
+    const idx = [0,0,0,0,0];
+    while (true){
+      const combo = idx.map((v,k)=>bs[k][v]);
+      let spend=0; for (const c of combo) spend+=c.g;
+      if (spend<=BUDGET) out.push([score(combo).total, combo, spend]);
+      let k=SLOTS-1;
+      while (k>=0 && ++idx[k]===5){ idx[k]=0; k--; }
+      if (k<0) break;
+    }
+  }
+  out.sort((a,b)=>b[0]-a[0]);
+  return out;
+}
+
+/* ---------- 渲染 ---------- */
+const el = id => document.getElementById(id);
+const fmt = v => (v>=0?"+":"−") + Math.abs(v).toFixed(1);
+
+function renderStatus(){
+  el("seedout").textContent = S.seed;
+  el("money").textContent = "$" + S.left;
+  el("moneyfill").style.width = (100*S.left/BUDGET) + "%";
+  el("turns").innerHTML = Array.from({length:TURNS}, (_,i)=>{
+    const t=i+1;
+    const cls = S.passed.includes(t) ? "pip passed" : (t < S.turn || (t===S.turn && S.done) ? "pip used" : "pip");
+    return `<span class="${cls}" title="第 ${t} 轮"></span>`;
+  }).join("");
+  el("slots").innerHTML = Array.from({length:SLOTS}, (_,i)=>{
+    const c = S.picked[i];
+    return c ? `<div class="slot filled"><b class="disp num">$${c.g}</b>${POS[c.p]}</div>`
+             : `<div class="slot">空位</div>`;
+  }).join("");
+}
+
+function renderBoard(){
+  const need = ["I","A"].filter(p=>!S.picked.some(c=>c.p===p)).map(p=>POS[p]);
+  const cards = S.board.map((c,i)=>{
+    const ok = affordable(c);
+    const k = c.b, lvl = LEVEL3[bandOf(c,k,3)];
+    return `<button class="card" ${ok?"":"disabled"} data-i="${i}">
+      <span class="kbd">${i+1}</span>
+      <span class="price"><b class="disp num">$${c.g}</b><span class="pos">${POS[c.p]}</span></span>
+      <span class="redact" aria-hidden="true"></span>
+      <span class="scout">
+        <span class="srow"><span>火力</span><span class="stars">${stars(c)}</span></span>
+        <span class="srow"><span>${LABEL[k]}</span><span class="lvl">${lvl}</span></span>
+      </span>
+      <span class="origin"><em>${c.c}</em><span>${ok?"可买":"预算不够"}</span></span>
+    </button>`;
+  }).join("");
+
+  return `<div class="boardhd">
+      <h2 class="disp">第 ${S.turn} / ${TURNS} 轮</h2>
+      <span>还要选 ${slotsLeft()} 人${need.length ? " · 还缺 " + need.join(" / ") +
+        "（缺 AWP 扣 4 分，缺 IGL 领导力打六折）" : ""}</span>
+    </div>
+    <div class="board">${cards}</div>
+    <div class="actions">
+      <button class="btn" id="passbtn" ${canPass()?"":"disabled"}>
+        跳过这轮，换一批牌${canPass()?`（还能跳 ${turnsLeft()-slotsLeft()} 次）`:"（不能再跳了）"}
+      </button>
+      <span class="hint">键盘 1–5 选牌，S 跳过。同价位强度相同、形状不同。</span>
+    </div>`;
+}
+
+function renderReveal(){
+  const r = S.picked, s = score(r);
+  const lineups = allLineups(S.boards);
+  const totals = lineups.map(x=>x[0]);
+  const better = totals.filter(t=>t>s.total+1e-9).length;
+  const avg = mean(totals);
+
+  // 逐轮后悔:其余四人不动,只换这一张
+  const rows = r.map((c,k)=>{
+    const bi = S.boards.findIndex(b=>b.includes(c));
+    let best=null, bestT=-1e9;
+    for (const alt of S.boards[bi]){
+      const combo = r.slice(); combo[k]=alt;
+      let spend=0; for (const x of combo) spend+=x.g;
+      if (spend>BUDGET) continue;
+      const t = score(combo).total;
+      if (t>bestT){ bestT=t; best=alt; }
+    }
+    return {c, regret: bestT - s.total, best};
+  });
+
+  // 花掉多少钱 → 平均分
+  const bySpend = new Map();
+  for (const [t,,spend] of lineups){
+    if (!bySpend.has(spend)) bySpend.set(spend, []);
+    bySpend.get(spend).push(t);
+  }
+  const spendRows = [...bySpend.entries()].sort((a,b)=>b[0]-a[0]);
+  const spentMe = BUDGET - S.left;
+  const maxAvg = Math.max(...spendRows.map(([,v])=>mean(v)));
+  const minAvg = Math.min(...spendRows.map(([,v])=>mean(v)));
+
+  const money = spendRows.map(([m,v])=>{
+    const a = mean(v), w = 100*(a-minAvg+1)/(maxAvg-minAvg+1);
+    return `<div class="barrow ${m===spentMe?"you":""}">
+        <span class="num">$${m}</span>
+        <span class="bartrack"><span class="bar" style="width:${w.toFixed(1)}%"></span></span>
+        <span class="num">${a.toFixed(1)}</span>
+      </div>`;
+  }).join("");
+
+  const roster = r.map(c=>`<tr>
+      <td class="num">$${c.g}</td><td>${POS[c.p]}</td><td class="name">${c.n}</td>
+      <td>${c.c}</td><td>${c.t||"自由身 / 退役"}</td>
+      <td class="num">${c.f}</td><td class="num">${c.l}</td>
+      <td class="num">${c.e}</td><td class="num">${c.s}</td>
+    </tr>`).join("");
+
+  const regret = rows.map(x=>`<tr>
+      <td class="name">${x.c.n}</td><td class="num">$${x.c.g}</td>
+      <td class="num ${x.regret>3?"pos-bad":(x.regret<0.05?"pos-good":"")}">${x.regret.toFixed(1)}</td>
+      <td>${x.regret<0.05 ? "这轮没选错" : `更该拿 $${x.best.g} ${POS[x.best.p]} ${x.best.n}`}</td>
+    </tr>`).join("");
+
+  const notes = s.notes.length
+    ? s.notes.map(([t,v])=>`<li><span>${t}</span><span class="num ${v>0?"pos-good":"pos-bad"}">${fmt(v)}</span></li>`).join("")
+    : `<li><span>无 —— 五个人互相没打过、也不同国</span><span class="num">0.0</span></li>`;
+
+  saveLog(s, better+1, lineups.length, totals[0], avg);
+
+  return `<section class="panel">
+    <div class="panel-hd"><h2 class="disp">揭晓</h2>
+      <p>身份、四维、和你在这批牌里能拿到的最好结果</p></div>
+    <div class="panel-bd">
+      <div class="hero">
+        <b class="disp num">${s.total.toFixed(1)}</b>
+        <span class="rank">第 <b class="num">${better+1}</b> / ${lineups.length} 名
+          （前 ${Math.round(100*(better+1)/lineups.length)}%）
+          · 最优 <b class="num">${totals[0].toFixed(1)}</b>
+          · 瞎点平均 <b class="num">${avg.toFixed(1)}</b>
+          · 单场发挥 <span class="num">${(s.total-s.swing).toFixed(1)}~${(s.total+s.swing).toFixed(1)}</span></span>
+      </div>
+      <div class="tiles">
+        <div class="tile"><span class="eyebrow">火力</span><b class="num disp">${s.fire.toFixed(1)}</b></div>
+        <div class="tile"><span class="eyebrow">领导</span><b class="num disp">${s.lead.toFixed(1)}</b></div>
+        <div class="tile"><span class="eyebrow">经验</span><b class="num disp">${s.exp.toFixed(1)}</b></div>
+        <div class="tile"><span class="eyebrow">稳定</span><b class="num disp">${s.stab.toFixed(1)}</b></div>
+        <div class="tile"><span class="eyebrow">默契</span><b class="num disp">${fmt(s.chem)}</b></div>
+        <div class="tile"><span class="eyebrow">剩余</span><b class="num disp">$${S.left}</b></div>
+      </div>
+      ${s.noAwp ? `<p class="hint">阵容里没有 AWP，基础分已扣 4。</p>` : ""}
+      <div class="tablewrap"><table>
+        <thead><tr><th>价</th><th>位置</th><th>选手</th><th>国籍</th><th>战队</th>
+          <th>火力</th><th>领导</th><th>经验</th><th>稳定</th></tr></thead>
+        <tbody>${roster}</tbody></table></div>
+    </div>
+  </section>
+
+  <div class="cols">
+    <section class="panel">
+      <div class="panel-hd"><h2 class="disp">逐轮后悔</h2><p>其余四人不动，只换这一张能多拿多少</p></div>
+      <div class="panel-bd"><div class="tablewrap"><table>
+        <thead><tr><th>选手</th><th>价</th><th>后悔</th><th>更该拿</th></tr></thead>
+        <tbody>${regret}</tbody></table></div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-hd"><h2 class="disp">默契明细</h2><p>真实同队记录来自 25 届 Major 的阵容</p></div>
+      <div class="panel-bd"><ul class="notes">${notes}</ul></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-hd"><h2 class="disp">留钱亏多少</h2>
+      <p>同一批牌里，花掉 N 块的所有阵容的平均分。你这局花了 $${spentMe}</p></div>
+    <div class="panel-bd">${money}
+      <p class="hint">最优阵容：${lineups[0][1].map(c=>`$${c.g} ${c.n}`).join(" · ")}</p>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="btn primary" id="again">再来一局</button>
+    <button class="btn" id="replay">用同样的牌重打</button>
+    <details><summary>导出这台机器上的对局记录</summary>
+      <textarea readonly id="logout">${logText()}</textarea></details>
+  </div>`;
+}
+
+/* ---------- 本地记录:攒够几局可以整段复制出来 ---------- */
+function saveLog(s, rank, of, best, avg){
+  if (S.logged) return; S.logged = true;
+  const log = JSON.parse(localStorage.getItem("bd_log") || "[]");
+  log.push({v:"web2", seed:S.seed, picks:S.picked.map(c=>({n:c.n, g:c.g, p:POS[c.p]})),
+            passed:S.passed, spent:BUDGET-S.left, total:+s.total.toFixed(2),
+            chem:+s.chem.toFixed(2), rank, of, best:+best.toFixed(2), mean:+avg.toFixed(2)});
+  localStorage.setItem("bd_log", JSON.stringify(log));
+}
+const logText = () => (JSON.parse(localStorage.getItem("bd_log")||"[]"))
+  .map(x=>JSON.stringify(x)).join("\n");
+
+function render(){
+  renderStatus();
+  el("stage").innerHTML = S.done ? renderReveal() : renderBoard();
+  if (!S.done){
+    document.querySelectorAll(".card").forEach(b=>{
+      b.onclick = () => pick(S.board[+b.dataset.i]);
+    });
+    el("passbtn").onclick = pass;
+  } else {
+    el("again").onclick = () => newRun((Math.random()*1e9)|0);
+    el("replay").onclick = () => newRun(S.seed);
+  }
+}
+el("newrun").onclick = () => newRun((Math.random()*1e9)|0);
+newRun((Math.random()*1e9)|0);
+</script>
