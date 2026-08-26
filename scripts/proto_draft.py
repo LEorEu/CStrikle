@@ -6,26 +6,32 @@
     .\.venv\Scripts\python -X utf8 scripts\proto_draft.py --open    # 明牌(直接给档位和四维)
     .\.venv\Scripts\python -X utf8 scripts\proto_draft.py --seed 7  # 复现同一局
 
-v3 的取向:**一切为有趣服务**。v1/v2 八局实测(见 DESIGN_DRAFT_PROTOTYPE.md)证明
-「五档选手 + 匿名线索 + 预算」撑不起游戏——价格直接播报档位,于是认出名人就等于
-知道答案。v3 把游戏要问的问题从「这是谁」换成「这个资产值不值这个价」:
+取向:**一切为有趣服务**。v1/v2 八局实测(见 DESIGN_DRAFT_PROTOTYPE.md)证明
+「五档选手 + 匿名线索 + 预算」撑不起游戏——价格直接播报了档位,于是认出名人就等于
+知道答案。这一版把游戏要问的问题从「这是谁」换成「这个资产值不值这个价」。
 
-- **价格与档位分离(Market Roll)。** 每批牌的价格是市场开出来的,不再是 $5..$1
-  各一张。一张卡的档位在它标价的上下一档之间浮动:$1 有 25% 其实是 G2,$5 有 25%
-  只是 G4。抄底和买贵第一次真实存在,而且它说的是真话——一个 G3 卖 $1,他真的
-  就是 G3。**抄底的快感来自价格错了,不需要靠编造「这个人偷偷更强」去买。**
-- **Quality Offset 只从真实证据里推。** 同档确实该有好货坏货,但那个差异必须挖
-  出来而不是掷出来:HLTV top100 队伍排名、近年是否还在打、Major 前八次数、生涯
-  跨度。G2/G3 的证据足够推出真差异;G1 有三分之二什么证据都没有,那批就老实持平
-  ——**「查无此人」本身就是可玩的信息:$1 没有球探数据 = 真彩票。**
-- **卡面给一个真实四维数字。** 实测整形之后一个火力数字横跨 2~3 档(火力 70 →
-  G2 53% / G3 47%),所以它把候选收敛成一个区间而不是一个点,正是设计稿 §7.4 想要
-  的「线索应该瞄准区间」。同时它告诉玩家**游戏真正关心什么**。
-- **按剩余预算发牌。** 五张牌的标价全部落在你买得起的区间里,后期不再塌缩成
-  两张;缺的位置提高权重,只在最后一两个位置才硬保底。
-- **剩下的钱有出口。** 每剩 $1 折成全队火力 +3(兑换率是扫出来的中性点)。这是为了让「$5 明星 vs
-  $1 选手 + $4 资源」第一次成为真的取舍——在此之前跳过和留钱都是假决策。
-- **结算分维度**:选牌准度 / 预算管理 / 阵容契合 / 最大抄底,而不是甩一个名次。
+**下面分成两类,不要混着读。**
+
+正式机制(要进最终游戏的):
+
+- **选手卡是固定的。** 四维和档位取自已提交的 `data/draft_cards.json`(v6),
+  按生涯代表版本评价,不随局变化。原型**不再对卡做任何加工**。
+- **市场会错价(Market Price)。** 顺序是 **先抽到人 -> 读他固定的档位 ->
+  为这一局给他报个价**,价格在档位上下一档之间浮动。所以抄底说的是真话:
+  一个 G3 这局卖 $1,他真的就是 G3,只是市场报错了。
+  *(反过来做——先定价格再从价格附近生成档位——会让 34 个 G5 被反复回收:
+  实测板面上 G5 占 21%,而他们只占卡池 5%,放大 4.1 倍,星卡就不稀有了。)*
+- **卡面三层**:标价 / 位置 + 一维真实四维数字(按位置加权挑) / 国籍 +
+  一条身份线索(俱乐部、Major 次数、年龄三选一)。
+- **按剩余预算发牌**:标价全部落在买得起的区间;缺的位置提高权重,
+  只在最后一两个位置才硬保底;已有队员的真实队友权重 x2(不硬塞)。
+
+原型测试桩(**不是玩法,只是为了让这一层能被验证**):
+
+- **剩余的钱记作 Rogue Points。** 正式设计里它买的是 Buff、走另一条构筑路线;
+  Buff 系统还没做,所以原型暂时按「1 点 = 全队火力 +3」折算进分数,只为回答
+  「如果余钱有价值,省钱会不会变成真决策」。**这个折算不是玩法。**
+- **赛后穷举同一批牌能组出的全部阵容给名次**,用来判断「选什么都一样」与否。
 """
 import argparse
 import collections
@@ -39,7 +45,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CARDS_PATH = ROOT / "data" / "draft_cards.json"
 PLAYERS_PATH = ROOT / "data" / "players.json"
-TOP100_PATH = ROOT / "data" / "hltv_top100.json"
 LOG_PATH = ROOT / ".cache" / "proto_draft_runs.jsonl"
 
 BUDGET = 15
@@ -53,18 +58,41 @@ WEIGHTS = {"RIFLER": (0.55, 0.05, 0.20, 0.20),
 # 标价 → 档位的浮动。delta 是「档位 − 标价」:−1 = 买贵了,+1 = 抄到底。
 MARKET_ROLL = ((-1, 0.25), (0, 0.50), (1, 0.25))
 
-# 同档实力差的上限。证据越少的档给得越宽,但**只填到证据支持的程度**;
-# 一点证据都没有的人 offset 恒为 0(而不是掷一个)。
-QUALITY_CAP = {5: 2.0, 4: 3.0, 3: 5.0, 2: 6.0, 1: 7.0}
+# 板面的「进货结构」。卡池是 47.7% G1 / 5.2% G5,照原样抽的话板面几乎全是便宜货、
+# 预算永远花不掉;所以按档位调一个进货权重。**这只影响谁被摆上货架,不影响他的
+# 档位和四维**——价格仍然是抽到人之后才为他报的。
+GRADE_WEIGHT = {5: 1.5, 4: 2.2, 3: 1.6, 2: 1.1, 1: 0.6}
 
-# 每剩 $1 -> 全队火力 +3。兑换率是扫出来的中性点:R=3.0 时「留钱的最优」与
-# 「花满的最优」平均只差 -0.01 分,留钱更优的板面占 57%——正好是硬币两面。
-# 低了(R=1.5)留钱恒错,高了(R=4.0)留钱恒对,两种都不是决策。
+# **测试桩,不是玩法。** 正式设计里剩下的钱买的是 Buff(Rogue Build),
+# 走的是另一条构筑路线;Buff 还没做,所以原型暂时把 1 点 Rogue Point 折算成
+# 全队火力 +3,只为回答「如果余钱有价值,省钱会不会变成真决策」。
 #
-# 只加火力、不让玩家选维度:火力在基础分里权重 0.40,其余三维都是 0.20,
-# 「砸哪一维」永远是火力——那是个假决策,而假决策正是这一版要拆掉的东西。
-SAVE_RATE = 3.0
+# 兑换率在新发牌下重扫过:R=1.5 时最优打法平均留 $1.5、比"花满"高 1.26 分
+# (R=0 时也有 +0.80,因为板面不总能正好花完 $15),再高就变成囤钱恒对。
+# 上限 4 点:正式设计里 Buff 位有限,这里也借这个理由挡住"全买 $1 囤一堆钱"
+# 的退化解——不设的话,一局留 $9 就能换全队火力 +27。
+SAVE_RATE = 1.5
+SAVE_CAP = 4
 SAVE_ATTR = "firepower"
+
+# 球探区间。**不能用「真值 ±5」**——那只是把数字换个写法,玩两把就知道中点是真值,
+# 档位照样被反推出去。要的是:宽度随机、真值在区间里的位置也随机,只保证一定落在
+# 区间内。于是相邻档位在球探报告这一层真正重叠:真实 69 和真实 75 都可能显示
+# 「68-78」,玩家只能算概率,算不出答案。
+#
+# 参数是扫出来的。决定「能推断多准」的**不是宽度,是真值允许落在区间里的位置范围**:
+# 可推断窗口 = (位置上限 - 位置下限) x 宽度。把位置锁在 30%~70% 的话,窗口只有 ~4 点,
+# 比档位带(约 10 点宽)还窄,88% 的区间照样只对应一个档位——等于白改。
+#
+#   宽 8-14 · 位置 30-70%   平均 1.12 档   只对应 1 档 88%   窗口 ~4 点
+#   宽 8-14 · 位置  5-95%   平均 1.37 档   只对应 1 档 63%   窗口 ~10 点
+#   宽 12-18 · 位置 5-95%   平均 1.61 档   只对应 1 档 39%   窗口 ~13 点  <- 采用
+#
+# 代价是真值可能贴着区间的边,球探偶尔"很不准"——但那正好让 Reveal 的
+# 「超出预期 / 贴着下沿」有了意义。区间每次发牌重摇,不跟着卡走:固定在卡上的话,
+# 区间本身会变成这个人的指纹,又能查表了。
+SCOUT_WIDTH = (12, 18)
+SCOUT_POS = (0.05, 0.95)          # 真值落在区间的哪个位置
 
 MONEY_ATTRS = ("firepower", "stability", "experience", "leadership")
 ATTR_CN = {"firepower": "火力", "stability": "稳定",
@@ -86,12 +114,17 @@ RULES = """\
          同代    年龄差 <=5 -> +2   >=12 -> -2
          两个指挥                      -3(抢话)
 
-  余钱   每剩 $1 -> 全队火力 +3(赛后自动折算)
+  余钱   每剩 $1 = 1 Rogue Point(最多算 4 点)。正式设计里它买 Buff(还没做),
+         原型暂按 1 点 = 全队火力 +1.5 折算进分数 —— 这是测试桩,不是玩法
 
-  总分 = 基础分 + 默契 + 余钱   单场发挥 ~ 总分 +- (100 - 稳定) / 4
+  总分 = 基础分 + 默契 + Rogue 折算   单场发挥 ~ 总分 +- (100 - 稳定) / 4
 
-**标价不等于档位。** 一张卡的真实档位在标价的上下一档之间:$1 有 25% 其实是 G2,
-$5 有 25% 只是 G4。卡面给你一个真实的四维数字 —— 用它去判断这张牌值不值这个价。
+**标价不等于档位。** 每个人的档位是他自己固定的,市场只是这一局给他报了个价;
+报价可能比他真实的档位低一档(抄底)或高一档(买贵)。
+
+**卡面给的是球探报告,不是完整属性。** 那一维给的是一个区间,真值一定在区间内,
+但不一定在中间,宽度也不固定 —— 你能判断他大概多强,但推不出他的确切档位。
+签下来之后(Reveal)才看到精确数字。
 """
 
 
@@ -103,130 +136,26 @@ def overall(c):
             + c["experience"] * we + c["stability"] * ws)
 
 
-def _bump(card, delta):
-    """四维同加 delta —— 位置权重和为 1,等于 overall 加 delta。"""
-    for k in MONEY_ATTRS:
-        card[k] = max(1, min(99, card[k] + delta))
-
-
-# ----------------------------------------------------------------- 证据 -> Quality
-
-def load_evidence():
-    """page -> (原始证据分, 有没有证据)。全部取自仓库里已有的真实数据。"""
-    ranks = {t: i + 1 for i, t in
-             enumerate(json.loads(TOP100_PATH.read_text(encoding="utf-8"))["teams"])}
-    db = json.loads(PLAYERS_PATH.read_text(encoding="utf-8"))["players"]
-    out = {}
-    for p in db:
-        majors = p.get("majors", [])
-        top8 = sum(1 for m in majors if m.get("placement"))
-        first, last = p.get("first_major_year"), p.get("last_major_year")
-        span = (last - first) if (first and last) else 0
-        rank = ranks.get(p.get("team", ""))
-
-        signals, have = [], False
-        if rank:                       # 现在在多强的队里
-            signals.append(1.0 - (rank - 1) / 100.0); have = True
-        if top8:                       # 进过几次 Major 前八
-            signals.append(min(1.0, top8 / 4.0)); have = True
-        if last and last >= 2024:      # 近年还在打
-            signals.append(min(1.0, (last - 2023) / 3.0)); have = True
-        if span >= 2:                  # 在这行活了多久
-            signals.append(min(1.0, span / 8.0)); have = True
-        out[p["page"]] = (st.mean(signals) if signals else 0.0, have)
-    return out
-
-
-def apply_quality(cards, evidence):
-    """同档内按真实证据拉开实力差,证据推不出来的人保持在基线上。
-
-    做法:在同一档里,对**有证据的那批人**做 z 分数,映射到 +-QUALITY_CAP[档];
-    没有任何证据的人 offset 恒为 0,并打上 unknown 标记(卡面显示「无球探数据」)。
-    """
-    for grade, group in itertools.groupby(sorted(cards, key=lambda c: c["grade"]),
-                                          key=lambda c: c["grade"]):
-        group = list(group)
-        scored = [(c,) + evidence.get(c["page"], (0.0, False)) for c in group]
-        known = [s for _, s, have in scored if have]
-        mu = st.mean(known) if known else 0.0
-        sd = (st.pstdev(known) or 1.0) if len(known) > 1 else 1.0
-        cap = QUALITY_CAP[grade]
-        for c, raw, have in scored:
-            if not have:
-                c["quality"] = 0.0
-                c["unknown"] = True
-                continue
-            z = max(-2.0, min(2.0, (raw - mu) / sd))
-            q = z / 2.0 * cap
-            # 顶到 99 的卡就分不出 donk 和 ZywOo 了,所以按余量收一下再加
-            room = min(99 - c[k] for k in MONEY_ATTRS)
-            floor = min(c[k] for k in MONEY_ATTRS) - 1
-            c["quality"] = round(max(-floor, min(room, q)), 1)
-            c["unknown"] = False
-            _bump(c, c["quality"])
-
-
-# ----------------------------------------------------------------- 形状
-
-def shape_cards(cards):
-    """零和整形:同档内拉开形状,不拉开强弱(强弱交给上面的 Quality)。
-
-    形状取自真实履历而不是随机:年轻 -> 火力高/稳定低(打得凶但飘),
-    Major 与冠军多 -> 经验高/火力让一点(老兵)。整完之后给全卡加一个常数,
-    把加权 overall 拉回整形前的值。
-    """
-    for grade, group in itertools.groupby(sorted(cards, key=lambda c: c["grade"]),
-                                          key=lambda c: c["grade"]):
-        group = list(group)
-        ages = [c["age"] for c in group if c["age"]]
-        mu_a, sd_a = st.mean(ages), (st.pstdev(ages) or 1)
-        mjs = [c["majors"] for c in group]
-        mu_m, sd_m = st.mean(mjs), (st.pstdev(mjs) or 1)
-
-        # 第一遍:算出每张卡的形变量 g。整完要加的那个常数(把加权 overall 拉回
-        # 原值)本身也和形变量成正比,所以整条形变对缩放因子 s 是线性的:
-        #     final_k = base_k + s * g_k
-        shifts = {}
-        for c in group:
-            clamp = lambda v: max(-2.0, min(2.0, v))
-            aggression = clamp(-((c["age"] or mu_a) - mu_a) / sd_a)
-            veterancy = clamp((c["majors"] - mu_m) / sd_m + 0.5 * min(c["champions"], 4))
-
-            d = {"firepower": 6.0 * aggression - 3.0 * veterancy,
-                 "stability": -5.0 * aggression + 2.0 * veterancy,
-                 "experience": 6.0 * veterancy - 2.0 * aggression,
-                 "leadership": 0.0}
-            wf, wl, we, ws = WEIGHTS[c["position"]]
-            w = {"firepower": wf, "leadership": wl, "experience": we, "stability": ws}
-            fix_unit = -sum(d[k] * w[k] for k in d)
-            shifts[id(c)] = {k: d[k] + fix_unit for k in d}
-
-        # 第二遍:全档共用一个 s。**不能各算各的**——那样几张顶级火力卡会各自
-        # "正好"落到 99,还是分不开;顶格等于让 donk 和 ZywOo 变成同一张卡,
-        # 而那正是 v6 花力气消掉的东西。统一缩放则档内的相对差距完整保留,
-        # 最多只有最紧的那一张碰到天花板。
-        s = 1.0
-        for c in group:
-            for k, gk in shifts[id(c)].items():
-                if gk > 1e-9:
-                    s = min(s, (99 - c[k]) / gk)
-                elif gk < -1e-9:
-                    s = min(s, (c[k] - 1) / -gk)
-        s = max(0.0, s)
-
-        for c in group:
-            for k in MONEY_ATTRS:
-                c[k] = max(1, min(99, round(c[k] + s * shifts[id(c)][k])))
-            c["overall"] = round(overall(c), 1)
-
-
 def load_cards():
-    cards = [dict(c) for c in
-             json.loads(CARDS_PATH.read_text(encoding="utf-8"))["cards"]
-             if c.get("position")]
-    apply_quality(cards, load_evidence())
-    shape_cards(cards)
-    return cards
+    """原样读已提交的 v6 卡,**不做任何加工**。
+
+    早先的版本在这里加过两层:按队伍排名/活跃度推的 Quality Offset,和把
+    年龄换成火力的零和整形。两层都撤了,原因写在 DESIGN_DRAFT_PROTOTYPE.md:
+
+    - Quality Offset 用「近年是否还在打」当正分,直接违反 §14「一律按生涯代表
+      版本评价」——一个退役传奇不该因为退役而掉数值;而「所在队 Top100 排名」
+      是队伍指标,好选手在烂队、角色球员在强队都很常见。这等于在没有 Rating 的
+      情况下用代理指标重造一个隐藏 Rating,正是这个项目当初主动放弃的那条路。
+    - 零和整形要求同档 overall 守恒,可 overall 只是内部估值工具,不是守恒量。
+      一个又强又稳又有经验的人本来就该三项都高,没有理由让经验 +8 去还 -4 的火力。
+      而且它让年龄成了火力的主要驱动(donk 和 dev1ce 光生日就差 6 点火力),
+      和 41df824 骂过的「一个生日值 18 点火力」是同一个毛病。
+
+    同档内部的差异现在**只由市场错价提供**:同样 $2,一个是 G1、一个可能是 G3。
+    """
+    return [dict(c) for c in
+            json.loads(CARDS_PATH.read_text(encoding="utf-8"))["cards"]
+            if c.get("position")]
 
 
 def load_rosters():
@@ -279,6 +208,16 @@ def scout_attr(card):
     return _pick(card["page"], "attr", ATTR_WEIGHT[card["position"]])
 
 
+def scout_range(value, rng):
+    """真值 -> 球探区间,保证 lo <= value <= hi。"""
+    width = rng.randint(*SCOUT_WIDTH)
+    lo = round(value - width * rng.uniform(*SCOUT_POS))
+    lo, hi = max(1, lo), max(1, lo) + width
+    if hi > 99:
+        hi, lo = 99, max(1, 99 - width)
+    return lo, hi
+
+
 def identity_clue(card):
     """帮助认人的那一条:俱乐部 / Major 次数 / 年龄,三选一,同一个人固定。"""
     opts = []
@@ -300,12 +239,11 @@ def identity_clue(card):
 
 def face(card, open_mode):
     k = scout_attr(card)
-    bits = [f"{ATTR_CN[k]} {card[k]}", card["country"], identity_clue(card)]
-    if card.get("unknown"):
-        bits.append("无球探数据")
+    lo, hi = card["scout"]
+    bits = [f"{ATTR_CN[k]} {lo}-{hi}", card["country"], identity_clue(card)]
     if open_mode:
         bits.append(f"[G{card['grade']} 火{card['firepower']} 领{card['leadership']} "
-                    f"经{card['experience']} 稳{card['stability']} q{card['quality']:+.1f}]")
+                    f"经{card['experience']} 稳{card['stability']}]")
     return f"${card['price']}  {card['position']:<6}  " + "  ·  ".join(bits)
 
 
@@ -355,7 +293,7 @@ def chemistry(roster, rosters):
 
 def score(roster, rosters, money=0):
     """money = 剩余预算,按固定兑换率折成全队火力。"""
-    boost = money * SAVE_RATE
+    boost = min(money, SAVE_CAP) * SAVE_RATE
     get = lambda c, k: c[k] + (boost if k == SAVE_ATTR else 0.0)
 
     f = sorted((get(c, "firepower") for c in roster), reverse=True)
@@ -418,47 +356,62 @@ class Dealer:
         for c in cards:
             self.pool[c["grade"]].append(c)
 
-    def _draw(self, grade, need, want, position=None):
-        """从这一档里抽一张;抽干了就往邻近档退。"""
-        for g in sorted(GRADES, key=lambda x: abs(x - grade)):
-            cand = [c for c in self.pool[g]
-                    if position is None or c["position"] == position]
-            if not cand:
+    @staticmethod
+    def price_dist(grade):
+        """这一档的人这局可能被报什么价 -> {价格: 概率}(夹在 $1-$5)。"""
+        out = collections.defaultdict(float)
+        for delta, w in MARKET_ROLL:
+            out[max(1, min(5, grade + delta))] += w
+        return out
+
+    def _draw(self, max_price, need, want, position=None):
+        """**先抽到人**,再读他固定的档位,为他报这一局的价。
+
+        抽人的权重里带一项「他这局的报价买得起的概率」——这是「从卡池里抽一个人,
+        条件是他这局的价你付得起」的准确写法。反过来做(先定价格、再从价格附近
+        生成一个档位的人)会让 34 个 G5 被反复回收:实测板面上 G5 占 21%,
+        而他们只占卡池 5.2%,放大 4.1 倍,星卡就不稀有了。
+        """
+        cand, w = [], []
+        for g in GRADES:
+            afford = sum(v for pr, v in self.price_dist(g).items() if pr <= max_price)
+            if afford <= 0:
                 continue
-            w = [draw_weight(c)
-                 * (NEED_BOOST if c["position"] in need else 1.0)
-                 * (MATE_BOOST if c["page"] in want else 1.0)
-                 for c in cand]
-            pick = self.rng.choices(cand, weights=w, k=1)[0]
-            self.pool[pick["grade"]].remove(pick)
-            return pick
-        return None
+            for c in self.pool[g]:
+                if position is not None and c["position"] != position:
+                    continue
+                cand.append(c)
+                w.append(draw_weight(c) * GRADE_WEIGHT[g] * afford
+                         * (NEED_BOOST if c["position"] in need else 1.0)
+                         * (MATE_BOOST if c["page"] in want else 1.0))
+        if not cand:
+            return None
+        pick = self.rng.choices(cand, weights=w, k=1)[0]
+        self.pool[pick["grade"]].remove(pick)
+
+        dist = {pr: v for pr, v in self.price_dist(pick["grade"]).items()
+                if pr <= max_price}
+        price = self.rng.choices(list(dist), weights=list(dist.values()), k=1)[0]
+        # 球探区间每次发牌重摇:固定在卡上的话,区间本身就成了这个人的指纹
+        return dict(pick, price=price,
+                    scout=scout_range(pick[scout_attr(pick)], self.rng))
 
     def board(self, left, slots_left, owned):
-        """五张牌,标价全部落在买得起的区间里;缺的位置提权,最后才硬保底。"""
-        # 标价既要买得起,又不能越出 $1-$5 这套刻度
+        """五张牌,标价都落在买得起的区间;缺的位置提权,最后才硬保底。"""
         max_price = max(1, min(5, left - (slots_left - 1)))
         need = {p for p in ("AWPER", "IGL")
                 if not any(c["position"] == p for c in owned)}
         want = {m for c in owned for m in self.mates.get(c["page"], ())}
 
-        # 标价:一张顶格的,其余在 [1, max_price] 里随机 —— 价格组合本身就是抽卡
-        prices = [max_price] + [self.rng.randint(1, max_price) for _ in range(4)]
-        self.rng.shuffle(prices)
-
         board = []
-        for i, p in enumerate(prices):
-            delta = self.rng.choices([d for d, _ in MARKET_ROLL],
-                                     weights=[w for _, w in MARKET_ROLL], k=1)[0]
-            grade = max(1, min(5, p + delta))
-            # 只剩最后一两个位置还缺 AWP/IGL 时,最后一张硬保底
+        for i in range(5):
             force = None
-            if need and slots_left <= 2 and i == len(prices) - 1 \
+            if need and slots_left <= 2 and i == 4 \
                     and not any(c["position"] in need for c in board):
                 force = sorted(need)[0]
-            c = self._draw(grade, need, want, force)
+            c = self._draw(max_price, need, want, force)
             if c is not None:
-                board.append(dict(c, price=p))
+                board.append(c)
         return board
 
 
@@ -542,10 +495,16 @@ def reveal(picked, boards, left, rosters, passed):
     for c in picked:
         g = tier_gap(c)
         tag = f"抄底 +{g} 档" if g > 0 else (f"买贵 {g} 档" if g < 0 else "标价合理")
+        k = scout_attr(c)
+        lo, hi = c["scout"]
+        where = (c[k] - lo) / max(1, hi - lo)
+        hit = ("超出预期(卡在上沿)" if where >= 0.72 else
+               ("低于预期(贴着下沿)" if where <= 0.28 else "球探准"))
         print(f"  ${c['price']} {c['position']:<6} {c['nickname']:<13} {c['country']:<12}"
               f" {(c['team'] or '自由身/退役'):<20} G{c['grade']} "
               f"火{c['firepower']:<3} 领{c['leadership']:<3} 经{c['experience']:<3} "
               f"稳{c['stability']:<3} {tag}")
+        print(f"       球探报告 {ATTR_CN[k]} {lo}-{hi}  ->  实际 {c[k]}  {hit}")
 
     s = score(picked, rosters, left)
     if left:
@@ -648,7 +607,7 @@ def main():
             f.write(json.dumps({
                 "v": 3, "seed": seed, "open": args.open_mode,
                 "picks": [{"n": c["nickname"], "price": c["price"], "grade": c["grade"],
-                           "p": c["position"], "q": c["quality"]} for c in picked],
+                           "p": c["position"]} for c in picked],
                 "passed": passed, "hesitated": hesitated, "spent": BUDGET - left,
                 "total": round(s["total"], 2),
                 "chem": round(s["chem"], 2), "regret_sum": round(sum(regrets), 2),

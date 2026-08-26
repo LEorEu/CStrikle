@@ -5,7 +5,7 @@
     .\.venv\Scripts\python -X utf8 scripts\export_draft_web.py 输出.html
 
 模板是 scripts/proto_draft_web.html(里面有 /*__DATA__*/ 占位符)。数据取自
-proto_draft.py **整形与 Quality 之后**的卡,所以网页版和命令行版算出来的分逐分
+proto_draft.py 读到的**已提交的 v6 卡(不再做任何加工)**,所以网页版和命令行版算出来的分逐分
 一致;改了 proto_draft.py 的公式,重新跑一次这个脚本即可。
 
 卡面要展示的球探项和身份线索也在这里算好(它们由 page 的稳定哈希决定,不该在
@@ -33,8 +33,7 @@ for c in cards:
         "n": c["nickname"], "p": c["position"][0], "g": c["grade"],
         "c": c["country"], "t": c["team"], "a": c["age"], "m": c["majors"],
         "f": c["firepower"], "l": c["leadership"], "e": c["experience"],
-        "s": c["stability"], "o": c["overall"], "q": c["quality"],
-        "u": 1 if c["unknown"] else 0,
+        "s": c["stability"], "o": c["overall"],
         "sa": P.ATTR_CN[attr], "sv": c[attr],     # 球探报告给的那一维
         "ic": P.identity_clue(c),                  # 身份线索(俱乐部/Major/年龄)
     })
@@ -48,8 +47,9 @@ for i, j in itertools.combinations(range(len(cards)), 2):
 data = json.dumps({
     "cards": rows, "pairs": pairs,
     "budget": P.BUDGET, "slots": P.SLOTS, "turns": P.TURNS,
-    "saveRate": P.SAVE_RATE, "marketRoll": [list(x) for x in P.MARKET_ROLL],
-    "freeW": P.FREE_AGENT_WEIGHT, "vetW": P.VETERAN_WEIGHT,
+    "saveRate": P.SAVE_RATE, "saveCap": P.SAVE_CAP,
+    "scoutWidth": list(P.SCOUT_WIDTH), "scoutPos": list(P.SCOUT_POS), "marketRoll": [list(x) for x in P.MARKET_ROLL],
+    "gradeW": P.GRADE_WEIGHT, "freeW": P.FREE_AGENT_WEIGHT, "vetW": P.VETERAN_WEIGHT,
     "needBoost": P.NEED_BOOST, "mateBoost": P.MATE_BOOST,
 }, ensure_ascii=False, separators=(",", ":"))
 

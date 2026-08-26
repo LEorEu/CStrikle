@@ -157,10 +157,12 @@ footer code{color:var(--ink-2)}
     <div>
       <p class="eyebrow">FribergCS2 · 原型 v3</p>
       <h1 class="disp">Blind Draft 试玩台</h1>
-      <p><b>标价不等于档位。</b>市场会开错价——$1 有 25% 其实是 G2，$5 有 25% 只是 G4。
-         卡面给你一个真实的四维数字，用它判断这张牌值不值这个价。
+      <p><b>标价不等于档位。</b>每个人的档位是他自己固定的，市场只是这一局给他报了个价，
+         可能比他真实的档位低一档（抄底）或高一档（买贵）。卡面给你一个真实的四维数字，
+         <b>卡面给的是球探报告，不是完整属性</b>——那一维给的是一个区间，真值一定在里面，
+         但不一定在中间，宽度也不固定，签下来之后才看到精确数字。
          预算 <b class="num">$15</b> 招 5 个人，7 轮机会，跳过一轮换一批新牌，
-         没花完的钱折成全队火力。</p>
+         没花完的钱记作 Rogue Points。</p>
     </div>
     <div class="seedbox num">
       seed <span id="seedout">–</span>
@@ -185,20 +187,38 @@ footer code{color:var(--ink-2)}
       领导只算队里最强的那个指挥 ×0.70 + 其余四人 ×0.30，没指挥整项 ×0.60；经验、稳定取均值。
       基础分 = 火力 ×0.40 + 领导 ×0.20 + 经验 ×0.20 + 稳定 ×0.20，没有 AWP 再 −4。
       默契：真实队友（同一届 Major 同队）每对 +2、同队 ≥5 届再 +1；同国籍每多一人 +1.5；
-      年龄差 ≤5 +2、≥12 −2；两个指挥抢话 −3。没花完的每 $1 折成全队火力 +3。</p>
-    <p><b>同档也有好货坏货，但那个差异是挖出来的不是掷出来的</b>——取自 HLTV top100 队伍排名、
-      近年是否还在打、Major 前八次数、生涯跨度。证据推不出来的人老实持平并标注
-      <b>无球探数据</b>（$1 里约有一半是这种真彩票）。出场率另有一层加权：没队伍的人和
-      30 岁以上的选手在低价位大幅降权，$5/$4 不打折。数据取自
-      <code>data/draft_cards.json</code>（648 张）与 <code>players.json</code> 的真实同队记录
-      （2655 对），与 <code>scripts/proto_draft.py</code> 同一套算法。</p>
+      年龄差 ≤5 +2、≥12 −2；两个指挥抢话 −3。</p>
+    <p><b>选手卡本身不做任何加工</b>，四维和档位就是已提交的
+      <code>data/draft_cards.json</code>（648 张，按生涯代表版本评价，不随局变化）。
+      同一个标价下的差异全部来自市场错价：同样 $2，一个可能是 G1，另一个可能是 G3。
+      出场率另有一层加权：没队伍的人和 30 岁以上的选手在低价位降权（$5/$4 不打折，
+      那一档没队的正是最好认的传奇），已有队员的真实队友权重 ×2。默契取自
+      <code>players.json</code> 里 25 届 Major 的真实同队记录（2655 对）。
+      与 <code>scripts/proto_draft.py</code> 同一套算法。</p>
+    <p class="hint"><b>Rogue Points 是测试桩，不是玩法。</b>正式设计里没花完的钱买的是 Buff、
+      走另一条构筑路线；Buff 还没做，所以原型暂时把它折算成火力，只为回答
+      「如果余钱有价值，省钱会不会变成真决策」。</p>
   </footer>
 </div>
 
 <script>
 const D = /*__DATA__*/;
 const CARDS = D.cards; CARDS.forEach((c,i)=>c.i=i);
-const BUDGET = D.budget, SLOTS = D.slots, TURNS = D.turns, RATE = D.saveRate;
+const BUDGET = D.budget, SLOTS = D.slots, TURNS = D.turns;
+const RATE = D.saveRate, CAP = D.saveCap;
+const SCOUT_W = D.scoutWidth, SCOUT_P = D.scoutPos;
+
+/* 球探区间:宽度与真值在区间里的位置都随机,只保证真值一定在区间内。
+   决定「能推断多准」的是位置范围而不是宽度——位置锁在中段的话,可推断窗口比
+   档位带还窄,区间就等于直接报出档位。每次发牌重摇,不跟着卡走。 */
+function scoutRange(v, rng){
+  const w = SCOUT_W[0] + Math.floor(rng()*(SCOUT_W[1]-SCOUT_W[0]+1));
+  let lo = Math.round(v - w*(SCOUT_P[0] + rng()*(SCOUT_P[1]-SCOUT_P[0])));
+  lo = Math.max(1, lo);
+  let hi = lo + w;
+  if (hi > 99){ hi = 99; lo = Math.max(1, 99 - w); }
+  return [lo, hi];
+}
 const POS = {R:"RIFLER", A:"AWPER", I:"IGL"};
 const GRADES = [5,4,3,2,1];
 
@@ -240,7 +260,7 @@ function chemistry(r){
 }
 
 function score(r, money){
-  const boost = (money||0)*RATE;
+  const boost = Math.min(money||0, CAP)*RATE;
   const f = r.map(c=>c.f+boost).sort((a,b)=>b-a);
   const fire = f[0]*.35 + f[1]*.25 + mean(f.slice(2))*.40;
   const igls = r.filter(c=>c.p==="I");
@@ -291,45 +311,60 @@ function newRun(seed){
   nextBoard(); render();
 }
 
-function draw(grade, need, want, forcePos){
-  const order = GRADES.slice().sort((a,b)=>Math.abs(a-grade)-Math.abs(b-grade));
-  for (const g of order){
-    const cand = S.pool[g].filter(c=> !forcePos || POS[c.p]===forcePos);
-    if (!cand.length) continue;
-    const w = cand.map(c => drawWeight(c)
-        * (need.has(POS[c.p]) ? D.needBoost : 1)
-        * (want.has(c.i) ? D.mateBoost : 1));
-    const pick = weightedPick(cand, w, S.rng);
-    S.pool[pick.g].splice(S.pool[pick.g].indexOf(pick),1);
-    return pick;
+/* 这一档的人这局可能被报什么价 -> {价格: 概率}(夹在 $1-$5) */
+function priceDist(grade){
+  const out = {};
+  for (const [d,w] of D.marketRoll){
+    const p = Math.max(1, Math.min(5, grade + d));
+    out[p] = (out[p]||0) + w;
   }
-  return null;
+  return out;
+}
+
+/* **先抽到人**,再读他固定的档位为他报价。抽人的权重里带一项「他这局的报价
+   买得起的概率」——反过来做(先定价再从价格附近生成档位)会让 34 个 G5 被反复
+   回收:实测板面上 G5 占 21%,而他们只占卡池 5.2%,星卡就不稀有了。 */
+function draw(maxPrice, need, want, forcePos){
+  const cand = [], w = [];
+  for (const g of GRADES){
+    const dist = priceDist(g);
+    let afford = 0;
+    for (const p in dist) if (+p <= maxPrice) afford += dist[p];
+    if (afford <= 0) continue;
+    for (const c of S.pool[g]){
+      if (forcePos && POS[c.p] !== forcePos) continue;
+      cand.push(c);
+      w.push(drawWeight(c) * D.gradeW[g] * afford
+             * (need.has(POS[c.p]) ? D.needBoost : 1)
+             * (want.has(c.i) ? D.mateBoost : 1));
+    }
+  }
+  if (!cand.length) return null;
+  const pick = weightedPick(cand, w, S.rng);
+  S.pool[pick.g].splice(S.pool[pick.g].indexOf(pick), 1);
+
+  const dist = priceDist(pick.g);
+  const prices = [], pw = [];
+  for (const p in dist) if (+p <= maxPrice){ prices.push(+p); pw.push(dist[p]); }
+  return Object.assign({}, pick, {price: weightedPick(prices, pw, S.rng),
+                                  scout: scoutRange(pick.sv, S.rng)});
 }
 
 function nextBoard(){
-  const slotsLeft = SLOTS - S.picked.length;
-  const maxPrice = Math.max(1, Math.min(5, S.left - (slotsLeft-1)));
+  const sl = SLOTS - S.picked.length;
+  const maxPrice = Math.max(1, Math.min(5, S.left - (sl-1)));
   const need = new Set(["AWPER","IGL"].filter(p=>!S.picked.some(c=>POS[c.p]===p)));
   const want = new Set();
   for (const c of S.picked) for (const m of (MATES.get(c.i)||[])) want.add(m);
 
-  const prices = [maxPrice];
-  for (let k=0;k<4;k++) prices.push(1 + Math.floor(S.rng()*maxPrice));
-  for (let i=prices.length-1;i>0;i--){
-    const j=Math.floor(S.rng()*(i+1)); [prices[i],prices[j]]=[prices[j],prices[i]];
-  }
-
   const board = [];
-  prices.forEach((p,i)=>{
-    let x = S.rng(), delta = -1;
-    for (const [d,w] of D.marketRoll){ if (x < w){ delta = d; break; } x -= w; }
-    const grade = Math.max(1, Math.min(5, p + delta));
+  for (let i=0;i<5;i++){
     let force = null;
-    if (need.size && slotsLeft<=2 && i===prices.length-1
-        && !board.some(c=>need.has(POS[c.p]))) force = [...need].sort()[0];
-    const c = draw(grade, need, want, force);
-    if (c) board.push(Object.assign({}, c, {price:p}));
-  });
+    if (need.size && sl<=2 && i===4 && !board.some(c=>need.has(POS[c.p])))
+      force = [...need].sort()[0];
+    const c = draw(maxPrice, need, want, force);
+    if (c) board.push(c);
+  }
   S.turn++; S.boards.push(board); S.board = board;
 }
 
@@ -378,6 +413,12 @@ function allLineups(boards){
   return out;
 }
 const gap = c => c.g - c.price;
+function scoutHit(c){
+  const w = (c.sv - c.scout[0]) / Math.max(1, c.scout[1] - c.scout[0]);
+  if (w >= 0.72) return '<span class="steal">超出预期</span>';
+  if (w <= 0.28) return '<span class="over">低于预期</span>';
+  return '球探准';
+}
 
 /* ---------- 渲染 ---------- */
 const el = id => document.getElementById(id);
@@ -408,9 +449,8 @@ function renderBoard(){
     <button class="card" data-i="${i}">
       <span class="kbd">${i+1}</span>
       <span class="price"><b class="disp num">$${c.price}</b><span class="pos">${POS[c.p]}</span></span>
-      <span class="scout"><span>${c.sa}</span><b class="num disp">${c.sv}</b></span>
-      <span class="idclue"><em>${c.c}</em><span>${c.ic}</span>
-        ${c.u ? '<span class="nodata">无球探数据</span>' : ''}</span>
+      <span class="scout"><span>${c.sa}</span><b class="num disp">${c.scout[0]}–${c.scout[1]}</b></span>
+      <span class="idclue"><em>${c.c}</em><span>${c.ic}</span></span>
     </button>`).join("");
 
   return `<div class="boardhd">
@@ -462,6 +502,7 @@ function renderReveal(){
       <td>${c.t||"自由身 / 退役"}</td>
       <td class="num">${c.f}</td><td class="num">${c.l}</td>
       <td class="num">${c.e}</td><td class="num">${c.s}</td>
+      <td class="num">${c.sa} ${c.scout[0]}–${c.scout[1]} → ${c.sv} ${scoutHit(c)}</td>
       <td>${gapTag(c)}</td></tr>`).join("");
 
   const regret = rows.map(x=>`<tr>
@@ -501,12 +542,13 @@ function renderReveal(){
           <b class="num disp">${gap(steal)>0?"+"+gap(steal):gap(steal)} 档</b>
           <small>$${steal.price} 买到 G${steal.g} ${steal.n}</small></div>
       </div>
-      ${S.left ? `<p class="hint">没花完的 $${S.left} 折成全队火力 +${S.left*RATE}。</p>` : ""}
+      ${S.left ? `<p class="hint">剩余 ${S.left} Rogue Points（最多算 ${CAP} 点）。正式设计里它买 Buff，Buff 还没做，所以原型暂折算成全队火力 +${(Math.min(S.left,CAP)*RATE).toFixed(1)} —— 这是测试桩，不是玩法。</p>` : ""}
       ${missed && gap(missed)>gap(steal) ? `<p class="hint">你错过的最大抄底：$${missed.price} 的
         G${missed.g} ${missed.n}（${gap(missed)>0?"+":""}${gap(missed)} 档）。</p>` : ""}
       <div class="tablewrap"><table>
         <thead><tr><th>价</th><th>档</th><th>位置</th><th>选手</th><th>国籍</th><th>战队</th>
-          <th>火力</th><th>领导</th><th>经验</th><th>稳定</th><th>标价</th></tr></thead>
+          <th>火力</th><th>领导</th><th>经验</th><th>稳定</th>
+          <th>球探报告 → 实际</th><th>标价</th></tr></thead>
         <tbody>${roster}</tbody></table></div>
     </div>
   </section>
@@ -538,7 +580,7 @@ function saveLog(s, rank, of, best, avg, steal){
   if (S.logged) return; S.logged = true;
   const log = JSON.parse(localStorage.getItem("bd_log") || "[]");
   log.push({v:"web3", seed:S.seed,
-    picks:S.picked.map(c=>({n:c.n, price:c.price, g:c.g, p:POS[c.p], u:c.u})),
+    picks:S.picked.map(c=>({n:c.n, price:c.price, g:c.g, p:POS[c.p]})),
     passed:S.passed, spent:BUDGET-S.left, total:+s.total.toFixed(2),
     chem:+s.chem.toFixed(2), steal:gap(steal), rank, of,
     best:+best.toFixed(2), mean:+avg.toFixed(2)});
