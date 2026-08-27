@@ -32,6 +32,7 @@ for c in cards:
     rows.append({
         "n": c["nickname"], "p": c["position"][0], "g": c["grade"],
         "c": c["country"], "t": c["team"], "a": c["age"], "m": c["majors"],
+        "ch": c["champions"],
         "f": c["firepower"], "l": c["leadership"], "e": c["experience"],
         "s": c["stability"], "o": c["overall"],
         "sa": P.ATTR_CN[attr], "sv": c[attr],     # 球探报告给的那一维
@@ -42,7 +43,12 @@ pairs = []
 for i, j in itertools.combinations(range(len(cards)), 2):
     bonus, info = P.pair_bonus(cards[i], cards[j], rosters)
     if bonus:
-        pairs.append([i, j, info[0], info[1]])
+        # info[0] 是两人一共同队几届(chemistry 的 >=5 加成用的是这个数),
+        # 但阵容标签要的是「在被点名的那支队一起打了几届」——两人先后待过两支队时
+        # 这两个数不一样(dev1ce + Xyp9x 一共 15 届,其中 astralis 8 届)。
+        shared = rosters[cards[i]["page"]] & rosters[cards[j]["page"]]
+        same = sum(1 for _, t in shared if t == info[1])
+        pairs.append([i, j, info[0], info[1], same])
 
 data = json.dumps({
     "cards": rows, "pairs": pairs,

@@ -21,15 +21,17 @@
   一个 G3 这局卖 $1,他真的就是 G3,只是市场报错了。
   *(反过来做——先定价格再从价格附近生成档位——会让 34 个 G5 被反复回收:
   实测板面上 G5 占 21%,而他们只占卡池 5%,放大 4.1 倍,星卡就不稀有了。)*
-- **卡面三层**:标价 / 位置 + 一维真实四维数字(按位置加权挑) / 国籍 +
-  一条身份线索(俱乐部、Major 次数、年龄三选一)。
+- **卡面三层**:标价 / 位置 + 一维的**球探区间**(真值一定在里面,但不一定在中间,
+  宽度也不固定) / 国籍 + 一条身份线索(俱乐部、Major 次数、年龄三选一)。
+- **揭晓时给阵容标签**:DOUBLE AWP / REUNION / MONEYBALL 之类,**只命名不算分**,
+  加减分早就在默契里算过了。
 - **按剩余预算发牌**:标价全部落在买得起的区间;缺的位置提高权重,
   只在最后一两个位置才硬保底;已有队员的真实队友权重 x2(不硬塞)。
 
 原型测试桩(**不是玩法,只是为了让这一层能被验证**):
 
 - **剩余的钱记作 Rogue Points。** 正式设计里它买的是 Buff、走另一条构筑路线;
-  Buff 系统还没做,所以原型暂时按「1 点 = 全队火力 +3」折算进分数,只为回答
+  Buff 系统还没做,所以原型暂时按「1 点 = 全队火力 +1.5」折算进分数,只为回答
   「如果余钱有价值,省钱会不会变成真决策」。**这个折算不是玩法。**
 - **赛后穷举同一批牌能组出的全部阵容给名次**,用来判断「选什么都一样」与否。
 """
@@ -49,14 +51,21 @@ LOG_PATH = ROOT / ".cache" / "proto_draft_runs.jsonl"
 
 BUDGET = 15
 SLOTS = 5
-TURNS = 7                        # 7 轮机会填 5 个位置 → 自带 2 次跳过
+TURNS = 6                        # 6 轮机会填 5 个位置 → 只有 1 次跳过
 GRADES = (5, 4, 3, 2, 1)
 WEIGHTS = {"RIFLER": (0.55, 0.05, 0.20, 0.20),
            "AWPER": (0.45, 0.05, 0.20, 0.30),
            "IGL": (0.25, 0.35, 0.35, 0.05)}   # 与 gen_draft_cards.py §18 一致
 
-# 标价 → 档位的浮动。delta 是「档位 − 标价」:−1 = 买贵了,+1 = 抄到底。
-MARKET_ROLL = ((-1, 0.25), (0, 0.50), (1, 0.25))
+# 市场为这个人报价时的浮动。**delta 是「标价 − 档位」**(代码里 price = 档位 + delta):
+# −1 = 报便宜了 = 抄到底,+1 = 报贵了 = 坑货。
+# (这里以前的注释把符号写反了。25/50/25 对称,所以看不出来;一旦改成不对称,
+#  照着旧注释写就会把两头调反。)
+#
+# 不对称是有意的:**好货不常打折,坑货倒是不少。** 25/50/25 的时候,一个看不见档位的
+# 玩家到手的五张里有 2 张以上抄底的概率是 58%、一张都没有只有 13%——抄底成了每局
+# 稳定发放的奖励,不是故事。改成 12/70/18 之后是 0 张 38% / 1 张 41% / 2 张+ 21%。
+MARKET_ROLL = ((-1, 0.12), (0, 0.70), (1, 0.18))
 
 # 板面的「进货结构」。卡池是 47.7% G1 / 5.2% G5,照原样抽的话板面几乎全是便宜货、
 # 预算永远花不掉;所以按档位调一个进货权重。**这只影响谁被摆上货架,不影响他的
@@ -65,7 +74,7 @@ GRADE_WEIGHT = {5: 1.5, 4: 2.2, 3: 1.6, 2: 1.1, 1: 0.6}
 
 # **测试桩,不是玩法。** 正式设计里剩下的钱买的是 Buff(Rogue Build),
 # 走的是另一条构筑路线;Buff 还没做,所以原型暂时把 1 点 Rogue Point 折算成
-# 全队火力 +3,只为回答「如果余钱有价值,省钱会不会变成真决策」。
+# 全队火力 +1.5,只为回答「如果余钱有价值,省钱会不会变成真决策」。
 #
 # 兑换率在新发牌下重扫过:R=1.5 时最优打法平均留 $1.5、比"花满"高 1.26 分
 # (R=0 时也有 +0.80,因为板面不总能正好花完 $15),再高就变成囤钱恒对。
@@ -487,6 +496,92 @@ def tier_gap(c):
     return c["grade"] - c["price"]
 
 
+def roster_traits(picked, rosters):
+    """给这五个人一个「这是支什么队」的答案。
+
+    **不新加任何数值。** 位置冲突、同国、同代、真队友这些的加减分早就在 chemistry
+    里算了,这里只是把同一件事从流水账(「同国籍 Denmark x2  +1.5」)换成一个名字
+    (「DANISH CORE」)。多加一个旋钮就又多一个没验证过的变量。
+
+    分两类,这个区分是有用的:
+    - aim   —— 只用卡面看得见的东西(位置、国籍、标价)判定,所以**选人的时候就能
+               朝它走**:手里已经两个 AWP 了,第三个买不买?
+    - blind —— 要身份揭晓才知道,选的时候看不见,是撞上的。
+    """
+    out = []
+    def add(kind, tag, note):
+        out.append({"kind": kind, "tag": tag, "note": note})
+
+    pos = collections.Counter(c["position"] for c in picked)
+    n_awp, n_igl = pos["AWPER"], pos["IGL"]
+    if n_awp == 0:
+        add("aim", "RIFLE ONLY", "五个人没人架狙")
+    elif n_awp == 2:
+        add("aim", "DOUBLE AWP", "双狙体系,火力上限高,谁让位是问题")
+    elif n_awp >= 3:
+        add("aim", "AWP OVERLOAD", f"{n_awp} 个主狙抢同一把枪")
+    if n_igl == 0:
+        add("aim", "NO CALLER", "没人指挥")
+    elif n_igl >= 2:
+        add("aim", "TWO CALLERS", f"{n_igl} 个指挥抢话")
+
+    ctry = collections.Counter(c["country"] for c in picked)
+    top_c, n_c = ctry.most_common(1)[0]
+    if n_c >= 3:
+        add("aim", f"{top_c.upper()} CORE", f"{n_c} 个{top_c}人的班底")
+
+    prices = sorted((c["price"] for c in picked), reverse=True)
+    if prices[0] <= 2:
+        add("aim", "MONEYBALL", f"全队最贵的一张只要 ${prices[0]}")
+    elif prices[1] == 5:
+        add("aim", "GALACTICOS", "两张 $5 摆在同一队")
+
+    # ↓ 以下选人时看不见:身份是盖着的
+    #
+    # 队名要挑「一起打过最多届 Major 的那一支」,不能挑「最多人待过的那一支」:
+    # 后者会把 dev1ce + Xyp9x 报成 dignitas(两人早年确实都在,但同队一届),
+    # 而不是 astralis(同队八届)。同队届数才是这段关系的分量。
+    together = collections.Counter()          # 战队 -> 队内同队届数合计
+    involved = collections.defaultdict(set)   # 战队 -> 涉及到的人
+    for a, b in itertools.combinations(picked, 2):
+        shared = rosters.get(a["page"], set()) & rosters.get(b["page"], set())
+        for _, t in shared:
+            together[t] += 1
+            involved[t] |= {a["nickname"], b["nickname"]}
+    if together:
+        top_t, n_t = together.most_common(1)[0]
+        if len(involved[top_t]) >= 3:
+            add("blind", f"{top_t.upper()} CORE",
+                f"{len(involved[top_t])} 个人一起在 {top_t} 打过 Major")
+        else:
+            add("blind", "REUNION", f"{top_t} 的老队友又凑到一起了(同队 {n_t} 届 Major)")
+    elif len(ctry) == 5:
+        # 五个国家、五个人互相没打过 —— 这才算「拼凑」,不是「国际班底」。
+        # (光看「五个国家」会有 57% 的局命中,那不是身份,是噪音。)
+        add("blind", "INTERNATIONAL MIX", "五个国家,五个人互相没打过")
+
+    champs = sum(c["champions"] for c in picked)
+    if champs >= 4:
+        add("blind", "MAJOR WINNERS", f"队内 Major 冠军合计 {champs} 座")
+
+    ages = [c["age"] for c in picked if c["age"]]
+    if len(ages) >= 2:
+        spread = max(ages) - min(ages)
+        if spread <= 5:
+            add("blind", "SAME GENERATION", f"年龄差只有 {spread} 岁")
+        elif spread >= 14:
+            add("blind", "GENERATION GAP", f"最老最小差 {spread} 岁")
+
+    steals = sum(1 for c in picked if tier_gap(c) > 0)
+    dupes = sum(1 for c in picked if tier_gap(c) < 0)
+    if steals >= 2:
+        add("blind", "BARGAIN BIN", f"{steals} 张的档位高于标价")
+    if dupes >= 3:
+        add("blind", "FLEECED", f"{dupes} 张买贵了")
+
+    return out
+
+
 def reveal(picked, boards, left, rosters, passed):
     print("\n" + "=" * 78)
     print("REVEAL")
@@ -505,6 +600,13 @@ def reveal(picked, boards, left, rosters, passed):
               f"火{c['firepower']:<3} 领{c['leadership']:<3} 经{c['experience']:<3} "
               f"稳{c['stability']:<3} {tag}")
         print(f"       球探报告 {ATTR_CN[k]} {lo}-{hi}  ->  实际 {c[k]}  {hit}")
+
+    traits = roster_traits(picked, rosters)
+    if traits:
+        print("\n  这是一支什么队:")
+        for t in traits:
+            mark = "选的时候看得见" if t["kind"] == "aim" else "撞上的"
+            print(f"    [{t['tag']}]  {t['note']}   ({mark})")
 
     s = score(picked, rosters, left)
     if left:
@@ -591,7 +693,7 @@ def main():
     dealer = Dealer(cards, rng, mate_index(rosters))
 
     print("=" * 78)
-    print(f"Blind Draft 原型 v3    预算 ${BUDGET} / {SLOTS} 人 / {TURNS} 轮机会    "
+    print(f"Blind Draft 原型 v3.3  预算 ${BUDGET} / {SLOTS} 人 / {TURNS} 轮机会    "
           f"{'明牌' if args.open_mode else '盲选'}    seed={seed}")
     print("=" * 78)
     print(RULES)

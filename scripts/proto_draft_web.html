@@ -59,6 +59,12 @@ header p{margin:5px 0 0; color:var(--ink-2); font-size:13px; max-width:60ch}
 .track{height:8px; background:var(--panel-3); border-radius:4px; overflow:hidden}
 .fill{height:100%; background:var(--accent); border-radius:4px; transition:width .25s ease}
 .turns{display:flex; gap:5px}
+.traits{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+.trait{display:flex; flex-direction:column; gap:2px; padding:7px 11px; border-radius:8px;
+  border:1px solid var(--line); background:var(--panel-2)}
+.trait b{font-size:12px; font-weight:700; letter-spacing:.06em; color:var(--ink)}
+.trait small{font-size:11px; color:var(--ink-3)}
+.trait.aim{border-color:var(--accent); background:var(--accent-soft)}
 .pip{width:11px; height:11px; border-radius:2px; background:var(--panel-3);
      border:1px solid var(--line-2)}
 .pip.used{background:var(--ink-3); border-color:var(--ink-3)}
@@ -158,11 +164,12 @@ footer code{color:var(--ink-2)}
       <p class="eyebrow">FribergCS2 · 原型 v3</p>
       <h1 class="disp">Blind Draft 试玩台</h1>
       <p><b>标价不等于档位。</b>每个人的档位是他自己固定的，市场只是这一局给他报了个价，
-         可能比他真实的档位低一档（抄底）或高一档（买贵）。卡面给你一个真实的四维数字，
-         <b>卡面给的是球探报告，不是完整属性</b>——那一维给的是一个区间，真值一定在里面，
-         但不一定在中间，宽度也不固定，签下来之后才看到精确数字。
-         预算 <b class="num">$15</b> 招 5 个人，7 轮机会，跳过一轮换一批新牌，
-         没花完的钱记作 Rogue Points。</p>
+         可能比他真实的档位低一档（抄底）或高一档（买贵）——不过<b>好货不常打折，
+         坑货倒是不少</b>。<b>卡面给的是球探报告，不是完整属性</b>——那一维给的是一个区间，
+         真值一定在里面，但不一定在中间，宽度也不固定，签下来之后才看到精确数字。
+         预算 <b class="num">$15</b> 招 <b class="num">5</b> 个人，
+         <b class="num">6</b> 轮机会 —— 也就是<b>只能跳过一次</b>，跳过换一批新牌。
+         没花完的钱记作 Rogue Points。揭晓时会告诉你这是支什么队。</p>
     </div>
     <div class="seedbox num">
       seed <span id="seedout">–</span>
@@ -223,8 +230,8 @@ const POS = {R:"RIFLER", A:"AWPER", I:"IGL"};
 const GRADES = [5,4,3,2,1];
 
 const PAIR = new Map(), MATES = new Map();
-for (const [i,j,n,team] of D.pairs){
-  PAIR.set(i*1000+j, [n,team]);
+for (const [i,j,n,team,same] of D.pairs){
+  PAIR.set(i*1000+j, [n,team,same]);
   if (!MATES.has(i)) MATES.set(i,new Set());
   if (!MATES.has(j)) MATES.set(j,new Set());
   MATES.get(i).add(j); MATES.get(j).add(i);
@@ -257,6 +264,64 @@ function chemistry(r){
   const nI = r.filter(c=>c.p==="I").length;
   if (nI>=2){ total -= 3*(nI-1); notes.push([`${nI} 个指挥抢话`, -3*(nI-1)]); }
   return {total, notes};
+}
+
+/* 阵容标签:给这五个人一个「这是支什么队」的答案。**不新加任何数值** ——
+   位置冲突、同国、同代、真队友的加减分早就在 chemistry 里算了,这里只是把同一件事
+   从流水账换成一个名字。与 proto_draft.py 的 roster_traits() 逐条对应。
+   aim   = 只用卡面看得见的东西判定,选人时就能朝它走
+   blind = 身份揭晓才知道,是撞上的 */
+function rosterTraits(r){
+  const out=[], add=(k,tag,note)=>out.push({k,tag,note});
+  const nA = r.filter(c=>c.p==="A").length, nI = r.filter(c=>c.p==="I").length;
+  if (nA===0) add("aim","RIFLE ONLY","五个人没人架狙");
+  else if (nA===2) add("aim","DOUBLE AWP","双狙体系，火力上限高，谁让位是问题");
+  else if (nA>=3) add("aim","AWP OVERLOAD",`${nA} 个主狙抢同一把枪`);
+  if (nI===0) add("aim","NO CALLER","没人指挥");
+  else if (nI>=2) add("aim","TWO CALLERS",`${nI} 个指挥抢话`);
+
+  const byC={}; for (const c of r) byC[c.c]=(byC[c.c]||0)+1;
+  let topC=null; for (const k in byC) if (!topC || byC[k]>byC[topC]) topC=k;
+  if (byC[topC]>=3) add("aim", topC.toUpperCase()+" CORE", `${byC[topC]} 个${topC}人的班底`);
+
+  const pr = r.map(c=>c.price).sort((a,b)=>b-a);
+  if (pr[0]<=2) add("aim","MONEYBALL",`全队最贵的一张只要 $${pr[0]}`);
+  else if (pr[1]===5) add("aim","GALACTICOS","两张 $5 摆在同一队");
+
+  /* ↓ 选人时看不见。队名要挑「一起打过最多届 Major 的那一支」,不是「最多人待过的
+     那一支」——后者会把 dev1ce + Xyp9x 报成 dignitas 而不是 astralis。 */
+  const tog={}, inv={};
+  for (let a=0;a<r.length;a++) for (let b=a+1;b<r.length;b++){
+    const lo=Math.min(r[a].i,r[b].i), hi=Math.max(r[a].i,r[b].i);
+    const hit=PAIR.get(lo*1000+hi);
+    if (!hit) continue;
+    tog[hit[1]] = (tog[hit[1]]||0) + hit[2];   // 只算在这支队一起打的届数
+    (inv[hit[1]] = inv[hit[1]] || new Set()).add(r[a].n).add(r[b].n);
+  }
+  let topT=null; for (const k in tog) if (!topT || tog[k]>tog[topT]) topT=k;
+  if (topT){
+    if (inv[topT].size>=3)
+      add("blind", topT.toUpperCase()+" CORE", `${inv[topT].size} 个人一起在 ${topT} 打过 Major`);
+    else
+      add("blind","REUNION",`${topT} 的老队友又凑到一起了（同队 ${tog[topT]} 届 Major）`);
+  } else if (Object.keys(byC).length===5){
+    add("blind","INTERNATIONAL MIX","五个国家，五个人互相没打过");
+  }
+
+  const champs = r.reduce((a,c)=>a+(c.ch||0),0);
+  if (champs>=4) add("blind","MAJOR WINNERS",`队内 Major 冠军合计 ${champs} 座`);
+
+  const ages = r.map(c=>c.a).filter(Boolean);
+  if (ages.length>=2){
+    const sp = Math.max(...ages)-Math.min(...ages);
+    if (sp<=5) add("blind","SAME GENERATION",`年龄差只有 ${sp} 岁`);
+    else if (sp>=14) add("blind","GENERATION GAP",`最老最小差 ${sp} 岁`);
+  }
+
+  const st = r.filter(c=>gap(c)>0).length, du = r.filter(c=>gap(c)<0).length;
+  if (st>=2) add("blind","BARGAIN BIN",`${st} 张的档位高于标价`);
+  if (du>=3) add("blind","FLEECED",`${du} 张买贵了`);
+  return out;
 }
 
 function score(r, money){
@@ -515,7 +580,11 @@ function renderReveal(){
     ? s.notes.map(([t,v])=>`<li><span>${t}</span><span class="num ${v>0?"steal":"over"}">${fmt(v)}</span></li>`).join("")
     : `<li><span>无 —— 五个人互相没打过、也不同国</span><span class="num">0.0</span></li>`;
 
-  saveLog(s, better+1, lineups.length, totals[0], avg, steal);
+  const traits = rosterTraits(r);
+  const traitHtml = traits.length ? `<div class="traits">${traits.map(t=>
+      `<span class="trait ${t.k}"><b>${t.tag}</b><small>${t.note}</small></span>`).join("")}</div>` : "";
+
+  saveLog(s, better+1, lineups.length, totals[0], avg, steal, traits);
 
   return `<section class="panel">
     <div class="panel-hd"><h2 class="disp">揭晓</h2>
@@ -529,6 +598,7 @@ function renderReveal(){
           · 瞎点平均 <b class="num">${avg.toFixed(1)}</b>
           · 单场发挥 <span class="num">${(s.total-s.swing).toFixed(1)}~${(s.total+s.swing).toFixed(1)}</span></span>
       </div>
+      ${traitHtml}
       <div class="tiles">
         <div class="tile"><span class="eyebrow">选牌准度</span>
           <b class="num disp">${regretSum.toFixed(1)}</b><small>逐轮后悔合计，0 = 每轮都选对</small></div>
@@ -576,13 +646,14 @@ function renderReveal(){
 }
 
 /* ---------- 本地记录 ---------- */
-function saveLog(s, rank, of, best, avg, steal){
+function saveLog(s, rank, of, best, avg, steal, traits){
   if (S.logged) return; S.logged = true;
   const log = JSON.parse(localStorage.getItem("bd_log") || "[]");
   log.push({v:"web3", seed:S.seed,
     picks:S.picked.map(c=>({n:c.n, price:c.price, g:c.g, p:POS[c.p]})),
     passed:S.passed, spent:BUDGET-S.left, total:+s.total.toFixed(2),
     chem:+s.chem.toFixed(2), steal:gap(steal), rank, of,
+    traits:(traits||[]).map(t=>t.tag),
     best:+best.toFixed(2), mean:+avg.toFixed(2)});
   localStorage.setItem("bd_log", JSON.stringify(log));
 }
