@@ -18,7 +18,8 @@ from scripts.gen_draft_cards import (
 )
 from server.players import PlayerDB
 
-DESIGN_DOC = Path(__file__).resolve().parent.parent / "DESIGN_GAMEPLAY.md"
+DESIGN_DOC = (Path(__file__).resolve().parent.parent
+              / "docs" / "blind-draft" / "卡牌与落地记录.md")
 
 
 class SpecInSyncTests(unittest.TestCase):
@@ -31,8 +32,8 @@ class SpecInSyncTests(unittest.TestCase):
 
     def test_design_doc_contains_generated_spec(self):
         doc = DESIGN_DOC.read_text(encoding="utf-8")
-        self.assertIn(SPEC_BEGIN, doc, "DESIGN_GAMEPLAY.md 里找不到规格块起始标记")
-        self.assertIn(SPEC_END, doc, "DESIGN_GAMEPLAY.md 里找不到规格块结束标记")
+        self.assertIn(SPEC_BEGIN, doc, "docs/blind-draft/卡牌与落地记录.md 里找不到规格块起始标记")
+        self.assertIn(SPEC_END, doc, "docs/blind-draft/卡牌与落地记录.md 里找不到规格块结束标记")
         start = doc.index(SPEC_BEGIN)
         end = doc.index(SPEC_END) + len(SPEC_END)
         embedded = doc[start:end].replace("\r\n", "\n").strip()
@@ -40,7 +41,7 @@ class SpecInSyncTests(unittest.TestCase):
             embedded,
             spec_markdown().strip(),
             "文档里的算法规格和代码不一致;重新执行 "
-            "`python scripts/gen_draft_cards.py --spec` 并把输出贴回 DESIGN_GAMEPLAY.md",
+            "`python scripts/gen_draft_cards.py --spec` 并把输出贴回 docs/blind-draft/卡牌与落地记录.md",
         )
 
 

@@ -4,7 +4,7 @@
     .\.venv\Scripts\python -X utf8 scripts\gen_draft_cards.py            # 只体检,不写盘
     .\.venv\Scripts\python -X utf8 scripts\gen_draft_cards.py --sample NiKo s1mple
     .\.venv\Scripts\python -X utf8 scripts\gen_draft_cards.py --write    # 生成 data/draft_cards.json
-    .\.venv\Scripts\python -X utf8 scripts\gen_draft_cards.py --spec     # 算法规格 -> 贴进 DESIGN_GAMEPLAY.md
+    .\.venv\Scripts\python -X utf8 scripts\gen_draft_cards.py --spec     # 算法规格 -> 贴进 docs/blind-draft/卡牌与落地记录.md
 
 设计稿 §16.1 要求「卡牌 RNG 只在生成时跑一次,之后永久固定」。这里不靠保存
 随机状态来实现,而是让生成器**幂等**:每个人的随机数种子取自
@@ -544,7 +544,7 @@ def main():
     ap.add_argument("--write", action="store_true", help="写出 data/draft_cards.json")
     ap.add_argument("--sample", nargs="*", metavar="ID", help="只看这几个人的卡")
     ap.add_argument("--spec", action="store_true",
-                    help="打印算法规格(Markdown),嵌进 DESIGN_GAMEPLAY.md")
+                    help="打印算法规格(Markdown),嵌进 docs/blind-draft/卡牌与落地记录.md")
     args = ap.parse_args()
 
     if args.spec:

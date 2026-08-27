@@ -6,7 +6,7 @@
     .\.venv\Scripts\python -X utf8 scripts\proto_draft.py --open    # 明牌(直接给档位和四维)
     .\.venv\Scripts\python -X utf8 scripts\proto_draft.py --seed 7  # 复现同一局
 
-取向:**一切为有趣服务**。v1/v2 八局实测(见 DESIGN_DRAFT_PROTOTYPE.md)证明
+取向:**一切为有趣服务**。v1/v2 八局实测(见 docs/blind-draft/原型实测记录.md)证明
 「五档选手 + 匿名线索 + 预算」撑不起游戏——价格直接播报了档位,于是认出名人就等于
 知道答案。这一版把游戏要问的问题从「这是谁」换成「这个资产值不值这个价」。
 
@@ -158,7 +158,7 @@ def load_cards():
     """原样读已提交的 v6 卡,**不做任何加工**。
 
     早先的版本在这里加过两层:按队伍排名/活跃度推的 Quality Offset,和把
-    年龄换成火力的零和整形。两层都撤了,原因写在 DESIGN_DRAFT_PROTOTYPE.md:
+    年龄换成火力的零和整形。两层都撤了,原因写在 docs/blind-draft/原型实测记录.md:
 
     - Quality Offset 用「近年是否还在打」当正分,直接违反 §14「一律按生涯代表
       版本评价」——一个退役传奇不该因为退役而掉数值;而「所在队 Top100 排名」
