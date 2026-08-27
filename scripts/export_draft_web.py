@@ -57,6 +57,7 @@ data = json.dumps({
     "scoutWidth": list(P.SCOUT_WIDTH), "scoutPos": list(P.SCOUT_POS), "marketRoll": [list(x) for x in P.MARKET_ROLL],
     "gradeW": P.GRADE_WEIGHT, "freeW": P.FREE_AGENT_WEIGHT, "vetW": P.VETERAN_WEIGHT,
     "needBoost": P.NEED_BOOST, "mateBoost": P.MATE_BOOST,
+    "quota": P.POSITION_QUOTA, "fullPenalty": P.FULL_PENALTY,
 }, ensure_ascii=False, separators=(",", ":"))
 
 tpl = TEMPLATE.read_text(encoding="utf-8")

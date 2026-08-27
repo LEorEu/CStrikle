@@ -23,8 +23,12 @@
   实测板面上 G5 占 21%,而他们只占卡池 5%,放大 4.1 倍,星卡就不稀有了。)*
 - **卡面三层**:标价 / 位置 + 一维的**球探区间**(真值一定在里面,但不一定在中间,
   宽度也不固定) / 国籍 + 一条身份线索(俱乐部、Major 次数、年龄三选一)。
-- **揭晓时给阵容标签**:DOUBLE AWP / REUNION / MONEYBALL 之类,**只命名不算分**,
-  加减分早就在默契里算过了。
+- **阵容标签**:DOUBLE AWP / REUNION / MONEYBALL 之类,**只命名不算分**,
+  加减分早就在默契里算过了。看得见的那一半(位置、国籍、标价判定的)在**选人时**
+  就常驻显示,告诉你这一局可以去追什么、还差几个人。
+- **散场时每一张牌都翻开**:七个市场日 35 张,当时卡面写了什么 -> 他实际是谁,
+  并标出错过的抄底。这也是「老哥太多、都不认识」的解药——重复出现是学习曲线的
+  前提,前提是每局结束能对一次答案。
 - **按剩余预算发牌**:标价全部落在买得起的区间;缺的位置提高权重,
   只在最后一两个位置才硬保底;已有队员的真实队友权重 x2(不硬塞)。
 
@@ -40,6 +44,7 @@ import collections
 import itertools
 import json
 import random
+import re
 import statistics as st
 import zlib
 from pathlib import Path
@@ -51,7 +56,7 @@ LOG_PATH = ROOT / ".cache" / "proto_draft_runs.jsonl"
 
 BUDGET = 15
 SLOTS = 5
-TURNS = 6                        # 6 轮机会填 5 个位置 → 只有 1 次跳过
+TURNS = 7                        # 7 个「市场日」里完成 5 次签约(不是「白送两次刷新」)
 GRADES = (5, 4, 3, 2, 1)
 WEIGHTS = {"RIFLER": (0.55, 0.05, 0.20, 0.20),
            "AWPER": (0.45, 0.05, 0.20, 0.30),
@@ -65,6 +70,10 @@ WEIGHTS = {"RIFLER": (0.55, 0.05, 0.20, 0.20),
 # 不对称是有意的:**好货不常打折,坑货倒是不少。** 25/50/25 的时候,一个看不见档位的
 # 玩家到手的五张里有 2 张以上抄底的概率是 58%、一张都没有只有 13%——抄底成了每局
 # 稳定发放的奖励,不是故事。改成 12/70/18 之后是 0 张 38% / 1 张 41% / 2 张+ 21%。
+#
+# (轮次一度收到 6 轮 1 跳,又改回来了:6 轮是在**旧发牌器**上得出的结论,而新发牌器
+#  按预算控价、缺位提权、后期保底,6/1 从来没单独验证过。实测第一局就打出反例——
+#  跳掉第三轮之后第四轮只有一张步枪,那不是「选哪个步枪」,是「只有这一个还能怎么办」。)
 MARKET_ROLL = ((-1, 0.12), (0, 0.70), (1, 0.18))
 
 # 板面的「进货结构」。卡池是 47.7% G1 / 5.2% G5,照原样抽的话板面几乎全是便宜货、
@@ -339,6 +348,14 @@ VETERAN_WEIGHT = {5: 1.0, 4: 0.9, 3: 0.50, 2: 0.40, 1: 0.35}
 NEED_BOOST = 2.5        # 还缺的位置
 MATE_BOOST = 2.0        # 已有队员的真实队友(实测把出现率从 39% 抬到 57%)
 
+# 一支队自然只要一个狙、一个指挥、三个步枪。**位置已经满了的牌就是废牌**:
+# 实测拿齐 AWP + IGL 之后,板面上仍有 35.6% 的牌是你不再需要的位置,五张里有两张
+# 以上废位的局占 59%——「一批五张」实际上只有三张能选,这就是「可选择的不够多」。
+# 降权是软的,不是禁:双狙、双指挥仍然摸得到(那是 DOUBLE AWP 这类标签的前提),
+# 只是不会在你已经有 s1mple 之后再连发三个狙。
+POSITION_QUOTA = {"AWPER": 1, "IGL": 1, "RIFLER": 3}
+FULL_PENALTY = 0.45
+
 
 def draw_weight(c):
     """出场权重:只改出场率,不改任何卡的数值,人也都还在库里。
@@ -373,7 +390,7 @@ class Dealer:
             out[max(1, min(5, grade + delta))] += w
         return out
 
-    def _draw(self, max_price, need, want, position=None):
+    def _draw(self, max_price, need, want, full=frozenset(), position=None):
         """**先抽到人**,再读他固定的档位,为他报这一局的价。
 
         抽人的权重里带一项「他这局的报价买得起的概率」——这是「从卡池里抽一个人,
@@ -392,6 +409,7 @@ class Dealer:
                 cand.append(c)
                 w.append(draw_weight(c) * GRADE_WEIGHT[g] * afford
                          * (NEED_BOOST if c["position"] in need else 1.0)
+                         * (FULL_PENALTY if c["position"] in full else 1.0)
                          * (MATE_BOOST if c["page"] in want else 1.0))
         if not cand:
             return None
@@ -408,8 +426,9 @@ class Dealer:
     def board(self, left, slots_left, owned):
         """五张牌,标价都落在买得起的区间;缺的位置提权,最后才硬保底。"""
         max_price = max(1, min(5, left - (slots_left - 1)))
-        need = {p for p in ("AWPER", "IGL")
-                if not any(c["position"] == p for c in owned)}
+        have = collections.Counter(c["position"] for c in owned)
+        need = {p for p in ("AWPER", "IGL") if not have[p]}
+        full = {p for p, q in POSITION_QUOTA.items() if have[p] >= q}
         want = {m for c in owned for m in self.mates.get(c["page"], ())}
 
         board = []
@@ -418,7 +437,7 @@ class Dealer:
             if need and slots_left <= 2 and i == 4 \
                     and not any(c["position"] in need for c in board):
                 force = sorted(need)[0]
-            c = self._draw(max_price, need, want, force)
+            c = self._draw(max_price, need, want, full, force)
             if c is not None:
                 board.append(c)
         return board
@@ -442,8 +461,8 @@ def play(dealer, open_mode):
 
         board = dealer.board(left, slots_left, picked)
         boards.append(board)
-        print(f"\n-- 第 {turn}/{TURNS} 轮    预算 ${left}    还要选 {slots_left} 人"
-              f"    {'还能跳过 %d 次' % (turns_left - slots_left) if can_pass else '不能再跳过了'} --")
+        print(f"\n-- 第 {turn}/{TURNS} 个市场日    预算 ${left}    还要签 {slots_left} 人"
+              f"    {'可以放掉 %d 个市场日' % (turns_left - slots_left) if can_pass else '接下来每天都必须签人'} --")
         if picked:
             print("   已有:", "  ".join(f"${c['price']} {c['position']}({c['country']})"
                                         for c in picked))
@@ -453,10 +472,15 @@ def play(dealer, open_mode):
                 print("   还缺:", " / ".join(missing),
                       " (缺 AWP 扣 4 分,缺 IGL 领导力打六折)")
 
+        bp = blueprints(picked, slots_left)
+        if bp:
+            print("   可以去追:  " + "   ".join(
+                "[%s] %s%s" % (t, note, " ✓" if done else "") for t, note, done in bp))
+
         for i, c in enumerate(board, 1):
             print(f"  {i}) {face(c, open_mode)}")
         if can_pass:
-            print("  s) 跳过这轮,换一批新牌")
+            print("  s) 放掉这个市场日,换一批新牌")
 
         while True:
             raw = input("选哪张? (编号 / s 跳过,加 ? 表示这轮你犹豫过,如 3?) > ").strip()
@@ -494,6 +518,80 @@ def all_lineups(boards, rosters):
 
 def tier_gap(c):
     return c["grade"] - c["price"]
+
+
+def why_better(mine, mine_left, alt, alt_left, rosters):
+    """「更该拿 X」得说出为什么。
+
+    第一次实测里两条建议(jambo、Vexite)都是**同国籍默契**——正是玩家自己在做的
+    事——可面板只报了一个名字和一个数,读起来像在说「你该省钱」。
+    """
+    a, m = score(alt, rosters, alt_left), score(mine, rosters, mine_left)
+    money = ((a["total"] - score(alt, rosters, 0)["total"])
+             - (m["total"] - score(mine, rosters, 0)["total"]))
+    chem = a["chem"] - m["chem"]
+    card = (a["total"] - m["total"]) - money - chem
+    # 只说「多了什么 / 少了什么」里最重的那一条。默契变好可能是因为多了一条加分,
+    # 也可能是因为**少了**一条罚分(比如不再是三个指挥抢话)——两种说法不能混。
+    val = lambda n: float(re.search(r"[-+]\d+(?:\.\d+)?$", n).group())
+    gained = sorted((n for n in a["notes"] if n not in m["notes"]), key=val)
+    lost = sorted((n for n in m["notes"] if n not in a["notes"]), key=val)
+    why = ""
+    if gained and val(gained[-1]) > 0:
+        why = "多了「%s」" % gained[-1]
+    elif lost and val(lost[0]) < 0:
+        why = "少了「%s」" % lost[0]
+    bits = []
+    if abs(chem) >= 0.05:
+        bits.append("默契 %+.1f%s" % (chem, "  " + why if why else ""))
+    if abs(card) >= 0.05:
+        bits.append("卡本身 %+.1f" % card)
+    if abs(money) >= 0.05:
+        bits.append("余钱 %+.1f" % money)
+    return " · ".join(bits)
+
+
+def blueprints(picked, slots_left):
+    """选人时就能看见的「这一局你可以去追什么」。
+
+    这是**蓝图 v0:零新机制、不加分**。aim 标签本来就只用卡面看得见的东西
+    (位置、国籍、标价)判定,所以它天然就是一张「你现在可以朝这走」的清单;
+    这里只是把它从赛后搬到赛中,并算出还差几个人。
+
+    为什么先做这个不做回报:第二局实测里玩家自己想组「独联体青春风暴」,
+    板面上料是够的(25 张牌里 6 个独联体人,4 个 24 岁以下),他也真凑出了
+    UKRAINE CORE——**问题不是牌不给,是组成了也没有任何东西承认这件事**。
+    如果连「看得见」都不能让人产生想追的欲望,加分也救不了它。加回报和
+    SCOUTING FOCUS(主动把方向盘拨一下)都要等这一步的结果。
+
+    返回 [(标签, 进度说明, 是否已达成)],已达成的排前面,已经不可能的不返回。
+    """
+    out = []
+    pos = collections.Counter(c["position"] for c in picked)
+    ctry = collections.Counter(c["country"] for c in picked)
+    prices = [c["price"] for c in picked]
+
+    def add(tag, have, want, unit, dead=False):
+        if dead or have + slots_left < want:
+            return
+        out.append((tag, "已达成" if have >= want else f"还差 {want - have} {unit}",
+                    have >= want))
+
+    add("DOUBLE AWP", min(pos["AWPER"], 2), 2, "个狙")
+    if pos["AWPER"] >= 2:
+        add("AWP OVERLOAD", pos["AWPER"], 3, "个狙")
+    add("TWO CALLERS", pos["IGL"], 2, "个指挥")
+    if ctry:
+        top_c, n_c = ctry.most_common(1)[0]
+        add(f"{top_c.upper()} CORE", n_c, 3, f"个 {top_c} 人")
+    elif slots_left >= 3:
+        out.append(("同国三人", "任选一国凑满 3 个", False))
+    if not any(x > 2 for x in prices):
+        out.append(("MONEYBALL", "已达成" if len(picked) == SLOTS
+                    else "接着只买 $1-2 的牌", len(picked) == SLOTS))
+    add("GALACTICOS", sum(1 for x in prices if x == 5), 2, "张 $5")
+    out.sort(key=lambda t: (not t[2],))
+    return out[:5]
 
 
 def roster_traits(picked, rosters):
@@ -629,7 +727,9 @@ def reveal(picked, boards, left, rosters, passed):
     better = sum(1 for t in totals if t > mine + 1e-9)
 
     regrets = []
-    print("\n  逐轮后悔(其余四人不动,只换这一张能到多少分):")
+    print("\n  事后最优(**上帝视角,不是说你选错了**):")
+    print("    用的是揭晓后的完整真值——精确四维、组合出来的默契、便宜一块留下的")
+    print("    Rogue Point——全都是你当时看不到的。在信息不全时判断,本来就是这个玩法。")
     for k, c in enumerate(picked):
         bi = next(i for i, b in enumerate(boards) if c in b)
         alts = []
@@ -641,11 +741,17 @@ def reveal(picked, boards, left, rosters, passed):
         alts.sort(key=lambda x: -x[0])
         regret = alts[0][0] - mine
         regrets.append(regret)
-        tail = ("这轮没选错" if regret < .05 else
-                "更该拿 $%d %s %s" % (alts[0][1]["price"], alts[0][1]["position"],
+        tail = ("当时那批牌里这张就是最优" if regret < .05 else
+                "事后最优 $%d %s %s" % (alts[0][1]["price"], alts[0][1]["position"],
                                       alts[0][1]["nickname"]))
         print(f"    ${c['price']} {c['position']:<6} {c['nickname']:<12} "
-              f"后悔 {regret:5.1f}   {tail}")
+              f"差 {regret:5.1f}   {tail}")
+        if regret >= .05:
+            combo = list(picked); combo[k] = alts[0][1]
+            why = why_better(picked, left, combo,
+                             BUDGET - sum(x["price"] for x in combo), rosters)
+            if why:
+                print(f"    {'':>27}   {why}")
 
     spend_me = BUDGET - left
     same_spend = [t for t, _, sp in ranked if sp == spend_me] or [mine]
@@ -654,8 +760,8 @@ def reveal(picked, boards, left, rosters, passed):
                  key=tier_gap, default=None)
 
     print("\n  " + "-" * 74)
-    print(f"  选牌准度   逐轮后悔合计 {sum(regrets):5.1f}   "
-          f"(0 = 每一轮在当时的牌里都选对了)")
+    print(f"  选牌准度   与事后最优的差值合计 {sum(regrets):5.1f}   "
+          f"(上帝视角;0 = 每一轮都撞上了当时那批牌的最优)")
     print(f"  预算管理   你花了 ${spend_me};同样花 ${spend_me} 的阵容最高 "
           f"{max(same_spend):.1f},你 {mine:.1f}")
     print(f"  阵容契合   默契 {s['chem']:+.1f}"
@@ -672,6 +778,29 @@ def reveal(picked, boards, left, rosters, passed):
     print(f"    最优         {totals[0]:6.1f}   "
           f"{'  '.join('$%d %s' % (c['price'], c['nickname']) for c in ranked[0][1])}")
     print(f"    随便瞎点均值 {st.mean(totals):6.1f}   标准差 {st.pstdev(totals):.1f}")
+
+    # WHAT YOU MISSED:每个市场日、每一张牌全部翻开。
+    # 不翻开的话,反复出现的那 69 张 G4/G5 面孔只是噪音;翻开之后,「上次就是这哥
+    # 把我坑了」才会变成下一局的记忆。也是「老哥太多、都不认识」最自然的解药。
+    print("\n  " + "-" * 74)
+    print("  你错过了谁 —— 当时卡面上写的是什么,他实际上是谁")
+    for bi, b in enumerate(boards, 1):
+        mine = next((c for c in b if c in picked), None)
+        head = ("你放掉了这天" if bi in passed else
+                (f"你签下 {mine['nickname']} (${mine['price']})" if mine else "—"))
+        print(f"\n  第 {bi} 个市场日 · {head}")
+        for c in b:
+            g = tier_gap(c)
+            mark = ("<- 你签下" if c is mine else
+                    (f"[抄底] 错过 +{g} 档" if g > 0 else
+                     (f"[虚高] 标价高 {-g} 档" if g < 0 else "")))
+            k = scout_attr(c)
+            lo, hi = c["scout"]
+            print(f"    ${c['price']} {c['position']:<6} "
+                  f"{ATTR_CN[k]} {lo}-{hi} · {c['country'][:12]:<12} · "
+                  f"{identity_clue(c)[:16]:<16} -> {c['nickname']:<13} G{c['grade']} "
+                  f"{c['firepower']}/{c['leadership']}/{c['experience']}/"
+                  f"{c['stability']:<3} {mark}")
     if passed:
         print(f"    跳过了第 {passed} 轮;穷举把跳过的那几批也算进去了")
     return s, ranked, better, regrets
@@ -693,7 +822,7 @@ def main():
     dealer = Dealer(cards, rng, mate_index(rosters))
 
     print("=" * 78)
-    print(f"Blind Draft 原型 v3.3  预算 ${BUDGET} / {SLOTS} 人 / {TURNS} 轮机会    "
+    print(f"Blind Draft 原型 v3.4  预算 ${BUDGET} · 签 {SLOTS} 人 · {TURNS} 个市场日    "
           f"{'明牌' if args.open_mode else '盲选'}    seed={seed}")
     print("=" * 78)
     print(RULES)

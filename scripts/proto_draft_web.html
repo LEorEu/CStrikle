@@ -59,6 +59,22 @@ header p{margin:5px 0 0; color:var(--ink-2); font-size:13px; max-width:60ch}
 .track{height:8px; background:var(--panel-3); border-radius:4px; overflow:hidden}
 .fill{height:100%; background:var(--accent); border-radius:4px; transition:width .25s ease}
 .turns{display:flex; gap:5px}
+.why{color:var(--ink-3); font-size:11px}
+.bp{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 14px}
+.bp .eyebrow{margin-right:2px}
+.chip{display:inline-flex; align-items:baseline; gap:6px; padding:5px 10px; border-radius:999px;
+  border:1px dashed var(--line-2); background:var(--panel-2)}
+.chip b{font-size:11px; font-weight:700; letter-spacing:.05em; color:var(--ink-2)}
+.chip small{font-size:11px; color:var(--ink-3)}
+.chip.hit{border-style:solid; border-color:var(--good); background:transparent}
+.chip.hit b{color:var(--good)}
+.trait .chem{color:var(--ink-2); font-size:11px}
+.misses td{vertical-align:top}
+.misses .dim{color:var(--ink-3); font-size:12px}
+.misses .rsep td{padding-top:16px; color:var(--ink-2); font-weight:600;
+  border-bottom:1px solid var(--line-2)}
+.misses tr.ismine{background:var(--accent-soft)}
+.you{color:var(--accent); font-weight:600}
 .traits{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
 .trait{display:flex; flex-direction:column; gap:2px; padding:7px 11px; border-radius:8px;
   border:1px solid var(--line); background:var(--panel-2)}
@@ -266,11 +282,54 @@ function chemistry(r){
   return {total, notes};
 }
 
+/* 选人时就能看见的「这一局你可以去追什么」。**蓝图 v0:零新机制、不加分。**
+   aim 标签本来就只用卡面看得见的东西判定,所以它天然是一张「现在可以朝这走」的
+   清单;这里只是把它从赛后搬到赛中,并算出还差几个人。
+   为什么先做这个不做回报:实测里玩家自己想组「独联体青春风暴」,板面上料是够的,
+   他也真凑出了 UKRAINE CORE —— 问题不是牌不给,是**组成了也没有任何东西承认**。
+   如果连「看得见」都不能让人产生想追的欲望,加分也救不了。与 proto_draft.py 的
+   blueprints() 逐条对应。 */
+function blueprints(picked, slotsLeft){
+  const out=[], pos={}, ctry={};
+  for (const c of picked){ pos[POS[c.p]]=(pos[POS[c.p]]||0)+1; ctry[c.c]=(ctry[c.c]||0)+1; }
+  const n=p=>pos[p]||0;
+  const add=(tag,have,want,unit)=>{
+    if (have+slotsLeft < want) return;
+    out.push({tag, note: have>=want ? "已达成" : `还差 ${want-have} ${unit}`, done: have>=want});
+  };
+  add("DOUBLE AWP", Math.min(n("AWPER"),2), 2, "个狙");
+  if (n("AWPER")>=2) add("AWP OVERLOAD", n("AWPER"), 3, "个狙");
+  add("TWO CALLERS", n("IGL"), 2, "个指挥");
+  const cs=Object.keys(ctry);
+  if (cs.length){
+    let top=cs[0]; for (const k of cs) if (ctry[k]>ctry[top]) top=k;
+    add(top.toUpperCase()+" CORE", ctry[top], 3, `个 ${top} 人`);
+  } else if (slotsLeft>=3) out.push({tag:"同国三人", note:"任选一国凑满 3 个", done:false});
+  if (!picked.some(c=>c.price>2))
+    out.push({tag:"MONEYBALL", note: picked.length===SLOTS ? "已达成" : "接着只买 $1-2 的牌",
+              done: picked.length===SLOTS});
+  add("GALACTICOS", picked.filter(c=>c.price===5).length, 2, "张 $5");
+  out.sort((a,b)=>(a.done?0:1)-(b.done?0:1));
+  return out.slice(0,5);
+}
+
 /* 阵容标签:给这五个人一个「这是支什么队」的答案。**不新加任何数值** ——
    位置冲突、同国、同代、真队友的加减分早就在 chemistry 里算了,这里只是把同一件事
    从流水账换成一个名字。与 proto_draft.py 的 roster_traits() 逐条对应。
    aim   = 只用卡面看得见的东西判定,选人时就能朝它走
    blind = 身份揭晓才知道,是撞上的 */
+/* 标签 -> 默契里对应的那一条(只是把已算的数显示出来,不新增任何分数) */
+function traitNote(t, text){
+  if (t.tag==="REUNION" || t.tag.endsWith(" CORE")) {
+    if (text.startsWith("队友") && (t.tag==="REUNION" || text.includes(t.tag.replace(" CORE","").toLowerCase()))) return true;
+    if (text.startsWith("同国籍") && text.toUpperCase().includes(t.tag.replace(" CORE",""))) return true;
+  }
+  if (t.tag==="TWO CALLERS") return text.includes("指挥抢话");
+  if (t.tag==="SAME GENERATION") return text.startsWith("同代");
+  if (t.tag==="GENERATION GAP") return text.startsWith("跨代");
+  return false;
+}
+
 function rosterTraits(r){
   const out=[], add=(k,tag,note)=>out.push({k,tag,note});
   const nA = r.filter(c=>c.p==="A").length, nI = r.filter(c=>c.p==="I").length;
@@ -322,6 +381,29 @@ function rosterTraits(r){
   if (st>=2) add("blind","BARGAIN BIN",`${st} 张的档位高于标价`);
   if (du>=3) add("blind","FLEECED",`${du} 张买贵了`);
   return out;
+}
+
+/* 「更该拿 X」得说出为什么。第一次实测里两条建议(jambo、Vexite)都是**同国籍默契**
+   ——正是玩家自己在做的事——可面板只报了一个名字和一个数,读起来像在说「你该省钱」。
+   把差额拆成:卡本身 / 默契(带上是哪一条) / 余钱折算。 */
+function whyBetter(mineR, mineLeft, altR, altLeft){
+  const a = score(altR, altLeft), m = score(mineR, mineLeft);
+  const money = (a.total - score(altR,0).total) - (m.total - score(mineR,0).total);
+  const chem = a.chem - m.chem;
+  const card = (a.total - m.total) - money - chem;
+  /* 只说「多了什么 / 少了什么」里最重的那一条。默契变好可能是多了一条加分,
+     也可能是**少了**一条罚分(比如不再是三个指挥抢话)——两种说法不能混。 */
+  const mine_ = new Set(m.notes.map(n=>n[0])), alt_ = new Set(a.notes.map(n=>n[0]));
+  const gained = a.notes.filter(n=>!mine_.has(n[0])).sort((x,y)=>y[1]-x[1]);
+  const lost   = m.notes.filter(n=>!alt_.has(n[0])).sort((x,y)=>x[1]-y[1]);
+  let why = "";
+  if (gained.length && gained[0][1] > 0) why = `　多了「${gained[0][0]}」`;
+  else if (lost.length && lost[0][1] < 0) why = `　少了「${lost[0][0]}」`;
+  const bits = [];
+  if (Math.abs(chem) >= 0.05) bits.push(`默契 ${fmt(chem)}${why}`);
+  if (Math.abs(card) >= 0.05) bits.push(`卡本身 ${fmt(card)}`);
+  if (Math.abs(money) >= 0.05) bits.push(`余钱 ${fmt(money)}`);
+  return bits.join(" · ");
 }
 
 function score(r, money){
@@ -389,7 +471,7 @@ function priceDist(grade){
 /* **先抽到人**,再读他固定的档位为他报价。抽人的权重里带一项「他这局的报价
    买得起的概率」——反过来做(先定价再从价格附近生成档位)会让 34 个 G5 被反复
    回收:实测板面上 G5 占 21%,而他们只占卡池 5.2%,星卡就不稀有了。 */
-function draw(maxPrice, need, want, forcePos){
+function draw(maxPrice, need, want, full, forcePos){
   const cand = [], w = [];
   for (const g of GRADES){
     const dist = priceDist(g);
@@ -401,6 +483,7 @@ function draw(maxPrice, need, want, forcePos){
       cand.push(c);
       w.push(drawWeight(c) * D.gradeW[g] * afford
              * (need.has(POS[c.p]) ? D.needBoost : 1)
+             * (full.has(POS[c.p]) ? D.fullPenalty : 1)
              * (want.has(c.i) ? D.mateBoost : 1));
     }
   }
@@ -418,7 +501,12 @@ function draw(maxPrice, need, want, forcePos){
 function nextBoard(){
   const sl = SLOTS - S.picked.length;
   const maxPrice = Math.max(1, Math.min(5, S.left - (sl-1)));
-  const need = new Set(["AWPER","IGL"].filter(p=>!S.picked.some(c=>POS[c.p]===p)));
+  const have = {};
+  for (const c of S.picked) have[POS[c.p]] = (have[POS[c.p]]||0)+1;
+  const need = new Set(["AWPER","IGL"].filter(p=>!have[p]));
+  /* 位置已经满了的牌就是废牌:实测拿齐 AWP+IGL 之后板面仍有 35.6% 是你不需要的
+     位置。降权是软的不是禁,双狙/双指挥仍然摸得到。 */
+  const full = new Set(Object.keys(D.quota).filter(p=>(have[p]||0) >= D.quota[p]));
   const want = new Set();
   for (const c of S.picked) for (const m of (MATES.get(c.i)||[])) want.add(m);
 
@@ -427,7 +515,7 @@ function nextBoard(){
     let force = null;
     if (need.size && sl<=2 && i===4 && !board.some(c=>need.has(POS[c.p])))
       force = [...need].sort()[0];
-    const c = draw(maxPrice, need, want, force);
+    const c = draw(maxPrice, need, want, full, force);
     if (c) board.push(c);
   }
   S.turn++; S.boards.push(board); S.board = board;
@@ -518,17 +606,24 @@ function renderBoard(){
       <span class="idclue"><em>${c.c}</em><span>${c.ic}</span></span>
     </button>`).join("");
 
+  const bp = blueprints(S.picked, slotsLeft());
+  const bpHtml = bp.length ? `<div class="bp">
+      <span class="eyebrow">可以去追</span>
+      ${bp.map(b=>`<span class="chip ${b.done?"hit":""}"><b>${b.tag}</b><small>${b.note}</small></span>`).join("")}
+    </div>` : "";
+
   return `<div class="boardhd">
-      <h2 class="disp">第 ${S.turn} / ${TURNS} 轮</h2>
-      <span>还要选 ${slotsLeft()} 人${need.length ? " · 还缺 " + need.join(" / ") +
+      <h2 class="disp">第 ${S.turn} / ${TURNS} 个市场日</h2>
+      <span>还要签 ${slotsLeft()} 人${need.length ? " · 还缺 " + need.join(" / ") +
         "（缺 AWP 扣 4 分，缺 IGL 领导力打六折）" : ""}</span>
     </div>
+    ${bpHtml}
     <div class="board">${cards}</div>
     <div class="actions">
       <button class="btn" id="passbtn" ${canPass()?"":"disabled"}>
-        跳过这轮，换一批牌${canPass()?`（还能跳 ${turnsLeft()-slotsLeft()} 次）`:"（不能再跳了）"}
+        放掉这个市场日，换一批牌${canPass()?`（还能放掉 ${turnsLeft()-slotsLeft()} 个）`:"（接下来每天都得签人）"}
       </button>
-      <span class="hint">键盘 1–5 选牌，S 跳过。标价不等于档位——便宜的可能是好货。</span>
+      <span class="hint">键盘 1–5 选牌，S 放掉这天。标价不等于档位——便宜的可能是好货。</span>
     </div>`;
 }
 
@@ -550,7 +645,13 @@ function renderReveal(){
       const t = score(combo, BUDGET-sp).total;
       if (t>bestT){ bestT=t; best=alt; }
     }
-    return {c, regret: bestT - s.total, best};
+    let why = "";
+    if (best && best !== c){
+      const combo = r.slice(); combo[k] = best;
+      let sp=0; for (const x of combo) sp+=x.price;
+      why = whyBetter(r, S.left, combo, BUDGET-sp);
+    }
+    return {c, regret: bestT - s.total, best, why};
   });
   const regretSum = rows.reduce((a,x)=>a+x.regret,0);
 
@@ -573,16 +674,46 @@ function renderReveal(){
   const regret = rows.map(x=>`<tr>
       <td class="name">${x.c.n}</td><td class="num">$${x.c.price}</td>
       <td class="num ${x.regret>3?"over":(x.regret<0.05?"steal":"")}">${x.regret.toFixed(1)}</td>
-      <td>${x.regret<0.05 ? "这轮没选错"
-            : `更该拿 $${x.best.price} ${POS[x.best.p]} ${x.best.n}`}</td></tr>`).join("");
+      <td>${x.regret<0.05 ? "当时那批牌里，这张就是最优"
+            : `$${x.best.price} ${POS[x.best.p]} ${x.best.n}`
+              + (x.why ? `<br><small class="why">${x.why}</small>` : "")}</td></tr>`).join("");
 
   const notes = s.notes.length
     ? s.notes.map(([t,v])=>`<li><span>${t}</span><span class="num ${v>0?"steal":"over"}">${fmt(v)}</span></li>`).join("")
     : `<li><span>无 —— 五个人互相没打过、也不同国</span><span class="num">0.0</span></li>`;
 
+  /* WHAT YOU MISSED:七个市场日、35 张牌全部翻开。
+     不翻开的话,反复出现的那 69 张 G4/G5 面孔只是噪音;翻开之后,「上次就是这哥
+     把我坑了」才会变成下一局的记忆。这也是「老哥太多、都不认识」最自然的解药。 */
+  const allRows = S.boards.map((b,bi)=>{
+    const picked1 = b.find(c=>r.includes(c));
+    const passed1 = S.passed.includes(bi+1);
+    const head = `<tr class="rsep"><td colspan="7">第 ${bi+1} 个市场日 ·
+      ${passed1 ? '<span class="over">你放掉了这天</span>'
+        : (picked1 ? `你签下 <b>${picked1.n}</b>（$${picked1.price}）` : "—")}</td></tr>`;
+    const rows = b.map(c=>{
+      const mine = r.includes(c), g = gap(c);
+      let mark = "";
+      if (mine) mark = '<span class="you">✓ 你签下</span>';
+      else if (g > 0) mark = `<span class="steal">💎 错过的抄底 +${g} 档</span>`;
+      else if (g < 0) mark = `<span class="over">💸 标价虚高 ${g} 档</span>`;
+      return `<tr class="${mine?"ismine":""}">
+        <td class="num">$${c.price}</td><td>${POS[c.p]}</td>
+        <td class="dim">${c.sa} ${c.scout[0]}–${c.scout[1]} · ${c.c} · ${c.ic}</td>
+        <td class="name">${c.n}</td><td><span class="gbadge">G${c.g}</span></td>
+        <td class="num">${c.f} / ${c.l} / ${c.e} / ${c.s}</td>
+        <td>${mark}</td></tr>`;
+    }).join("");
+    return head + rows;
+  }).join("");
+
   const traits = rosterTraits(r);
-  const traitHtml = traits.length ? `<div class="traits">${traits.map(t=>
-      `<span class="trait ${t.k}"><b>${t.tag}</b><small>${t.note}</small></span>`).join("")}</div>` : "";
+  /* 标签底下显示的是**默契里本来就已经算过的那笔**,不是再加一笔新的。 */
+  const traitHtml = traits.length ? `<div class="traits">${traits.map(t=>{
+      const hit = s.notes.find(n=>traitNote(t, n[0]));
+      return `<span class="trait ${t.k}"><b>${t.tag}</b><small>${t.note}</small>${
+        hit ? `<small class="chem">${hit[0]} <b>${fmt(hit[1])}</b></small>` : ""}</span>`;
+    }).join("")}</div>` : "";
 
   saveLog(s, better+1, lineups.length, totals[0], avg, steal, traits);
 
@@ -601,7 +732,7 @@ function renderReveal(){
       ${traitHtml}
       <div class="tiles">
         <div class="tile"><span class="eyebrow">选牌准度</span>
-          <b class="num disp">${regretSum.toFixed(1)}</b><small>逐轮后悔合计，0 = 每轮都选对</small></div>
+          <b class="num disp">${regretSum.toFixed(1)}</b><small>与事后最优的差值合计（上帝视角）</small></div>
         <div class="tile"><span class="eyebrow">预算管理</span>
           <b class="num disp">${(s.total-bestSameSpend).toFixed(1)}</b>
           <small>同样花 $${spentMe} 最高能到 ${bestSameSpend.toFixed(1)}</small></div>
@@ -625,9 +756,12 @@ function renderReveal(){
 
   <div class="cols">
     <section class="panel">
-      <div class="panel-hd"><h2 class="disp">逐轮后悔</h2><p>其余四人不动，只换这一张能多拿多少</p></div>
+      <div class="panel-hd"><h2 class="disp">事后最优</h2>
+        <p><b>上帝视角，不是说你选错了。</b>这里用的是揭晓后的完整真值——精确四维、
+           组合出来的默契、便宜一块留下的 Rogue Point——全都是你当时看不到的。
+           在信息不全时判断，本来就是这个玩法的核心。</p></div>
       <div class="panel-bd"><div class="tablewrap"><table>
-        <thead><tr><th>选手</th><th>价</th><th>后悔</th><th>更该拿</th></tr></thead>
+        <thead><tr><th>你签的</th><th>价</th><th>差值</th><th>事后最优</th></tr></thead>
         <tbody>${regret}</tbody></table></div></div>
     </section>
     <section class="panel">
@@ -635,6 +769,15 @@ function renderReveal(){
       <div class="panel-bd"><ul class="notes">${notes}</ul></div>
     </section>
   </div>
+
+  <section class="panel">
+    <div class="panel-hd"><h2 class="disp">你错过了谁</h2>
+      <p>${S.boards.length} 个市场日全部翻开：当时卡面上写的是什么，他实际上是谁</p></div>
+    <div class="panel-bd"><div class="tablewrap"><table class="misses">
+      <thead><tr><th>价</th><th>位置</th><th>当时卡面</th><th>其实是</th><th>档</th>
+        <th>火 / 领 / 经 / 稳</th><th></th></tr></thead>
+      <tbody>${allRows}</tbody></table></div></div>
+  </section>
 
   <div class="actions">
     <button class="btn primary" id="again">再来一局</button>
