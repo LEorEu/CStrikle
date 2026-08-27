@@ -264,7 +264,10 @@ function chemistry(r){
     if (!hit) continue;
     const bonus = 2 + (hit[0]>=5 ? 1 : 0);
     total += bonus;
-    notes.push([`队友 ${r[a].n} + ${r[b].n} · 同队 ${hit[0]} 届 Major（${hit[1]}）`, bonus]);
+    /* hit[0] 是两人同队的总届数(>=5 的加成用它),hit[2] 是在被点名那支队一起打的
+       届数。两个数不一样时要都写出来,否则同一屏上会和 REUNION 标签对不上。 */
+    const where = hit[2] < hit[0] ? `${hit[1]} ${hit[2]} 届` : hit[1];
+    notes.push([`队友 ${r[a].n} + ${r[b].n} · 同队 ${hit[0]} 届 Major（${where}）`, bonus]);
   }
   const byC={};
   for (const c of r) byC[c.c]=(byC[c.c]||0)+1;
@@ -341,7 +344,7 @@ function rosterTraits(r){
 
   const byC={}; for (const c of r) byC[c.c]=(byC[c.c]||0)+1;
   let topC=null; for (const k in byC) if (!topC || byC[k]>byC[topC]) topC=k;
-  if (byC[topC]>=3) add("aim", topC.toUpperCase()+" CORE", `${byC[topC]} 个${topC}人的班底`);
+  if (byC[topC]>=3) add("aim", topC.toUpperCase()+" CORE", `${byC[topC]} 个 ${topC} 人的班底`);
 
   const pr = r.map(c=>c.price).sort((a,b)=>b-a);
   if (pr[0]<=2) add("aim","MONEYBALL",`全队最贵的一张只要 $${pr[0]}`);

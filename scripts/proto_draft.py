@@ -282,9 +282,12 @@ def chemistry(roster, rosters):
         bonus, info = pair_bonus(a, b, rosters)
         if bonus:
             n, team = info
+            same = sum(1 for _, t in
+                       rosters[a["page"]] & rosters[b["page"]] if t == team)
             total += bonus
+            where = f"({team} {same} 届)" if same < n else f"({team})"
             notes.append(f"队友 {a['nickname']} + {b['nickname']}  同队 {n} 届 Major"
-                         f"({team})  +{bonus:.1f}")
+                         f"{where}  +{bonus:.1f}")
 
     for country, n in collections.Counter(c["country"] for c in roster).items():
         if n >= 2:
@@ -626,7 +629,7 @@ def roster_traits(picked, rosters):
     ctry = collections.Counter(c["country"] for c in picked)
     top_c, n_c = ctry.most_common(1)[0]
     if n_c >= 3:
-        add("aim", f"{top_c.upper()} CORE", f"{n_c} 个{top_c}人的班底")
+        add("aim", f"{top_c.upper()} CORE", f"{n_c} 个 {top_c} 人的班底")
 
     prices = sorted((c["price"] for c in picked), reverse=True)
     if prices[0] <= 2:
