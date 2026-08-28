@@ -4,7 +4,8 @@
 > 再让它去打一届真实的 Major。
 
 **现在做到哪：** 选人这一层已经可玩（命令行 + 网页原型，十五局真人试玩）。
-比赛这一层还不存在——四维至今没有兑现场景，这是下一个里程碑。
+比赛这一层跑通了第一版：真实 32 队 Major、玩家按实力插队、三个瑞士轮串联，
+但只有命令行、没有淘汰赛、没有 Rogue Buff。
 
 ## 按这个顺序读
 
@@ -14,7 +15,7 @@
 | 2 | [玩法蓝图_v0.2.md](玩法蓝图_v0.2.md) | 最初的正式设计稿。Grade / Price / Power 的分离、生涯代表版本评价、位置权重都出自这里 | 想知道某条规则的原始意图 |
 | 3 | [卡牌与落地记录.md](卡牌与落地记录.md) | 648 张选手卡怎么生成的、实现时和蓝图差在哪、用真实数据核对的数字 | 要改卡库或生成器之前 |
 | 4 | [原型实测记录.md](原型实测记录.md) | 真人试玩记录，每条结论后面跟着产生它的那组数字和复算方法 | 想知道某个参数为什么是现在这个值 |
-| 5 | [比赛引擎_v0.1.md](比赛引擎_v0.1.md) | 下一步：把这五个人放进一届真实 Major 的瑞士轮 | 现在 |
+| 5 | [比赛引擎_v0.1.md](比赛引擎_v0.1.md) | 把这五个人放进一届真实 Major 的瑞士轮。§44、§45 是已经跑出来的数和据此改掉的设计 | 现在 |
 | — | [原始讨论_ChatGPT.md](原始讨论_ChatGPT.md) | 整个模式的原始素材，从看线上站点开始聊起 | 考古 |
 
 **第 4 份是按时间顺序写的**，二 / 三 / 五节是 v1 / v2 当时的状态，不是现状；
@@ -27,6 +28,8 @@ scripts/gen_draft_cards.py    卡牌生成器 → data/draft_cards.json（v6，�
 scripts/proto_draft.py        命令行原型（选人这一层的全部逻辑都在这）
 scripts/proto_draft_web.html  网页原型模板
 scripts/export_draft_web.py   把卡和常量注进模板 → .cache/proto_draft_web.html
+scripts/proto_major.py        入场层：真实 32 队 → 玩家插队 → 定 Stage → 首轮对阵
+scripts/proto_match.py        比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联
 tests/test_draft_cards.py     8 项，盯着卡库和「卡牌与落地记录.md」里的 SPEC 块
 ```
 
@@ -36,7 +39,16 @@ tests/test_draft_cards.py     8 项，盯着卡库和「卡牌与落地记录.md
 ## 一句话状态
 
 卡是固定的，市场会给他报错价，卡面只给球探区间；选人时你看得见可以去追哪几种
-阵容，散场时每一张牌都会翻开。**但这支队还没打过一场球。**
+阵容，散场时每一张牌都会翻开。**现在这支队会去打一届真实的 Major，
+从第几个阶段进场取决于你抽得怎么样。**
+
+```
+python scripts/proto_major.py --seed 1              # 只看入场：排第几、挤掉谁
+python scripts/proto_match.py --seed 50296 --cap 4  # 打完整届
+python scripts/proto_match.py --selftest            # 两条不变量
+python scripts/proto_match.py --stats --cap 4       # §35 的 Q1/Q2
+python scripts/proto_match.py --lab  --cap 4        # §35 的 Q3/Q4（控制变量）
+```
 
 ---
 
