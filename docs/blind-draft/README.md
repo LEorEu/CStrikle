@@ -4,8 +4,9 @@
 > 再让它去打一届真实的 Major。
 
 **现在做到哪：** 选人这一层已经可玩（命令行 + 网页原型，十五局真人试玩）。
-比赛这一层跑通了第一版：真实 32 队 Major、玩家按实力插队、三个瑞士轮串联，
-但只有命令行、没有淘汰赛、没有 Rogue Buff。
+比赛这一层跑通了第一版：32 队 Major、玩家按实力插队、三个瑞士轮串联。
+AI 对手用**当前阵容 + 当前位置 + 年龄衰减**，种子来自 HLTV 当前世界排名；
+玩家的卡仍然是生涯巅峰版本。还没有淘汰赛、没有 Rogue Buff、只有命令行。
 
 ## 按这个顺序读
 
@@ -16,6 +17,7 @@
 | 3 | [卡牌与落地记录.md](卡牌与落地记录.md) | 648 张选手卡怎么生成的、实现时和蓝图差在哪、用真实数据核对的数字 | 要改卡库或生成器之前 |
 | 4 | [原型实测记录.md](原型实测记录.md) | 真人试玩记录，每条结论后面跟着产生它的那组数字和复算方法 | 想知道某个参数为什么是现在这个值 |
 | 5 | [比赛引擎_v0.1.md](比赛引擎_v0.1.md) | 把这五个人放进一届真实 Major 的瑞士轮。§44、§45 是已经跑出来的数和据此改掉的设计 | 现在 |
+| 6 | [评审_GPT_比赛引擎.md](评审_GPT_比赛引擎.md) | 第三方复核比赛引擎 v0.1，抬头写明哪几条被采纳、哪几条明确不做 | 想知道某个结论被质疑过没有 |
 | — | [原始讨论_ChatGPT.md](原始讨论_ChatGPT.md) | 整个模式的原始素材，从看线上站点开始聊起 | 考古 |
 
 **第 4 份是按时间顺序写的**，二 / 三 / 五节是 v1 / v2 当时的状态，不是现状；
@@ -31,6 +33,7 @@ scripts/export_draft_web.py   把卡和常量注进模板 → .cache/proto_draft
 scripts/proto_major.py        入场层：生成赛场 → 玩家插队 → 定 Stage → 首轮对阵
 data/manual/major_field.json  赛场人工层：池子、固定几支、权重、阵容、chem_cap
 scripts/proto_match.py        比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联
+scripts/proto_ai_teams.py     AI 对手：当前阵容 + 当前位置 + 年龄衰减 + HLTV 种子
 tests/test_draft_cards.py     8 项，盯着卡库和「卡牌与落地记录.md」里的 SPEC 块
 ```
 
@@ -50,7 +53,15 @@ python scripts/proto_match.py --seed 50296 --cap 4  # 打完整届
 python scripts/proto_match.py --selftest            # 两条不变量
 python scripts/proto_match.py --stats --cap 4       # §35 的 Q1/Q2
 python scripts/proto_match.py --lab  --cap 4        # §35 的 Q3/Q4（控制变量）
+python scripts/proto_ai_teams.py                   # AI 赛场 32 队名单
+python scripts/proto_ai_teams.py --changes         # 只看被改判/衰减/占位的人
 ```
+
+两个可交互的页面（Artifact，私有）：
+
+- **比赛引擎调参台** — 7 个参数接在实时模拟上，拖动当场重跑几十届 Major
+  重算 §35 的四组读数
+- **AI 对手名册** — 32 支队逐人摊开，年龄曲线可现场调，用来一眼找出判错的人
 
 ---
 
