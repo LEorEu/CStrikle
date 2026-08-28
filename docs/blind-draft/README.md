@@ -28,7 +28,8 @@ scripts/gen_draft_cards.py    卡牌生成器 → data/draft_cards.json（v6，�
 scripts/proto_draft.py        命令行原型（选人这一层的全部逻辑都在这）
 scripts/proto_draft_web.html  网页原型模板
 scripts/export_draft_web.py   把卡和常量注进模板 → .cache/proto_draft_web.html
-scripts/proto_major.py        入场层：真实 32 队 → 玩家插队 → 定 Stage → 首轮对阵
+scripts/proto_major.py        入场层：生成赛场 → 玩家插队 → 定 Stage → 首轮对阵
+data/manual/major_field.json  赛场人工层：池子、固定几支、权重、阵容、chem_cap
 scripts/proto_match.py        比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联
 tests/test_draft_cards.py     8 项，盯着卡库和「卡牌与落地记录.md」里的 SPEC 块
 ```
@@ -44,6 +45,7 @@ tests/test_draft_cards.py     8 项，盯着卡库和「卡牌与落地记录.md
 
 ```
 python scripts/proto_major.py --seed 1              # 只看入场：排第几、挤掉谁
+python scripts/proto_major.py --sweep-field        # 每局赛场翻新几支
 python scripts/proto_match.py --seed 50296 --cap 4  # 打完整届
 python scripts/proto_match.py --selftest            # 两条不变量
 python scripts/proto_match.py --stats --cap 4       # §35 的 Q1/Q2

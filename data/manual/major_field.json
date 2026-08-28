@@ -1,0 +1,27 @@
+{
+  "_note": "Blind Draft 比赛引擎的赛场配置(设计稿 docs/blind-draft/比赛引擎_v0.1.md §2、§45.7)。每局从 pool 里的几届 Major 生成一届 32 队的赛场:全局顺位靠前的 locked_top 支必在,其余席位按权重随机 roll。改这里不需要动代码。注意卡库是一人一张生涯卡,不分年份——换一届阵容换的是「哪五个人」,不是这五个人的强弱。",
+
+  "_pool": "参赛队从这几届 Major 里取。列在前面的算更新的一届。",
+  "pool": [
+    "IEM Cologne 2026",
+    "BLAST Austin 2025",
+    "StarLadder Budapest 2025"
+  ],
+
+  "field_size": 32,
+
+  "_locked_top": "全局顺位前几支每局必定在场。它们是你的标尺,不该每局换人。设成 32 就退化成「固定赛场」。",
+  "locked_top": 8,
+
+  "_weight_decay": "默认权重 = decay^(全局顺位-1)。越小越偏向强队,越接近 1 越平均。可以用 --sweep-field 扫「两局之间差几支队」。",
+  "weight_decay": 0.95,
+
+  "_roster_mode": "latest = 一支队永远用它最近一届的五人(默认,最好懂);roll = 每局在它出现过的几届里随机挑一届的阵容。",
+  "roster_mode": "latest",
+
+  "_chem_cap": "先天默契的封顶(设计稿 §5.2)。实测它调的是「草台班子税」有多重:CAP=8 时普通打法 41% 进不了 Major,CAP=4 是 14%。详见 §45.6。",
+  "chem_cap": 4.0,
+
+  "_teams": "逐队人工层。weight 覆盖默认权重(0 = 永不出现,很大 = 几乎必在);roster 可以填一届 Major 的名字来钉死用那一届的阵容,也可以直接填五个 Liquipedia page 手写阵容。",
+  "teams": {}
+}

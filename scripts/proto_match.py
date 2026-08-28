@@ -378,10 +378,14 @@ def show_match(r, rnd, stage):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--event", default=M.DEFAULT_EVENT)
+    ap.add_argument("--event", default=None,
+                    help="只用这一届的 32 队,绕过 major_field.json")
+    ap.add_argument("--field-seed", type=int, default=None,
+                    help="赛场随机种子(默认同 --seed)")
     ap.add_argument("--seed", type=int, default=1, help="抽卡种子")
     ap.add_argument("--sim", type=int, default=None, help="比赛随机种子(默认同 --seed)")
-    ap.add_argument("--cap", type=float, default=M.CHEM_CAP)
+    ap.add_argument("--cap", type=float, default=None,
+                    help="覆盖 major_field.json 里的 chem_cap")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--stats", action="store_true")
     ap.add_argument("--lab", action="store_true")
@@ -389,6 +393,8 @@ def main():
     ap.add_argument("--scale", type=float, default=None)
     args = ap.parse_args()
 
+    if args.cap is None:
+        args.cap = float(M.load_config().get("chem_cap", M.CHEM_CAP))
     if args.scale is not None:
         global WIN_SCALE
         WIN_SCALE = args.scale
@@ -405,7 +411,18 @@ def main():
     rosters = P.load_rosters()
     cards = P.load_cards()
     mates = P.mate_index(rosters)
-    field, _, _ = M.real_field(args.event, rosters, args.cap)
+    if args.event:
+        field = _fixed_field(args, rosters)
+        print("赛场:%s(单届,固定)" % args.event)
+    else:
+        cfg = M.load_config()
+        field = M.build_field(random.Random(args.field_seed
+                                            if args.field_seed is not None
+                                            else args.seed),
+                              cfg, rosters, args.cap)
+        print("赛场:%d 支队,池子 %s,前 %d 固定,阵容 %s"
+              % (len(field), " + ".join(cfg["pool"]), cfg["locked_top"],
+                 cfg["roster_mode"]))
 
     roster, left = M.bot_draft(args.seed, cards, rosters, mates)
     if len(roster) < P.SLOTS:
@@ -413,7 +430,7 @@ def main():
         return
     me = M.Entry("YOUR TEAM", roster, M.entry_rating(roster, rosters, args.cap),
                  is_player=True)
-    rank, out, field = M.insert_player(field, me)
+    rank, shove, field = M.insert_player(field, me)
     print("你的五个人(seed %d,剩 $%d):" % (args.seed, left))
     for c in roster:
         print("   %-7s %-14s %-12s G%d  火力%3d 稳定%3d 经验%3d"
@@ -424,8 +441,12 @@ def main():
         print("RUN END — Failed to qualify(第 %d)" % rank)
         return
     print()
-    print("Projected Seed #%d,挤掉 %s,从 Stage %d 进场。"
-          % (rank, out.name, M.stage_of(rank)))
+    print("Projected Seed #%d,从 Stage %d 进场。"
+          % (rank, M.stage_of(rank)))
+    for team, was, now in shove.demoted:
+        print("   你把 %s 从 Stage %d 挤到了 Stage %d。" % (team.name, was, now))
+    if shove.dropped is not None:
+        print("   %s 掉到第 33 位,失去席位。" % shove.dropped.name)
 
     rng = random.Random(args.sim if args.sim is not None else args.seed)
     stages, logs = run_major(field, rng, args.cap)
@@ -466,10 +487,15 @@ def _flip(r):
 
 # ------------------------------------------------------------------ selftest
 
+def _fixed_field(args, rosters):
+    """selftest / stats / lab 要一个不变的赛场,否则量的是赛场在抖。"""
+    return M.real_field(args.event or M.DEFAULT_EVENT, rosters, args.cap)[0]
+
+
 def selftest(args):
     """不 Roll 的强度必须等于 Entry Rating(§15:不许有第二套 Overall)。"""
     rosters = P.load_rosters()
-    field, _, _ = M.real_field(args.event, rosters, args.cap)
+    field = _fixed_field(args, rosters)
     bad = 0
     for i, e in enumerate(field):
         t = MatchTeam(e, i + 1, args.cap)
@@ -505,7 +531,7 @@ def _all_matches(logs):
 def stats(args, runs=200):
     """§35 的第 1、2 问:强队是不是更容易晋级但不是必进?BO1 是不是更容易爆冷?"""
     rosters = P.load_rosters()
-    field, _, _ = M.real_field(args.event, rosters, args.cap)
+    field = _fixed_field(args, rosters)
     rng = random.Random(20260828)
 
     top8 = collections.Counter()
@@ -613,7 +639,7 @@ def _stage_spread(args, hi, lo):  # noqa: C901
     高稳定应该更少 3-0 也更少 0-3。
     """
     rosters = P.load_rosters()
-    field, _, _ = M.real_field(args.event, rosters, args.cap)
+    field = _fixed_field(args, rosters)
     rest = field[16:30]
     # 两支对照队必须调到这个 Stage 的中位强度,否则一起 3-0,什么也量不出来
     target = st.median([e.entry for e in rest])

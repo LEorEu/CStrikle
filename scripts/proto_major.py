@@ -11,12 +11,16 @@
 之所以先做这一层:它一个随机数都不需要,对错肉眼可判;而 Swiss 循环和胜率
 函数(§34)全都建在它上面。
 
-不改卡库、不写 data/,只读 data/players.json 和 proto_draft 的评分函数。
+不改卡库、不改 data/players.json,只读它和 proto_draft 的评分函数。
+唯一写进 data/ 的是人工配置 data/manual/major_field.json——按 §21
+「Algorithm First, Override Last」,和已有的 draft_overrides.json 同一套规矩。
 """
 import argparse
 import collections
 import json
 import os
+import random
+import statistics as st
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -108,22 +112,201 @@ def real_field(event, rosters, chem_cap=CHEM_CAP):
     return field, dropped, missing
 
 
+# ------------------------------------------------------------------ 可配置赛场
+
+CONFIG_PATH = os.path.join(os.path.dirname(DATA), "manual", "major_field.json")
+
+DEFAULT_CONFIG = {
+    "pool": [DEFAULT_EVENT, "BLAST Austin 2025", "StarLadder Budapest 2025"],
+    "field_size": FIELD_SIZE,
+    "locked_top": 8,
+    "weight_decay": 0.95,
+    "roster_mode": "latest",
+    "chem_cap": CHEM_CAP,
+    "teams": {},
+}
+
+
+def load_config(path=None):
+    """读 data/manual/major_field.json,缺什么用 DEFAULT_CONFIG 补。"""
+    cfg = dict(DEFAULT_CONFIG)
+    try:
+        raw = json.load(open(path or CONFIG_PATH, encoding="utf-8"))
+    except (IOError, OSError):
+        return cfg
+    cfg.update({k: v for k, v in raw.items() if not k.startswith("_")})
+    return cfg
+
+
+def build_pool(cfg, rosters, chem_cap=CHEM_CAP):
+    """把 pool 里几届 Major 摊成 {队名: [(赛事, 五张卡, Entry Rating), ...]}。
+
+    版本按 cfg["pool"] 的顺序排,所以第 0 个就是「最近一届的阵容」。
+    同一支队在不同届之间平均换 1.8 个人(28 支重复队里 24 支换过),
+    所以「哪一届的它」是一个真的变量,不是换皮。
+    """
+    pool = collections.defaultdict(list)
+    for event in cfg["pool"]:
+        teams, _ = load_major(event)
+        for name, roster in teams.items():
+            if len(roster) == 5:
+                pool[name].append((event, roster,
+                                   entry_rating(roster, rosters, chem_cap)))
+    return dict(pool)
+
+
+def rank_names(pool, cfg):
+    """全局顺位:按一支队各版本 Entry Rating 的均值排。
+
+    用均值而不是「当前版本」,是为了让顺位在不同 roster_mode 下都稳定——
+    locked_top 每局锁的必须是同一批队,否则「标尺」就没意义了。
+    """
+    over = cfg.get("teams", {})
+    names = [n for n in pool if over.get(n, {}).get("weight", 1.0) > 0]
+    names.sort(key=lambda n: -st.mean(v[2]["entry"] for v in pool[n]))
+    out = []
+    for i, n in enumerate(names, 1):
+        w = over.get(n, {}).get("weight")
+        out.append((n, i, cfg["weight_decay"] ** (i - 1) if w is None else float(w)))
+    return out
+
+
+def _pick_version(name, versions, cfg, rng):
+    pin = cfg.get("teams", {}).get(name, {}).get("roster")
+    if isinstance(pin, str):                      # 钉死某一届
+        for v in versions:
+            if v[0] == pin:
+                return v
+    if cfg["roster_mode"] == "roll" and len(versions) > 1:
+        return versions[rng.randrange(len(versions))]
+    return versions[0]                            # latest
+
+
+def build_field(rng, cfg=None, rosters=None, chem_cap=CHEM_CAP, pool=None):
+    """生成一届赛场:顺位前 locked_top 支必在,其余席位按权重不放回抽。
+
+    人工层(data/manual/major_field.json 的 teams 段)在这里全部生效:
+    weight 0 = 永不出现、weight 很大 = 几乎必在、roster 填赛事名 = 钉死那一届
+    的阵容、roster 填五个人 = 手写阵容。
+    """
+    cfg = cfg or load_config()
+    rosters = rosters if rosters is not None else load_rosters_cached()
+    pool = pool if pool is not None else build_pool(cfg, rosters, chem_cap)
+
+    # 手写阵容既可以顶掉某支真实队的五人,也可以凭空加一支池子里没有的队。
+    # 后者得先进池子,否则它永远不会被选中。
+    hand = _hand_written(cfg, chem_cap, rosters)
+    if hand:
+        pool = dict(pool)
+        for name, ver in hand.items():
+            pool[name] = [ver]
+    ranked = rank_names(pool, cfg)
+
+    n = int(cfg["field_size"])
+    locked = [r[0] for r in ranked[:int(cfg["locked_top"])]]
+    rest = [(r[0], r[2]) for r in ranked[int(cfg["locked_top"]):]]
+    chosen = list(locked)
+    need = n - len(chosen)
+    for _ in range(min(need, len(rest))):
+        total = sum(w for _, w in rest)
+        x = rng.random() * total
+        for i, (name, w) in enumerate(rest):
+            x -= w
+            if x <= 0:
+                chosen.append(name)
+                rest.pop(i)
+                break
+
+    field = []
+    for name in chosen:
+        if name in hand:
+            event, roster, rating = hand[name]
+        else:
+            event, roster, rating = _pick_version(name, pool[name], cfg, rng)
+        e = Entry(name, roster, rating)
+        e.event = event
+        field.append(e)
+    field.sort(key=lambda e: -e.entry)
+    return field
+
+
+_HAND_CACHE = {}
+
+
+def _hand_written(cfg, chem_cap, rosters):
+    """teams.<队>.roster 是一个五人列表时,直接用它拼一支队。
+
+    人手写 JSON 的时候不该被迫记住 Liquipedia 页面名的大小写,所以昵称和
+    页面名都认,且不分大小写。结果缓存,免得每生成一次赛场就重报一次警告。
+    """
+    key = json.dumps(cfg.get("teams", {}), sort_keys=True) + str(chem_cap)
+    if key in _HAND_CACHE:
+        return _HAND_CACHE[key]
+    out = {}
+    index = None
+    for name, spec in cfg.get("teams", {}).items():
+        wanted = spec.get("roster")
+        if not isinstance(wanted, list):
+            continue
+        if index is None:
+            index = {}
+            for c in P.load_cards():
+                index.setdefault(c["page"].casefold(), c)
+                index.setdefault(c["nickname"].casefold(), c)
+        roster = [index[w.casefold()] for w in wanted if w.casefold() in index]
+        if len(roster) == 5:
+            out[name] = ("(手写)", roster, entry_rating(roster, rosters, chem_cap))
+        else:
+            bad = [w for w in wanted if w.casefold() not in index]
+            print("手写阵容 %s 忽略:卡库里没有 %s%s"
+                  % (name, bad, "" if bad else "(要正好 5 个人)"))
+    _HAND_CACHE[key] = out
+    return out
+
+
+_ROSTERS = []
+
+
+def load_rosters_cached():
+    if not _ROSTERS:
+        _ROSTERS.append(P.load_rosters())
+    return _ROSTERS[0]
+
+
 # ------------------------------------------------------------------ 玩家插入
 
-def insert_player(field, player):
-    """§3.1:玩家按 Entry Rating 插进去,**原本站在那个名次上的真实队被挤出**。
+class Shove(object):
+    """玩家挤进来之后,谁被挤到了哪儿。"""
 
-    不是踢掉最弱的那支——踢掉的是你刚好越过去的那一支,这样「你挤掉了 XXX」
-    才是一句有名字的话。玩家排到第 33(比全场最弱还弱)时返回 rank=33、
-    displaced=None,那就是 RUN END — Failed to qualify。
+    def __init__(self, dropped=None, demoted=()):
+        self.dropped = dropped          # 掉到第 33、失去席位的那支
+        self.demoted = list(demoted)    # [(队, 原 Stage, 现 Stage)]
+
+
+def insert_player(field, player):
+    """§3.1:玩家按 Entry Rating 插进去,**下面全体顺延一位**。
+
+    设计稿那一节自己是矛盾的(一边说踢掉「原本在 #12 的队」,一边把它画在
+    #13)。正确的是顺延:一届 Major 就是 32 个席位,你占一个,下面每支退一位,
+    第 33 位掉出去。
+
+    顺延的叙事也更好。踢人只有一句话,顺延有三句,而且全在关键位置上——
+    跨过第 8 名的那支要多打一个瑞士轮,跨过第 16 名的那支得从 Stage 1 爬,
+    第 32 名直接失去席位。**你的加入让三支队各降一级**,这是名额守恒本来
+    就该产生的级联。
+
+    玩家排到第 33(比全场最弱还弱)时 rank=33,那就是 Failed to qualify。
     """
     rank = sum(1 for e in field if e.entry > player.entry) + 1
     if rank > FIELD_SIZE:
-        return FIELD_SIZE + 1, None, list(field)
-    out = field[rank - 1]
-    new = list(field)
-    new[rank - 1] = player
-    return rank, out, new
+        return FIELD_SIZE + 1, Shove(), list(field)
+    new = field[:rank - 1] + [player] + field[rank - 1:]
+    shove = Shove(dropped=new[FIELD_SIZE])
+    for edge in (8, 16):
+        if rank <= edge:
+            # 原本第 edge 名的那支现在是第 edge+1 名,掉了一个 Stage
+            shove.demoted.append((new[edge], stage_of(edge), stage_of(edge + 1)))
+    return rank, shove, new[:FIELD_SIZE]
 
 
 def stage_of(rank):
@@ -166,6 +349,35 @@ def round1(direct, advancers):
 
 # ------------------------------------------------------------------ 一个陪跑的玩家
 
+def sweep_field(args):
+    """扫 weight_decay:每局赛场翻新多少支,以及池子本身的容量。"""
+    rosters = P.load_rosters()
+    cfg = load_config()
+    pool = build_pool(cfg, rosters, args.cap or cfg.get("chem_cap", CHEM_CAP))
+    print("池子:%s" % " + ".join(cfg["pool"]))
+    ver = collections.Counter(len(v) for v in pool.values())
+    print("不同队名 %d 支,其中出现 %s"
+          % (len(pool), "、".join("%d 届的 %d 支" % (k, ver[k]) for k in sorted(ver))))
+    print("每局 %d 席,前 %d 固定,剩 %d 席从 %d 支里抽"
+          % (cfg["field_size"], cfg["locked_top"],
+             cfg["field_size"] - cfg["locked_top"], len(pool) - cfg["locked_top"]))
+    print()
+    print("decay   两局之间平均差几支   最弱一支的出场率")
+    for decay in (1.0, 0.98, 0.95, 0.90, 0.85, 0.75):
+        c = dict(cfg, weight_decay=decay)
+        rng = random.Random(4242)
+        seen, last, diffs = collections.Counter(), None, []
+        for _ in range(400):
+            names = {e.name for e in build_field(rng, c, rosters, args.cap, pool)}
+            seen.update(names)
+            if last is not None:
+                diffs.append(len(names - last))
+            last = names
+        weakest = rank_names(pool, c)[-1][0]
+        print("%.2f          %4.1f 支            %s %.0f%%"
+              % (decay, st.mean(diffs), weakest, 100.0 * seen[weakest] / 400))
+
+
 def bot_draft(seed, cards, rosters, mates):
     """一个按性价比买、先补狙和指挥的普通打法,用来生成一支玩家队。
 
@@ -201,29 +413,35 @@ def name_of(entry):
     return ("*** " + entry.name + " ***") if entry.is_player else entry.name
 
 
-def print_field(field, player_rank, displaced, event, chem_cap):
+def print_field(field, player_rank, shove, event, chem_cap):
     print("=" * 70)
     print("%s  —  Projected Seeding(模拟种子,不是历史真实 VRS)" % event)
     print("Entry Rating = 基础分 + min(先天默契, %.1f)" % chem_cap)
     print("=" * 70)
     last = None
+    show_event = len({getattr(e, "event", None) for e in field}) > 1
     for i, e in enumerate(field, 1):
         stage = stage_of(i)
         if stage != last:
             print("  ---- Stage %d ----" % stage)
             last = stage
         mark = ">>>" if e.is_player else "   "
-        print("%s %2d  %-22s  %5.1f   基础 %5.1f  默契 %4.1f (裸 %4.1f)"
+        tail = ("   [%s]" % e.event) if show_event and getattr(e, "event", None) else ""
+        print("%s %2d  %-22s  %5.1f   基础 %5.1f  默契 %4.1f (裸 %4.1f)%s"
               % (mark, i, e.name, e.entry, e.rating["base"],
-                 e.rating["chem"], e.rating["chem_raw"]))
+                 e.rating["chem"], e.rating["chem_raw"], tail))
     print()
     if player_rank > FIELD_SIZE:
         print("RUN END — Failed to qualify(第 %d,连最后一个席位都没挤进去)"
               % player_rank)
-    elif displaced is not None:
-        print("你以 Projected Seed #%d 拿到席位,挤掉了 %s(%.1f)。"
-              % (player_rank, displaced.name, displaced.entry))
-        print("起始位置:Stage %d" % stage_of(player_rank))
+        return
+    print("你以 Projected Seed #%d 拿到席位,起始位置 Stage %d。"
+          % (player_rank, stage_of(player_rank)))
+    for team, was, now in shove.demoted:
+        print("   你把 %s 从 Stage %d 挤到了 Stage %d,他们要多打一个瑞士轮。"
+              % (team.name, was, now))
+    if shove.dropped is not None:
+        print("   %s 掉到第 33 位,失去了这届 Major 的席位。" % shove.dropped.name)
 
 
 def print_round1(field, stage):
@@ -241,29 +459,50 @@ def print_round1(field, stage):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--event", default=DEFAULT_EVENT)
+    ap.add_argument("--event", default=None,
+                    help="只用这一届的 32 队,绕过 major_field.json")
     ap.add_argument("--seed", type=int, default=None,
                     help="给一个种子就顺便抽一支玩家队插进去")
-    ap.add_argument("--cap", type=float, default=CHEM_CAP)
+    ap.add_argument("--field-seed", type=int, default=None,
+                    help="赛场随机种子(默认同 --seed)")
+    ap.add_argument("--cap", type=float, default=None,
+                    help="覆盖配置里的 chem_cap")
     ap.add_argument("--events", action="store_true", help="列出可用的 Major")
+    ap.add_argument("--sweep-field", action="store_true",
+                    help="扫 weight_decay:两局之间会差几支队")
     args = ap.parse_args()
 
     if args.events:
         for ev, n in list_events():
             print("%-34s %3d 人次" % (ev, n))
         return
-
-    rosters = P.load_rosters()
-    field, dropped, missing = real_field(args.event, rosters, args.cap)
-    if not field:
-        print("没找到 %s 的完整参赛队。用 --events 看有哪些。" % args.event)
+    if args.sweep_field:
+        sweep_field(args)
         return
-    if dropped:
-        print("跳过(不是 5 人): %s" % dropped)
-    if missing:
-        print("在 Major 名单里但卡库没有: %s" % dict(list(missing.items())[:5]))
 
-    rank, displaced = FIELD_SIZE + 1, None
+    cfg = load_config()
+    if args.cap is None:
+        args.cap = float(cfg.get("chem_cap", CHEM_CAP))
+    rosters = P.load_rosters()
+    if args.event:
+        label = args.event
+        field, dropped, missing = real_field(args.event, rosters, args.cap)
+        if not field:
+            print("没找到 %s 的完整参赛队。用 --events 看有哪些。" % args.event)
+            return
+        if dropped:
+            print("跳过(不是 5 人): %s" % dropped)
+        if missing:
+            print("在 Major 名单里但卡库没有: %s" % dict(list(missing.items())[:5]))
+    else:
+        rng = random.Random(args.field_seed if args.field_seed is not None
+                            else args.seed)
+        field = build_field(rng, cfg, rosters, args.cap)
+        label = "%d 支队 · 池子 %s · 前 %d 固定 · 阵容 %s" % (
+            len(field), " + ".join(cfg["pool"]), cfg["locked_top"],
+            cfg["roster_mode"])
+
+    rank, shove = FIELD_SIZE + 1, Shove()
     if args.seed is not None:
         cards = P.load_cards()
         mates = P.mate_index(rosters)
@@ -278,9 +517,9 @@ def main():
             print("   %-7s %-14s %-12s G%d" % (c["position"], c["nickname"],
                                                c["country"], c["grade"]))
         print()
-        rank, displaced, field = insert_player(field, me)
+        rank, shove, field = insert_player(field, me)
 
-    print_field(field, rank, displaced, args.event, args.cap)
+    print_field(field, rank, shove, label, args.cap)
     if 1 <= stage_of(rank) <= 3:
         print_round1(field, stage_of(rank))
 
