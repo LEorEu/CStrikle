@@ -91,7 +91,21 @@ def entry_rating(roster, rosters, cohesion_cap=COHESION_CAP):
 
 
 class Entry(object):
-    """赛场上的一支队。is_player 决定它在表里怎么显示。"""
+    """赛场上的一支队。is_player 决定它在表里怎么显示。
+
+    `adjust` 是人工层直接加在分上的偏移(teams.<队>.adjust),默认 0。
+
+    为什么需要这个出口、为什么加在分上而不是改火力:卡面四维量的是**生涯成就**,
+    HLTV 排名量的是**现在在赢球**,两者秩相关只有 0.53,而且这不是某个参数没调好
+    ——实测给「距上次进 top20 的年数」加衰减,要把两年没进榜的人火力清零才能把
+    rho 抬到 0.61(§48)。剩下的差距只能人工填。改火力太钝:BC.Game 全队 -24 火力
+    只挪 3 位,因为火力权重 0.40 还要摊进那条排序加权的聚合式。
+
+    MatchTeam 会把这一笔加进 floor,所以「不 Roll 的强度 == Entry Rating」那条
+    不变量仍然成立(selftest 会查)。
+    """
+
+    adjust = 0.0
 
     def __init__(self, name, roster, rating, is_player=False):
         self.name = name
@@ -269,6 +283,11 @@ def build_current_field(rng, cfg=None, rosters=None, cohesion_cap=COHESION_CAP):
     for t in teams:
         e = Entry(t["name"], t["roster"],
                   entry_rating(t["roster"], rosters, cohesion_cap))
+        # teams.<队>.adjust:直接在「分」上加减。见下面 adjust 的注释。
+        adj = float(t.get("adjust") or 0.0)
+        if adj:
+            e.adjust = adj
+            e.rating = dict(e.rating, entry=e.rating["entry"] + adj, adjust=adj)
         e.event = "当前阵容 @ %s" % (asof or "?")
         e.hltv = t["rank"]
         made[t["name"]] = e

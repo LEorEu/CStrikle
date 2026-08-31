@@ -264,12 +264,15 @@ def build_ai_field(size=FIELD_SIZE, max_filler=MAX_FILLER, cfg=None):
         if len(raw) < 5 - max_filler:
             skipped.append((rank, name, len(raw)))
             continue
-        pinned = {k: (cfg.get("teams", {}).get(name, {}) or {}).get(k)
-                  for k in ("caller", "awper")}
+        spec = (cfg.get("teams", {}).get(name, {}) or {})
+        pinned = {k: spec.get(k) for k in ("caller", "awper")}
         cur = [settle(c) for c in
                dedupe_positions([to_current(c, players) for c in raw[:5]], pinned)]
         team = {"name": name, "rank": rank, "roster": fill(cur, name),
-                "source": source, "real": len(cur)}
+                "source": source, "real": len(cur),
+                # 人工层直接加在「分」上的偏移。放在队上而不是各自去读配置,
+                # 是为了让这张报表和真正开赛的赛场读同一个数。
+                "adjust": float(spec.get("adjust") or 0.0)}
         field.append(team)
     return field, skipped, asof
 
@@ -295,8 +298,9 @@ def _hand_rosters(cfg, cards):
 
 
 def entry_of(team, rosters_idx, cohesion_cap):
-    roster = [c for c in team["roster"]]
-    return M.entry_rating(roster, rosters_idx, cohesion_cap)
+    r = M.entry_rating(team["roster"], rosters_idx, cohesion_cap)
+    adj = team.get("adjust") or 0.0
+    return dict(r, entry=r["entry"] + adj, adjust=adj) if adj else r
 
 
 # ------------------------------------------------------------------ 输出
@@ -330,6 +334,8 @@ def main():
     rated.sort(key=lambda x: -x[0])
     for i, (e, t, r) in enumerate(rated, 1):
         flag = "" if t["real"] == 5 else "  [补 %d 人]" % (5 - t["real"])
+        if t.get("adjust"):
+            flag += "  [人工 %+.0f]" % t["adjust"]
         print("%2d  %-20s HLTV #%-3d  评分 %5.1f  默契 %4.1f%s"
               % (i, t["name"], t["rank"], e, r["chem_raw"], flag))
         print("      " + "  ".join(

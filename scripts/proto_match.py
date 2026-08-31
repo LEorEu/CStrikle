@@ -110,7 +110,8 @@ class MatchTeam(object):
         self.chem = min(entry.rating["chem_raw"], cohesion_cap)
         # 除火力外的全部,和 P.score 的权重一致
         self.floor = (self.lead * .20 + self.exp * .20 + self.stab * .20
-                      - (4.0 if self.no_awp else 0.0) + self.chem)
+                      - (4.0 if self.no_awp else 0.0) + self.chem
+                      + getattr(entry, "adjust", 0.0))   # 人工层的分数偏移
 
         # Stage 内的战绩状态(§11)
         self.reset()
