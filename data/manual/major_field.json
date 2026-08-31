@@ -1,12 +1,18 @@
 {
   "_note": "Blind Draft 比赛引擎的赛场配置(设计稿 docs/blind-draft/比赛引擎_v0.1.md §2、§45.7)。每局从 pool 里的几届 Major 生成一届 32 队的赛场:全局顺位靠前的 locked_top 支必在,其余席位按权重随机 roll。改这里不需要动代码。注意卡库是一人一张生涯卡,不分年份——换一届阵容换的是「哪五个人」,不是这五个人的强弱。",
 
-  "_pool": "参赛队从这几届 Major 里取。列在前面的算更新的一届。",
+  "_pool": "参赛队从这几届 Major 里取。列在前面的算更新的一届。只在 field_source=major_pool 时生效。",
   "pool": [
     "IEM Cologne 2026",
     "BLAST Austin 2025",
     "StarLadder Budapest 2025"
   ],
+
+  "_field_source": "赛场从哪来。current = 按 HLTV 当前世界排名找出还在打职业的队,用它们**现在的**五个人 + 现在的位置 + 年龄衰减(设计稿 §46,默认);major_pool = 从下面 pool 那几届 Major 的参赛名单里取队和阵容(旧口径,faze 会带着 s1mple 出现)。两种来源都遵守 locked_top / weight_decay / teams。",
+  "field_source": "current",
+
+  "_max_filler": "field_source=current 时,一支队最多补几个新秀占位。卡库只收打过 Major 的人,所以一线队里会有查不到的新人。0 -> 候选池只剩 26 支,1 -> 37 支,2 -> 46 支。候选池要比 field_size 大才有得 roll。",
+  "max_filler": 1,
 
   "field_size": 32,
 
@@ -16,11 +22,11 @@
   "_weight_decay": "默认权重 = decay^(全局顺位-1)。越小越偏向强队,越接近 1 越平均。可以用 --sweep-field 扫「两局之间差几支队」。",
   "weight_decay": 0.95,
 
-  "_roster_mode": "latest = 一支队永远用它最近一届的五人(默认,最好懂);roll = 每局在它出现过的几届里随机挑一届的阵容。",
+  "_roster_mode": "只在 field_source=major_pool 时生效。latest = 一支队永远用它最近一届的五人(默认,最好懂);roll = 每局在它出现过的几届里随机挑一届的阵容。",
   "roster_mode": "latest",
 
-  "_chem_cap": "先天默契的封顶(设计稿 §5.2)。实测它调的是「草台班子税」有多重:CAP=8 时普通打法 41% 进不了 Major,CAP=4 是 14%。详见 §45.6。",
-  "chem_cap": 4.0,
+  "_cohesion_cap": "磨合度上限(Team Cohesion,设计稿 §5.2)。磨合度 = min(裸默契, 这个数)。真实队的裸默契几乎全部顶格,只有玩家临时队落在 0~这个数之间——所以它调的是「草台班子税」有多重,而不是真队之间谁更磨合。实测 8 时普通打法 41% 进不了 Major,4 是 14%。详见 §45.6。旧名 chem_cap 仍然认。",
+  "cohesion_cap": 4.0,
 
   "_teams": "逐队人工层。weight 覆盖默认权重(0 = 永不出现,很大 = 几乎必在);roster 填一届 Major 的名字 = 钉死用那一届的阵容,填五个名字 = 手写阵容(认昵称也认 page,不分大小写;写一个卡库里没有的名字就自动变成新秀占位)。caller / awper 用来钉死这支队谁在喊、谁拿大狙——自动规则从 roles 里认,大概能对九成,剩下一成靠这两个字段。",
   "teams": {}

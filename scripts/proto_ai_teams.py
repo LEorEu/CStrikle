@@ -41,12 +41,17 @@ FIELD_SIZE = 32
 
 # 只影响火力（领导 / 经验 / 稳定不随年龄掉——老将的价值本来就在那三样）。
 # loss = RATE * (age - KNEE) ** EXP
-#   33 岁 -1.7    35 岁 -3.9    36 岁 -5.3    38 岁 -8.4    39 岁 -10.1
-# 全库 130 名现役 AI 选手里只有 18% 到 30 岁，所以这条曲线影响面不大，
-# 但对 karrigan / FalleN 这种老将是决定性的。
-AGE_KNEE = 30
-AGE_RATE = 0.30
-AGE_EXP = 1.6
+#   30 岁 -2.6   32 岁 -8.4   34 岁 -16.8   36 岁 -27.4   38 岁 -40.1
+# 这条曲线是在「AI 对手名册」那一页上拖出来的，不是算出来的——库里没有任何
+# 「这个人现在打得怎么样」的个人数据，所以只能设计。
+#
+# 它比第一版（30/0.30/1.6）陡得多：36 岁的 Snappi 火力 51→24。但赛场顺位几乎
+# 没动（最大 -1.4 分、只有 4 支队各挪一位），原因值得记下来：全场 29 岁以上的
+# 21 个人里有 13 个是**指挥**，而指挥本来就排在队内火力的最后一档，权重只有
+# 13.3%（见下面 §45.2 那条聚合式）。这条曲线砍的正好是那一档。
+AGE_KNEE = 28
+AGE_RATE = 0.80
+AGE_EXP = 1.7
 
 # 当前角色 -> Draft 位置。`roles` 是**有序**的，第一个才是主位置：
 # Dumau ['rifle','awp'] 是步枪手，Try ['awp'] 才是 Legacy 真正的狙。
@@ -289,9 +294,9 @@ def _hand_rosters(cfg, cards):
     return out
 
 
-def entry_of(team, rosters_idx, chem_cap):
+def entry_of(team, rosters_idx, cohesion_cap):
     roster = [c for c in team["roster"]]
-    return M.entry_rating(roster, rosters_idx, chem_cap)
+    return M.entry_rating(roster, rosters_idx, cohesion_cap)
 
 
 # ------------------------------------------------------------------ 输出
@@ -304,7 +309,7 @@ def main():
     args = ap.parse_args()
 
     cfg = M.load_config()
-    cap = args.cap if args.cap is not None else float(cfg.get("chem_cap", 4.0))
+    cap = args.cap if args.cap is not None else float(cfg.get("cohesion_cap", 4.0))
     idx = P.load_rosters()
     field, skipped, asof = build_ai_field(args.size, cfg=cfg)
 

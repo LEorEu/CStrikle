@@ -82,7 +82,7 @@ class MatchTeam(object):
     在一个 Stage 里永远不变。拆法必须和 P.score 逐项对齐,selftest 会查。
     """
 
-    def __init__(self, entry, seed, chem_cap=M.CHEM_CAP):
+    def __init__(self, entry, seed, cohesion_cap=M.COHESION_CAP):
         self.entry = entry
         self.name = entry.name
         self.roster = entry.roster
@@ -107,7 +107,7 @@ class MatchTeam(object):
         self.exp = st.mean(c["experience"] for c in roster)
         self.stab = st.mean(c["stability"] for c in roster)
         self.no_awp = not any(c["position"] == "AWPER" for c in roster)
-        self.chem = min(entry.rating["chem_raw"], chem_cap)
+        self.chem = min(entry.rating["chem_raw"], cohesion_cap)
         # 除火力外的全部,和 P.score 的权重一致
         self.floor = (self.lead * .20 + self.exp * .20 + self.stab * .20
                       - (4.0 if self.no_awp else 0.0) + self.chem)
@@ -317,24 +317,24 @@ def _by_record(alive):
 
 # ------------------------------------------------------------------ 一届 Major
 
-def run_major(field, rng, chem_cap=M.CHEM_CAP):
+def run_major(field, rng, cohesion_cap=M.COHESION_CAP):
     """§7:Stage 1 -> Stage 2 -> Stage 3。Playoffs(§12)v0.1 不打。
 
     Stage 2 / 3 的种子 9-16 必须由上一个 Stage 决出,所以哪怕玩家直接从
     Stage 3 进场,下面两个 Stage 也得先跑——这不是多做的功能,是正确性。
     """
-    mk = lambda e, s: MatchTeam(e, s, chem_cap)
+    mk = lambda e, s: MatchTeam(e, s, cohesion_cap)
     logs = {}
 
     s1 = [mk(e, i + 1) for i, e in enumerate(field[16:32])]
     adv1, logs[1] = run_stage(s1, rng)
 
     s2 = [mk(e, i + 1) for i, e in enumerate(field[8:16])]
-    s2 += [MatchTeam(t.entry, 9 + i, chem_cap) for i, t in enumerate(adv1)]
+    s2 += [MatchTeam(t.entry, 9 + i, cohesion_cap) for i, t in enumerate(adv1)]
     adv2, logs[2] = run_stage(s2, rng)
 
     s3 = [mk(e, i + 1) for i, e in enumerate(field[0:8])]
-    s3 += [MatchTeam(t.entry, 9 + i, chem_cap) for i, t in enumerate(adv2)]
+    s3 += [MatchTeam(t.entry, 9 + i, cohesion_cap) for i, t in enumerate(adv2)]
     adv3, logs[3] = run_stage(s3, rng)
 
     return {1: (s1, adv1), 2: (s2, adv2), 3: (s3, adv3)}, logs
@@ -385,7 +385,7 @@ def main():
     ap.add_argument("--seed", type=int, default=1, help="抽卡种子")
     ap.add_argument("--sim", type=int, default=None, help="比赛随机种子(默认同 --seed)")
     ap.add_argument("--cap", type=float, default=None,
-                    help="覆盖 major_field.json 里的 chem_cap")
+                    help="覆盖 major_field.json 里的 cohesion_cap")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--stats", action="store_true")
     ap.add_argument("--lab", action="store_true")
@@ -394,7 +394,7 @@ def main():
     args = ap.parse_args()
 
     if args.cap is None:
-        args.cap = float(M.load_config().get("chem_cap", M.CHEM_CAP))
+        args.cap = float(M.load_config().get("cohesion_cap", M.COHESION_CAP))
     if args.scale is not None:
         global WIN_SCALE
         WIN_SCALE = args.scale
@@ -416,13 +416,11 @@ def main():
         print("赛场:%s(单届,固定)" % args.event)
     else:
         cfg = M.load_config()
-        field = M.build_field(random.Random(args.field_seed
-                                            if args.field_seed is not None
-                                            else args.seed),
-                              cfg, rosters, args.cap)
-        print("赛场:%d 支队,池子 %s,前 %d 固定,阵容 %s"
-              % (len(field), " + ".join(cfg["pool"]), cfg["locked_top"],
-                 cfg["roster_mode"]))
+        field = M.make_field(random.Random(args.field_seed
+                                           if args.field_seed is not None
+                                           else args.seed),
+                             cfg, rosters, args.cap)
+        print("赛场:" + M.field_label(cfg, field))
 
     roster, left = M.bot_draft(args.seed, cards, rosters, mates)
     if len(roster) < P.SLOTS:
@@ -488,8 +486,15 @@ def _flip(r):
 # ------------------------------------------------------------------ selftest
 
 def _fixed_field(args, rosters):
-    """selftest / stats / lab 要一个不变的赛场,否则量的是赛场在抖。"""
-    return M.real_field(args.event or M.DEFAULT_EVENT, rosters, args.cap)[0]
+    """selftest / stats / lab 要一个不变的赛场,否则量的是赛场在抖。
+
+    --event 明确指定时用那一届的历史阵容;否则跟着 field_source 走,只是把
+    roll 的种子钉死。量出来的数必须和真正跑一局时的赛场是同一批队,不然
+    §35 那几个验收问题回答的是另一个游戏。
+    """
+    if args.event:
+        return M.real_field(args.event, rosters, args.cap)[0]
+    return M.make_field(random.Random(20260828), M.load_config(), rosters, args.cap)
 
 
 def selftest(args):
@@ -551,7 +556,7 @@ def stats(args, runs=200):
             gap_bucket[key][0] += 1
             gap_bucket[key][1] += 0 if upset else 1
 
-    print("WIN_SCALE=%.1f  CHEM_CAP=%.1f  %d 届 Major" % (WIN_SCALE, args.cap, runs))
+    print("WIN_SCALE=%.1f  磨合度上限=%.1f  %d 届 Major" % (WIN_SCALE, args.cap, runs))
     print()
     print("[Q1] 进八强的概率(按 Projected Seed)")
     for i, e in enumerate(field, 1):
@@ -586,7 +591,7 @@ def _fake(nick, pos, fire, lead, exp, stab):
 def _lab_team(name, fire, stab, exp, lead=70):
     roster = [_fake(name + str(i), p, fire, lead if p == "IGL" else 40, exp, stab)
               for i, p in enumerate(("IGL", "AWPER", "RIFLER", "RIFLER", "RIFLER"))]
-    e = M.Entry(name, roster, {"base": 0.0, "chem_raw": 0.0, "chem": 0.0,
+    e = M.Entry(name, roster, {"base": 0.0, "chem_raw": 0.0, "cohesion": 0.0,
                                "entry": 0.0, "notes": []})
     return MatchTeam(e, 1, 0.0)
 
