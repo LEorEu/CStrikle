@@ -390,6 +390,10 @@ def main():
     ap.add_argument("--stats", action="store_true")
     ap.add_argument("--lab", action="store_true")
     ap.add_argument("--runs", type=int, default=200)
+    ap.add_argument("--roster", default=None,
+                    help="逗号分隔的五个人,绕过抽卡直接上场(认昵称也认 page)。"
+                         "用来试「某支真实队去打会怎样」——注意它不受 $15 预算约束")
+    ap.add_argument("--label", default="YOUR TEAM", help="--roster 时的队名")
     ap.add_argument("--scale", type=float, default=None)
     args = ap.parse_args()
 
@@ -422,14 +426,27 @@ def main():
                              cfg, rosters, args.cap)
         print("赛场:" + M.field_label(cfg, field))
 
-    roster, left = M.bot_draft(args.seed, cards, rosters, mates)
+    if args.roster:
+        roster, left = pick_roster(args.roster, cards), None
+        if roster is None:
+            return
+    else:
+        roster, left = M.bot_draft(args.seed, cards, rosters, mates)
     if len(roster) < P.SLOTS:
         print("这局没凑齐 5 个人,换一个 --seed")
         return
-    me = M.Entry("YOUR TEAM", roster, M.entry_rating(roster, rosters, args.cap),
+    me = M.Entry(args.label, roster, M.entry_rating(roster, rosters, args.cap),
                  is_player=True)
     rank, shove, field = M.insert_player(field, me)
-    print("你的五个人(seed %d,剩 $%d):" % (args.seed, left))
+    if left is None:
+        # 报价是每局现 roll 的,所以只能给一个下限:这五个人**运气最好**时要多少钱
+        lo = min(d for d, _ in P.MARKET_ROLL)
+        floor = sum(max(1, min(5, c["grade"] + lo)) for c in roster)
+        print("你的五个人(手点,最低报价合计 $%d / 预算 $%d%s):"
+              % (floor, P.BUDGET,
+                 ",**正常抽卡买不到,这是试算**" if floor > P.BUDGET else ""))
+    else:
+        print("你的五个人(seed %d,剩 $%d):" % (args.seed, left))
     for c in roster:
         print("   %-7s %-14s %-12s G%d  火力%3d 稳定%3d 经验%3d"
               % (c["position"], c["nickname"], c["country"], c["grade"],
@@ -484,6 +501,23 @@ def _flip(r):
 
 
 # ------------------------------------------------------------------ selftest
+
+def pick_roster(spec, cards):
+    """--roster 的五个名字 -> 五张卡。认昵称也认 page,不分大小写。"""
+    index = {}
+    for c in cards:
+        index.setdefault(c["page"].casefold(), c)
+        index.setdefault(c["nickname"].casefold(), c)
+    want = [w.strip() for w in spec.split(",") if w.strip()]
+    bad = [w for w in want if w.casefold() not in index]
+    if bad:
+        print("卡库里没有:%s" % "、".join(bad))
+        return None
+    if len(want) != P.SLOTS:
+        print("要正好 %d 个人,给了 %d 个" % (P.SLOTS, len(want)))
+        return None
+    return [index[w.casefold()] for w in want]
+
 
 def _fixed_field(args, rosters):
     """selftest / stats / lab 要一个不变的赛场,否则量的是赛场在抖。
