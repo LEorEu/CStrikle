@@ -14,8 +14,10 @@ top20"扣火力、按最近几年证据重判档位、按队伍排名锚定—�
   等级     Major + S+ + S。放宽到 A 级只多 2% 覆盖，相关性反而从 0.618 掉到
            0.573，因为低级别赛事炸鱼刷出来的 1.25 和 S 级的 1.25 不是一回事
            （asap S 级 1.09/11 图，含 A 级变 1.24/31 图）。
-           **推论：查不到的人不是"数据缺失"，是"他没有顶级赛事样本"这件事本身**，
-           对这种人应当回退卡面，而不是给他一个从 C 级赛事刷出来的数。
+           **但"查不到"不等于"没在打比赛"**：实测 56 个查不到 S 级数据的人里，
+           55 个在同一年打了 250~380 张图，一张都不在 Major/S+/S。所以退一档
+           查全等级、再按 LOW_TIER_DISCOUNT 折算回 S 级口径，标 tier="all"。
+           折算过的数比一张记着生涯巅峰的卡更接近他现在的水平。
   样本量   必须按 map_count 往均值收缩。xKacpersky 近 3 月 1.52 是 6 张图打的。
 
 两个接口的坑，踩过了写在这里：
@@ -50,6 +52,7 @@ OUT_PATH = ROOT / "data" / "5e_player_stats.json"
 ALIAS_PATH = ROOT / "data" / "manual" / "5e_aliases.json"
 IDS_CACHE = ROOT / ".cache" / "5e" / "player_ids.json"
 SNAP_PATH = ROOT / "data" / "team_snapshot.json"
+FIELD_PATH = ROOT / "data" / "manual" / "major_field.json"
 
 API = "https://esports-data.5eplaycdn.com/v1/api/csgo/mfilter/player/"
 UA = "Mozilla/5.0 (compatible; cstrikle-local-tool)"
@@ -58,6 +61,14 @@ UA = "Mozilla/5.0 (compatible; cstrikle-local-tool)"
 WINDOW_MONTHS = 12
 GRADES = ["1", "7", "2"]            # Major / S+ / S
 GRADE_LABEL = "Major + S+ + S"
+
+# 查不到顶级样本的人不是"没有数据",是"没打过 S 级赛事"——实测 56 个这样的人里
+# 55 个在同一年打了 250~380 张图,只是一张都不在 Major/S+/S。所以退一档去查全等级,
+# 再折算回 S 级口径。折扣是量出来的:120 个两种口径都有的人,
+#     gap = 0.136 x 非S级占比      r = 0.731
+# 外推到"全部都是低级别"就是下面这个数。**它是外推不是实测**(样本里非 S 占比
+# 最高只到 82%),所以这种行标 tier="all",别和实测行混着用。
+LOW_TIER_DISCOUNT = 0.127
 SLEEP = 0.25                        # 别把人家接口打疼
 
 # 我们要留下来的字段。impact 恒为 0，dagger/v4/v5 太稀疏，都不收。
@@ -163,8 +174,42 @@ def snapshot_ids(teams=None) -> dict:
     return out
 
 
-def pool_targets(teams, top: int) -> dict:
-    """**当前世界的选手池**：排名前 `top` 的队伍的现役队员，id -> 名字。
+def candidate_teams(teams) -> list:
+    """**候选池**：各大区 VRS 前几支，外加 pin 里点名的队。
+
+    池子故意比赛场大。名额只有 32 个（`regional_slots`），但 VRS 每周都在动，
+    存 45 支的数据意味着分数一变就能重算名册，不必回头再抓一遍——**余量是为了
+    不重抓，不是为了多打几场**。选队按 Regional VRS 而不是全球排名：Major 名额
+    按大区发，欧洲第 30 和亚洲第 5 是两件不可比的事（设计稿 §53）。
+    """
+    spec = {"欧洲": 30, "美洲": 10, "亚洲": 5, "pin": []}
+    if FIELD_PATH.exists():
+        cfg = json.loads(FIELD_PATH.read_text(encoding="utf-8"))
+        spec.update(cfg.get("candidate_pool") or {})
+    pin = {str(x).casefold() for x in (spec.get("pin") or [])}
+
+    by = {}
+    for t in teams:
+        if t.get("vrs_rank"):
+            by.setdefault(t.get("region") or "?", []).append(t)
+    out, seen = [], set()
+    for reg, n in spec.items():
+        if reg == "pin" or not isinstance(n, int):
+            continue
+        for t in sorted(by.get(reg, []), key=lambda x: x["vrs_rank"])[:n]:
+            if t["id"] not in seen:
+                seen.add(t["id"])
+                out.append(t)
+    for t in teams:
+        if t["id"] not in seen and (t["name"].casefold() in pin
+                                    or (t.get("abbr") or "").casefold() in pin):
+            seen.add(t["id"])
+            out.append(t)
+    return sorted(out, key=lambda t: t.get("vrs_rank") or 9999)
+
+
+def pool_targets(teams) -> dict:
+    """候选池里所有现役队员，id -> 名字。
 
     和卡库（生涯世界）是两个池子,故意不取交集——当前世界里本来就该有卡库里
     没有的人(tikuak、DarkMeister 从没打过 Major,但他们现在就在 The MongolZ
@@ -172,10 +217,7 @@ def pool_targets(teams, top: int) -> dict:
     既没有卡也没有数据,AI 层只能拿 G1 占位去顶——那已经不是这支队了。
     """
     out = {}
-    for t in teams:
-        rk = t.get("hltv_rank") or t.get("vrs_rank")
-        if not rk or rk > top:
-            continue
+    for t in candidate_teams(teams):
         for r in t.get("roster") or []:
             if r.get("id") and r.get("name"):
                 out[r["id"]] = r["name"]
@@ -243,15 +285,16 @@ def match(cards, index: list, aliases: dict):
 
 # ------------------------------------------------------------------ 第三步：逐人查
 
-def fetch_one(player_id: str, time_value: str) -> dict | None:
+def fetch_one(player_id: str, time_value: str, grades=None) -> dict | None:
     d = post("multidimension/list",
              {"dimension": "top", "sort_value": "desc", "sort_key": "kddiff",
-              "player_options": options(player_id, 1, time_value, GRADES)})
+              "player_options": options(player_id, 1, time_value,
+                                        GRADES if grades is None else grades)})
     items = (d.get("data") or {}).get("items") or []
     if not items:
         return None
     fv = items[0].get("field_values") or {}
-    # 没有顶级赛事样本时接口返回的是**一行全零**,不是空列表。存下来的话
+    # 没有样本时接口返回的是**一行全零**,不是空列表。存下来的话
     # rating 0.00 会被当成"打得极差",而事实是"这一年没在 S 级赛事出现过"。
     # 这两件事后果完全相反:前者该削弱他,后者该回退卡面。
     if not to_num(fv.get("map_count")):
@@ -322,8 +365,8 @@ def main():
     ap.add_argument("--all", action="store_true",
                     help="抓全部 648 张卡；默认只抓当前有队的人（AI 层只用得到这些）")
     ap.add_argument("--limit", type=int, default=0, help="只抓前 N 个，用来试跑")
-    ap.add_argument("--pool-top", type=int, default=60,
-                    help="当前世界池取排名前几的队伍（默认 60，够铺满一个 Major 名册）")
+    ap.add_argument("--no-low-tier", action="store_true",
+                    help="不查全等级兜底（默认查：没有 S 级样本不等于没在打比赛）")
     ap.add_argument("--dry-run", action="store_true", help="只报匹配情况，不发查询、不写文件")
     args = ap.parse_args()
 
@@ -356,13 +399,14 @@ def main():
               % (len(miss), "  ".join(c["nickname"] for c in miss)))
     # 两个池子并起来：生涯世界按名字对到的人 + 当前世界前 N 名队伍的现役队员。
     # 后者会带进卡库里根本没有的人，那正是要的。
-    pool = pool_targets(teams, args.pool_top)
+    cand = candidate_teams(teams)
+    pool = pool_targets(teams)
     page_of = {pid: page for page, (pid, _n) in hit.items()}
     todo = dict(pool)
     for page, (pid, name5e) in hit.items():
         todo.setdefault(pid, name5e)
-    print("当前世界池：前 %d 名队伍现役 %d 人，其中卡库里没有的 %d 人"
-          % (args.pool_top, len(pool), sum(1 for i in pool if i not in page_of)))
+    print("当前世界候选池：%d 支队 / %d 人，其中卡库里没有的 %d 人"
+          % (len(cand), len(pool), sum(1 for i in pool if i not in page_of)))
     print("本次要查 %d 人（两池并集）" % len(todo))
     if args.dry_run:
         return 0
@@ -375,7 +419,7 @@ def main():
     if args.limit:
         items = items[:args.limit]
 
-    added = updated = unchanged = nodata = failed = 0
+    added = updated = unchanged = nodata = lowtier = failed = 0
     for i, (pid, name5e) in enumerate(items, 1):
         try:
             row = fetch_one(pid, tv)
@@ -388,9 +432,24 @@ def main():
             continue
         finally:
             time.sleep(SLEEP)
+        if row is None and not args.no_low_tier:
+            # 没有 S 级样本 != 没在打比赛。退一档查全等级，折算回 S 级口径。
+            try:
+                row = fetch_one(pid, tv, [])
+            except RuntimeError:
+                row = None
+            finally:
+                time.sleep(SLEEP)
+            if row is not None:
+                row["tier"] = "all"
+                r = to_num(row.get("rating"))
+                if r is not None:
+                    row["rating_s_equiv"] = round(r - LOW_TIER_DISCOUNT, 3)
+                lowtier += 1
         if row is None:
             nodata += 1
-            continue                       # 没有顶级赛事样本，本来就该回退卡面
+            continue                       # 真的一场比赛都查不到
+        row.setdefault("tier", "S")
         row["5e_id"] = pid
         row["card_page"] = page_of.get(pid)      # 当前世界的人不一定有卡
         row.pop("stale", None)
@@ -407,12 +466,15 @@ def main():
                   % (i, len(items), name5e, row.get("rating"), row.get("map_count")))
 
     stats = {"card_matched": len(hit), "pool": len(pool), "queried": len(items),
-             "added": added, "updated": updated,
-             "unchanged": unchanged, "no_top_tier_sample": nodata, "failed": failed}
+             "added": added, "updated": updated, "unchanged": unchanged,
+             "low_tier_fallback": lowtier, "no_sample_at_all": nodata,
+             "failed": failed}
     write_out(players, tv, stats)
     print("\n写入 %s" % OUT_PATH.relative_to(ROOT))
-    print("  新增 %d  更新 %d  未变 %d  无顶级样本 %d  失败 %d（失败的人保留旧值并标 stale）"
-          % (added, updated, unchanged, nodata, failed))
+    print("  新增 %d  更新 %d  未变 %d  失败 %d（失败的人保留旧值并标 stale）"
+          % (added, updated, unchanged, failed))
+    print("  其中退到全等级折算的 %d 人（tier=all）；一场比赛都查不到的 %d 人"
+          % (lowtier, nodata))
     print("  文件里现有 %d 人（只合并不删除——比对 HEAD 应当只增不减）" % len(players))
     return 1 if failed else 0
 

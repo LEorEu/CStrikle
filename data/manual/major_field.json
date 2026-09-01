@@ -14,11 +14,19 @@
   "_max_filler": "field_source=current 时,一支队最多补几个新秀占位。卡库只收打过 Major 的人,所以一线队里会有查不到的新人。0 -> 候选池只剩 26 支,1 -> 37 支,2 -> 46 支。候选池要比 field_size 大才有得 roll。全局留 1;要放宽某一支队(FaZe / The MongolZ 这类高人气但卡库只查得到三个人的)就在 teams 里单独写 max_filler,全局放宽会把一堆没人关心的队一起放进来。占位卡是 G1 模板 —— 它代表「从没打过 Major 的人」,G2 会让「查不到」变成奖励(§50)。",
   "max_filler": 1,
 
-  "_regional_slots": "Major 名额按大区发,不按全球排名(设计稿 §53)。Stage 1 的 16 席是固定基础名额;Stage 2/3 的 8+8 个直邀由上一届该大区的战绩继承——上届进 Stage 3 的队数决定下届能跳过 Stage 1 的名额,上届进 Playoffs 的队数决定其中多少能直接进 Stage 3。这里记的是 PGL Singapore Major 2026 的配额(Cologne 打完继承下来的)。选队用 Regional VRS(team_snapshot.json 的 region + vrs_rank),种子才用 Global VRS。**还没接进代码**,现在的 build_current_field 仍然按全局 HLTV 排名取前 32。",
+  "_regional_slots": "Major 名额按大区发,不按全球排名(设计稿 §53)。Stage 1 的 16 席是固定基础名额(欧 6 / 美 6 / 亚 4);Stage 2、Stage 3 的 8+8 个直邀由上一届该大区的战绩继承。选队用 Regional VRS(team_snapshot.json 的 region + vrs_rank),种子才用 Global VRS。这里**不是**照抄 Singapore 的现行配额(欧 18 / 美 9 / 亚 5)——那份是 Cologne 打完继承下来的,而赛季还没结算完,分数还会动。我们取欧 20 / 美 8 / 亚 4,把欧洲的深度给足。多出来的 2 席从直邀里给欧洲,基础名额不动,所以三个 Stage 仍然是 16 / 8 / 8。",
   "regional_slots": {
-    "欧洲": { "stage1": 6, "stage2": 6, "stage3": 6 },
-    "美洲": { "stage1": 6, "stage2": 1, "stage3": 2 },
-    "亚洲": { "stage1": 4, "stage2": 1, "stage3": 0 }
+    "欧洲": { "stage1": 6, "stage2": 7, "stage3": 7 },
+    "美洲": { "stage1": 6, "stage2": 1, "stage3": 1 },
+    "亚洲": { "stage1": 4, "stage2": 0, "stage3": 0 }
+  },
+
+  "_candidate_pool": "**候选池比赛场大**,这是留给 VRS 变动的余量。名额只有 32 个,但我们存 45 支队的数据,这样分数一动就能重算名册,不必回头再抓一遍。取各区 VRS 前几支;pin 里的队无论排到哪都留着(它们已经在欧洲前 30 里了,写在这儿是防它们掉出去)。加上玩家自己那支队一共 46 支。scripts/fetch_5e_stats.py 按这一段决定抓谁。",
+  "candidate_pool": {
+    "欧洲": 30,
+    "美洲": 10,
+    "亚洲": 5,
+    "pin": ["BC.Game", "100 Thieves"]
   },
 
   "field_size": 32,
