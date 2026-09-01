@@ -11,7 +11,7 @@
   "_field_source": "赛场从哪来。current = 按 HLTV 当前世界排名找出还在打职业的队,用它们**现在的**五个人 + 现在的位置 + 年龄衰减(设计稿 §46,默认);major_pool = 从下面 pool 那几届 Major 的参赛名单里取队和阵容(旧口径,faze 会带着 s1mple 出现)。两种来源都遵守 locked_top / weight_decay / teams。",
   "field_source": "current",
 
-  "_max_filler": "field_source=current 时,一支队最多补几个新秀占位。卡库只收打过 Major 的人,所以一线队里会有查不到的新人。0 -> 候选池只剩 26 支,1 -> 37 支,2 -> 46 支。候选池要比 field_size 大才有得 roll。",
+  "_max_filler": "field_source=current 时,一支队最多补几个新秀占位。卡库只收打过 Major 的人,所以一线队里会有查不到的新人。0 -> 候选池只剩 26 支,1 -> 37 支,2 -> 46 支。候选池要比 field_size 大才有得 roll。全局留 1;要放宽某一支队(FaZe / The MongolZ 这类高人气但卡库只查得到三个人的)就在 teams 里单独写 max_filler,全局放宽会把一堆没人关心的队一起放进来。占位卡是 G1 模板 —— 它代表「从没打过 Major 的人」,G2 会让「查不到」变成奖励(§50)。",
   "max_filler": 1,
 
   "field_size": 32,
@@ -30,6 +30,10 @@
 
   "_teams": "逐队人工层。weight 覆盖默认权重(0 = 永不出现,很大 = 几乎必在);roster 填一届 Major 的名字 = 钉死用那一届的阵容,填五个名字 = 手写阵容(认昵称也认 page,不分大小写;写一个卡库里没有的名字就自动变成新秀占位)。adjust 直接在「分」上加减(负数 = 削弱),用来填「卡面记生涯成就、排名记现在在赢球」那道差距——见设计稿 §48。caller / awper 用来钉死这支队谁在喊、谁拿大狙——自动规则从 roles 里认,大概能对九成,剩下一成靠这两个字段。",
   "teams": {
+    "FaZe":        { "_why": "卡库里只查得到三个人(jcobbb / frozen / Twistzz),高人气队,单独放宽到补两个新秀。", "max_filler": 2 },
+    "The MongolZ": { "_why": "同上:bLitz / Techno4K / 910。", "max_filler": 2 },
+    "100 Thieves": { "_why": "同上:dev1ce / rain / Gizmy。gla1ve 在库里挂 coach,不算队员。", "max_filler": 2 },
+
     "BC.Game": {
       "_why": "指挥是 Magisk(库里没人挂 igl,TaZ 挂的是 coach,所以自动规则把这队算成「没有指挥」——那反而让它虚弱,补上指挥它会冲到第 2)。adjust 是压回现实:队里 s1mple/electroNic/Magisk 三张巅峰卡,而这支队现在的世界排名在 40 上下。-28 让它落到赛场第 27 位左右。这个数是人拍的,改它只影响这一支队。",
       "caller": "Magisk",

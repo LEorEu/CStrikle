@@ -104,10 +104,19 @@ def retemplate(card, new_pos):
         out[key] = max(1, min(99, int(round(new[i] + excess))))
     return out
 
-# 补位用的占位卡：RIFLER G2 模板。它代表「这个位置上有个我们数据库里没有的
-# 新人」——卡库只收打过 Major 的人，而现在一线队里确实有还没打过 Major 的人。
-FILLER = {"grade": 2, "firepower": 60, "leadership": 22,
-          "experience": 34, "stability": 56, "age": 21}
+# 补位用的占位卡：G2 模板，**按要补的那个位置取**。它代表「这个位置上有个我们
+# 数据库里没有的新人」——卡库只收打过 Major 的人，而现在一线队里确实有还没打过
+# Major 的人。
+#
+# 早先这里写死了 RIFLER G2 的四维、只换 position 字段，于是补出来的「新秀指挥」
+# 领导力是 22（步枪手档），比没有指挥还糟；「新秀狙」的稳定也是步枪手的。
+# 和 retemplate 那处是同一个错：**换位置就得换整套模板**。
+#
+# 档位从 G2 降到 G1：占位卡代表的是「从没打过 Major 的人」，而 G2 火力 60 比
+# 赛场下半区一半真人还高——实测「补位」因此变成了奖励，补过人的队平均比 HLTV
+# 排名高 17 位，没补过的只差 0.7 位（§50）。G1（火 52）才是「我们对他一无所知」
+# 那一档，而且它已经很宽容了：全库 G1 是真正打过 Major 的 306 个人。
+FILLER_GRADE = 1
 MAX_FILLER = 1          # 一支队最多补几个；补 2 个以上的队请在配置里手写
 
 
@@ -246,8 +255,9 @@ def settle(card):
 
 
 def make_filler(team, need_pos, n):
-    c = dict(FILLER)
-    c.update({"page": "_filler_%s_%d" % (team, n), "nickname": "新秀",
+    c = dict(zip(G.ATTRS, G.TEMPLATE[need_pos][FILLER_GRADE]))
+    c.update({"grade": FILLER_GRADE, "age": 21,
+              "page": "_filler_%s_%d" % (team, n), "nickname": "新秀",
               "position": need_pos, "country": "", "team": team,
               "majors": 0, "champions": 0, "titles": [],
               "_notes": ["卡库里没有这个人：只收打过 Major 的选手"], "_filler": True})
@@ -296,10 +306,13 @@ def build_ai_field(size=FIELD_SIZE, max_filler=MAX_FILLER, cfg=None):
             raw, source = hand[name.casefold()], "手写"
         else:
             raw, source = resolve(name, aliases, rosters), "当前名单"
-        if len(raw) < 5 - max_filler:
+        spec = (cfg.get("teams", {}).get(name, {}) or {})
+        # 逐队可以放宽:FaZe / The MongolZ 这类高人气但卡库只查得到三个人的队,
+        # 单独开到 2 个占位。全局放宽会把一堆没人关心的队一起放进来。
+        mf = int(spec.get("max_filler", max_filler))
+        if len(raw) < 5 - mf:
             skipped.append((rank, name, len(raw)))
             continue
-        spec = (cfg.get("teams", {}).get(name, {}) or {})
         pinned = {k: spec.get(k) for k in ("caller", "awper")}
         cur = [settle(c) for c in
                dedupe_positions([to_current(c, players) for c in raw[:5]], pinned)]
