@@ -146,14 +146,36 @@ def load_aliases() -> dict:
     return {k: v for k, v in raw.items() if not k.startswith("_")}
 
 
-def snapshot_ids() -> dict:
+def snapshot_teams() -> list:
+    if not SNAP_PATH.exists():
+        return []
+    return json.loads(SNAP_PATH.read_text(encoding="utf-8")).get("teams") or []
+
+
+def snapshot_ids(teams=None) -> dict:
     """队伍快照里的 id。**权威层**：它来自 `teams/<id>/overview`,是队伍页自己
     列出来的人,根本不经过名字匹配,所以不可能配错人。"""
-    if not SNAP_PATH.exists():
-        return {}
-    raw = json.loads(SNAP_PATH.read_text(encoding="utf-8"))
     out = {}
-    for t in raw.get("teams") or []:
+    for t in (teams if teams is not None else snapshot_teams()):
+        for r in t.get("roster") or []:
+            if r.get("id") and r.get("name"):
+                out[r["id"]] = r["name"]
+    return out
+
+
+def pool_targets(teams, top: int) -> dict:
+    """**当前世界的选手池**：排名前 `top` 的队伍的现役队员，id -> 名字。
+
+    和卡库（生涯世界）是两个池子,故意不取交集——当前世界里本来就该有卡库里
+    没有的人(tikuak、DarkMeister 从没打过 Major,但他们现在就在 The MongolZ
+    首发)。原来只抓"卡库里有队的人",于是前 50 名的 238 个首发里有 58 个
+    既没有卡也没有数据,AI 层只能拿 G1 占位去顶——那已经不是这支队了。
+    """
+    out = {}
+    for t in teams:
+        rk = t.get("hltv_rank") or t.get("vrs_rank")
+        if not rk or rk > top:
+            continue
         for r in t.get("roster") or []:
             if r.get("id") and r.get("name"):
                 out[r["id"]] = r["name"]
@@ -252,9 +274,24 @@ def to_num(v):
 # ------------------------------------------------------------------ 落盘
 
 def load_existing() -> dict:
+    """按 5eplay player_id 存。
+
+    原来是按卡库的 `page` 存的——那是**生涯世界的主键**，当前世界里根本没有
+    卡的人存不进去。换主键的时候把老文件迁一遍（老行里带着 `5e_id`），
+    只合并不删除这条不受影响。
+    """
     if not OUT_PATH.exists():
         return {}
-    return json.loads(OUT_PATH.read_text(encoding="utf-8")).get("players") or {}
+    raw = json.loads(OUT_PATH.read_text(encoding="utf-8")).get("players") or {}
+    out = {}
+    for k, v in raw.items():
+        pid = v.get("5e_id")
+        if not pid:                       # 迁不过来的行不丢，原样保留
+            out[k] = v
+            continue
+        v.setdefault("card_page", k if not k.startswith("csgo_pl_") else None)
+        out[pid] = v
+    return out
 
 
 def write_out(players: dict, tv: str, stats: dict):
@@ -285,6 +322,8 @@ def main():
     ap.add_argument("--all", action="store_true",
                     help="抓全部 648 张卡；默认只抓当前有队的人（AI 层只用得到这些）")
     ap.add_argument("--limit", type=int, default=0, help="只抓前 N 个，用来试跑")
+    ap.add_argument("--pool-top", type=int, default=60,
+                    help="当前世界池取排名前几的队伍（默认 60，够铺满一个 Major 名册）")
     ap.add_argument("--dry-run", action="store_true", help="只报匹配情况，不发查询、不写文件")
     args = ap.parse_args()
 
@@ -298,7 +337,8 @@ def main():
         ids = json.loads(IDS_CACHE.read_text(encoding="utf-8"))
         print("用缓存的 id 表 %d 人（--refresh-ids 重抓）" % len(ids))
 
-    snap = snapshot_ids()
+    teams = snapshot_teams()
+    snap = snapshot_ids(teams)
     print("队伍快照 id %d 个（权威层，来自队伍页，不经过名字）" % len(snap))
     index, dropped = build_index(snap, ids)
     if dropped:
@@ -314,6 +354,16 @@ def main():
     if miss:
         print("  对不上的 %d 人（在 data/manual/5e_aliases.json 里补别名）：\n     %s"
               % (len(miss), "  ".join(c["nickname"] for c in miss)))
+    # 两个池子并起来：生涯世界按名字对到的人 + 当前世界前 N 名队伍的现役队员。
+    # 后者会带进卡库里根本没有的人，那正是要的。
+    pool = pool_targets(teams, args.pool_top)
+    page_of = {pid: page for page, (pid, _n) in hit.items()}
+    todo = dict(pool)
+    for page, (pid, name5e) in hit.items():
+        todo.setdefault(pid, name5e)
+    print("当前世界池：前 %d 名队伍现役 %d 人，其中卡库里没有的 %d 人"
+          % (args.pool_top, len(pool), sum(1 for i in pool if i not in page_of)))
+    print("本次要查 %d 人（两池并集）" % len(todo))
     if args.dry_run:
         return 0
 
@@ -321,19 +371,19 @@ def main():
     print("查询窗口 %s，等级 %s" % (tv, GRADE_LABEL))
     players = load_existing()
     before = {k: dict(v) for k, v in players.items()}
-    items = list(hit.items())
+    items = sorted(todo.items(), key=lambda kv: kv[1].casefold())
     if args.limit:
         items = items[:args.limit]
 
     added = updated = unchanged = nodata = failed = 0
-    for i, (page, (pid, name5e)) in enumerate(items, 1):
+    for i, (pid, name5e) in enumerate(items, 1):
         try:
             row = fetch_one(pid, tv)
         except RuntimeError as exc:
             # 只合并不删除：抓失败的人保留旧数据并标 stale
             failed += 1
-            if page in players:
-                players[page]["stale"] = True
+            if pid in players:
+                players[pid]["stale"] = True
             print("  [%d/%d] %-14s 失败：%s" % (i, len(items), name5e, exc))
             continue
         finally:
@@ -342,9 +392,10 @@ def main():
             nodata += 1
             continue                       # 没有顶级赛事样本，本来就该回退卡面
         row["5e_id"] = pid
+        row["card_page"] = page_of.get(pid)      # 当前世界的人不一定有卡
         row.pop("stale", None)
-        old = before.get(page)
-        players[page] = row
+        old = before.get(pid)
+        players[pid] = row
         if old is None:
             added += 1
         elif {k: v for k, v in old.items() if k != "stale"} != row:
@@ -355,7 +406,8 @@ def main():
             print("  [%d/%d] …%s rating %s（%s 图）"
                   % (i, len(items), name5e, row.get("rating"), row.get("map_count")))
 
-    stats = {"matched": len(hit), "added": added, "updated": updated,
+    stats = {"card_matched": len(hit), "pool": len(pool), "queried": len(items),
+             "added": added, "updated": updated,
              "unchanged": unchanged, "no_top_tier_sample": nodata, "failed": failed}
     write_out(players, tv, stats)
     print("\n写入 %s" % OUT_PATH.relative_to(ROOT))

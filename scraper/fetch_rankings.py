@@ -51,6 +51,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TEAMS_OUT = ROOT / "data" / "team_snapshot.json"
 VRS_OUT = ROOT / "data" / "vrs_global.json"
 IDS_CACHE = ROOT / ".cache" / "5e" / "team_ids.json"
+STATS_PATH = ROOT / "data" / "5e_player_stats.json"
+MANUAL_ROLES = ROOT / "data" / "manual" / "team_roles.json"
 
 E5 = "https://esports-data.5eplaycdn.com/v1/api/csgo/"
 GH_API = ("https://api.github.com/repos/ValveSoftware/"
@@ -140,6 +142,100 @@ def resolve_roles(players):
         if src == "lp":
             notes["fallback"].append([pos, cands[0]["name"]])
     return out, notes
+
+
+def _num(v):
+    try:
+        return float(str(v).replace("%", "").replace("+", "").replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+
+
+MAP_FLOOR = 10          # 结构性信号不需要大样本，20 会把 Jorko(15 图)挡在外面
+AWP_HS_MAX = 40.0       # 狙的爆头率上限：47 个已知狙的 90% 分位是 40.2%
+
+
+def fill_role_gaps(teams):
+    """把 role_gaps 补上。**一支真实队伍不可能没有指挥。**
+
+    队伍页的 tag 有缺口（前 50 名里 11 支缺指挥或缺狙），生涯角色也兜不住
+    ——dex 根本不在 players.json 里，那是 Major 名单，而当前世界本来就装得下
+    卡库没有的人。所以第四档拿竞技数据兜底。两条判据的强度**差得很远**，
+    不该混为一谈：
+
+    **狙 = 爆头率结构性地低。** 这几乎是条定理：AWP 一枪毙命，不靠爆头。
+    47 个已知狙 hs_rate 中位 33.9%，148 个步枪 53.1%，两个分布几乎不重叠
+    （狙的 90% 分位 40.2%，步枪的 10% 分位 42.8%）。所以判据不是"队里最低"
+    而是**绝对阈值 40%**：低于它才认，全队都高于它就如实留空。38 支已知队里
+    有 37 支的狙确实是队内最低，低出中位 13 个百分点。
+
+    **指挥 = 开火少。** 弱得多：33 支已知队里只有 22 支（67%）的指挥是队内
+    kpr 最低的人。所以它只是个**猜测**，标成 `kpr?`，而且要求他至少低于队内
+    步枪的中位数，否则宁可留空。真在乎的队请写进人工层。
+
+    人工层 `data/manual/team_roles.json` 压在最上面，格式
+    `{"队名": {"IGL": "昵称", "AWPER": "昵称"}}`。
+
+    这一步是**幂等**的：先把上一次兜底判的位置退回去，再重判。
+    """
+    stats = {}
+    if STATS_PATH.exists():
+        for v in (json.loads(STATS_PATH.read_text(encoding="utf-8"))
+                  .get("players") or {}).values():
+            if v.get("5e_id") and (_num(v.get("map_count")) or 0) >= MAP_FLOOR:
+                stats[v["5e_id"]] = v
+    manual = {}
+    if MANUAL_ROLES.exists():
+        manual = {k: v for k, v in
+                  json.loads(MANUAL_ROLES.read_text(encoding="utf-8")).items()
+                  if not k.startswith("_")}
+
+    filled = []
+    for t in teams:
+        starters = [r for r in t["roster"] if r.get("starter")]
+        # 幂等：退回上一次兜底的判定，缺口重新算
+        gaps = list(t.get("role_gaps") or [])
+        for r in starters:
+            if r.pop("role_source", None):
+                gaps.append(r["role"])
+                r["role"] = "RIFLER"
+        if not gaps:
+            continue
+        pinned = manual.get(t["name"]) or manual.get(t.get("abbr") or "") or {}
+        left, taken = [], set()
+
+        def riflers():
+            return [(r, stats[r["id"]]) for r in starters
+                    if r["role"] == "RIFLER" and r["id"] not in taken
+                    and r["id"] in stats]
+
+        for pos in sorted(set(gaps)):
+            got = src = None
+            want = pinned.get(pos)
+            if want:
+                got = next((r for r in starters
+                            if r["name"].casefold() == str(want).casefold()), None)
+                src = "manual"
+            if got is None:
+                cand = riflers()
+                if pos == "AWPER" and cand:
+                    r, v = min(cand, key=lambda x: _num(x[1]["hs_rate"]))
+                    if _num(v["hs_rate"]) < AWP_HS_MAX:
+                        got, src = r, "hs_rate"
+                elif pos == "IGL" and cand:
+                    r, v = min(cand, key=lambda x: _num(x[1]["kpr"]))
+                    ks = sorted(_num(x[1]["kpr"]) for x in cand)
+                    if _num(v["kpr"]) <= ks[len(ks) // 2]:
+                        got, src = r, "kpr?"      # 问号是认真的：只有 67% 对
+            if got is None:
+                left.append(pos)
+                continue
+            got["role"] = pos
+            got["role_source"] = src
+            taken.add(got["id"])
+            filled.append([t["name"], pos, got["name"], src])
+        t["role_gaps"] = left or None
+    return filled
 
 
 def get(url: str, as_json: bool = True, tries: int = 3):
@@ -261,6 +357,28 @@ def fetch_team(tid: str, unknown_roles: set) -> dict | None:
     }
 
 
+def repair_roles():
+    """只跑补位这一步，直接改已有的快照——不重抓 288 支队。
+
+    存在的理由是先后顺序：位置兜底要用竞技数据，而竞技数据的 id 来自快照，
+    所以只能 快照 -> 抓数据 -> 回头补位 这么走。
+    """
+    raw = json.loads(TEAMS_OUT.read_text(encoding="utf-8"))
+    teams = raw["teams"]
+    before = sum(len(t.get("role_gaps") or []) for t in teams)
+    filled = fill_role_gaps(teams)
+    after = sum(len(t.get("role_gaps") or []) for t in teams)
+    rank = {t["name"]: t.get("hltv_rank") or 999 for t in teams}
+    for name, pos, who, src in sorted(filled, key=lambda f: rank[f[0]]):
+        print("  #%-4s %-18s %-6s <- %-14s (%s)"
+              % (rank[name], name, pos, who, src))
+    print("位置缺口 %d -> %d，补上 %d 处" % (before, after, len(filled)))
+    raw["generated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
+    TEAMS_OUT.write_text(json.dumps(raw, ensure_ascii=False, indent=1) + "\n",
+                         encoding="utf-8")
+    print("写回 %s" % TEAMS_OUT.relative_to(ROOT))
+
+
 def fetch_teams(asof: date, refresh_ids: bool):
     if refresh_ids or not IDS_CACHE.exists():
         print("抓队伍 id 表…")
@@ -285,6 +403,10 @@ def fetch_teams(asof: date, refresh_ids: bool):
             out.append(t)
         if i % 50 == 0:
             print("  [%d/%d]…" % (i, len(ids)))
+
+    filled = fill_role_gaps(out)
+    if filled:
+        print("  位置缺口补上 %d 处（人工层 > 竞技数据兜底，见 fill_role_gaps）" % len(filled))
 
     # 有排名的排前面,没排名的按名字。排名缺失是常态(小队伍不进榜)。
     out.sort(key=lambda t: (t["hltv_rank"] is None, t["hltv_rank"] or 0, t["name"]))
@@ -368,8 +490,14 @@ def main():
     ap.add_argument("--discover", action="store_true",
                     help="从 .cache/5e/player_ids.json 的选手页反查队伍 id 并并入缓存"
                          "（队伍列表接口漏掉 MongolZ / BC.Game 这类队，只能这么补）")
+    ap.add_argument("--fill-roles", action="store_true",
+                    help="只补 role_gaps，就地改已有快照（要先抓过竞技数据）")
     ap.add_argument("--date", default=None, help="快照日期 YYYY-MM-DD,默认今天")
     args = ap.parse_args()
+    if args.fill_roles:
+        repair_roles()
+        return 0
+
     if not (args.teams or args.vrs or args.discover):
         ap.error("至少给一个 --teams / --vrs / --discover")
     asof = (datetime.strptime(args.date, "%Y-%m-%d").date()

@@ -1,0 +1,4 @@
+{
+  "_note": "当前世界的位置人工层。格式 {\"队名\": {\"IGL\": \"昵称\", \"AWPER\": \"昵称\"}}。只在队伍页 tag 和 Liquipedia 都判不出来时才需要写；写了就压过竞技数据兜底。队名用 team_snapshot.json 里的 name 或 abbr。",
+  "_example": {"Ninjas in Pyjamas": {"IGL": "sjuush"}}
+}
