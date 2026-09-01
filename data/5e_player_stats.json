@@ -1,6 +1,6 @@
 {
  "_note": "5eplay 的选手当前竞技数据，由 scripts/fetch_5e_stats.py 生成，勿手改。口径是**指标定义**不是旋钮：近 12 个月 + Major + S+ + S。map_count 少的人必须按 n/(n+k) 往均值收缩后再用（xKacpersky 1.52 是 6 张图打的）。查不到的人不是数据缺失，是他没有顶级赛事样本——应当回退卡面。人工别名写在 data/manual/5e_aliases.json。详见设计稿 §51。",
- "generated_at": "2026-09-01 06:33:53Z",
+ "generated_at": "2026-09-01 07:37:56Z",
  "source": "https://esports-data.5eplaycdn.com/v1/api/csgo/mfilter/player/multidimension/list",
  "window": {
   "months": 12,
@@ -14,9 +14,9 @@
  "grade_label": "Major + S+ + S",
  "counts": {
   "matched": 305,
-  "added": 213,
+  "added": 0,
   "updated": 0,
-  "unchanged": 0,
+  "unchanged": 213,
   "no_top_tier_sample": 92,
   "failed": 0
  },

@@ -1,0 +1,4698 @@
+{
+ "_note": "Valve Regional Standings 官方全球榜,**只做交叉核对**。它每月发一版,到快照日可能已经落后数周——实测 2026-08-03 那版把 mzinho 同时列在两支队里、G2 写的还是 SunPayus。**阵容一律以 team_snapshot.json 为准**,这份只用来核对积分与名次口径。",
+ "generated_at": "2026-09-01 07:08:53Z",
+ "snapshot_date": "2026-09-01",
+ "standings_date": "2026-08-03",
+ "source_url": "https://raw.githubusercontent.com/ValveSoftware/counter-strike_regional_standings/main/live/2026/standings_global_2026_08_03.md",
+ "count": 396,
+ "teams": [
+  {
+   "rank": 1,
+   "points": 2011,
+   "team": "Spirit",
+   "roster": [
+    "donk",
+    "magixx",
+    "sh1ro",
+    "tN1R",
+    "zont1x"
+   ]
+  },
+  {
+   "rank": 2,
+   "points": 1950,
+   "team": "Falcons",
+   "roster": [
+    "karrigan",
+    "kyousuke",
+    "m0NESY",
+    "NiKo",
+    "TeSeS"
+   ]
+  },
+  {
+   "rank": 3,
+   "points": 1873,
+   "team": "MOUZ",
+   "roster": [
+    "PR",
+    "Spinx",
+    "torzsi",
+    "xelex",
+    "xertioN"
+   ]
+  },
+  {
+   "rank": 4,
+   "points": 1847,
+   "team": "9z",
+   "roster": [
+    "dgt",
+    "HUASOPEEK",
+    "luchov",
+    "max",
+    "meyern"
+   ]
+  },
+  {
+   "rank": 5,
+   "points": 1836,
+   "team": "Vitality",
+   "roster": [
+    "apEX",
+    "flameZ",
+    "mezii",
+    "ropz",
+    "ZywOo"
+   ]
+  },
+  {
+   "rank": 6,
+   "points": 1802,
+   "team": "Natus Vincere",
+   "roster": [
+    "Aleksib",
+    "b1t",
+    "iM",
+    "makazze",
+    "w0nderful"
+   ]
+  },
+  {
+   "rank": 7,
+   "points": 1773,
+   "team": "Legacy",
+   "roster": [
+    "arT",
+    "dumau",
+    "latto",
+    "n1ssim",
+    "saadzin"
+   ]
+  },
+  {
+   "rank": 8,
+   "points": 1771,
+   "team": "FURIA",
+   "roster": [
+    "FalleN",
+    "KSCERATO",
+    "molodoy",
+    "YEKINDAR",
+    "yuurih"
+   ]
+  },
+  {
+   "rank": 9,
+   "points": 1742,
+   "team": "BetBoom",
+   "roster": [
+    "Boombl4",
+    "d1Ledez",
+    "FL4MUS",
+    "Magnojez",
+    "zorte"
+   ]
+  },
+  {
+   "rank": 10,
+   "points": 1690,
+   "team": "Aurora",
+   "roster": [
+    "Jimpphat",
+    "kyxsan",
+    "Wicadia",
+    "woxic",
+    "XANTARES"
+   ]
+  },
+  {
+   "rank": 11,
+   "points": 1688,
+   "team": "G2",
+   "roster": [
+    "HeavyGod",
+    "huNter-",
+    "MATYS",
+    "NertZ",
+    "SunPayus"
+   ]
+  },
+  {
+   "rank": 12,
+   "points": 1685,
+   "team": "PARIVISION",
+   "roster": [
+    "HObbit",
+    "Jame",
+    "slaxejezzz",
+    "xiELO",
+    "zweih"
+   ]
+  },
+  {
+   "rank": 13,
+   "points": 1677,
+   "team": "FaZe",
+   "roster": [
+    "frozen",
+    "JBOEN",
+    "jcobbb",
+    "Neityu",
+    "Twistzz"
+   ]
+  },
+  {
+   "rank": 14,
+   "points": 1663,
+   "team": "FUT",
+   "roster": [
+    "cmtry",
+    "dem0n",
+    "dziugss",
+    "Krabeni",
+    "lauNX"
+   ]
+  },
+  {
+   "rank": 15,
+   "points": 1637,
+   "team": "The MongolZ",
+   "roster": [
+    "910",
+    "bLitz",
+    "cobrazera",
+    "mzinho",
+    "Techno"
+   ]
+  },
+  {
+   "rank": 16,
+   "points": 1611,
+   "team": "MIBR",
+   "roster": [
+    "brnz4n",
+    "insani",
+    "LNZ",
+    "nqz",
+    "venomzera"
+   ]
+  },
+  {
+   "rank": 17,
+   "points": 1583,
+   "team": "Alliance",
+   "roster": [
+    "avid",
+    "bobeksde",
+    "eraa",
+    "twist",
+    "upE"
+   ]
+  },
+  {
+   "rank": 18,
+   "points": 1565,
+   "team": "TYLOO",
+   "roster": [
+    "JamYoung",
+    "Jee",
+    "Mercury",
+    "Moseyuh",
+    "Zero"
+   ]
+  },
+  {
+   "rank": 19,
+   "points": 1555,
+   "team": "Astralis",
+   "roster": [
+    "HooXi",
+    "jabbi",
+    "phzy",
+    "ryu",
+    "Staehr"
+   ]
+  },
+  {
+   "rank": 20,
+   "points": 1550,
+   "team": "B8",
+   "roster": [
+    "alex666",
+    "esenthial",
+    "kensizor",
+    "npl",
+    "s1zzi"
+   ]
+  },
+  {
+   "rank": 21,
+   "points": 1516,
+   "team": "BIG",
+   "roster": [
+    "blameF",
+    "faveN",
+    "gr1ks",
+    "JDC",
+    "tabseN"
+   ]
+  },
+  {
+   "rank": 22,
+   "points": 1504,
+   "team": "GamerLegion",
+   "roster": [
+    "hypex",
+    "PR",
+    "REZ",
+    "Snax",
+    "Tauson"
+   ]
+  },
+  {
+   "rank": 23,
+   "points": 1478,
+   "team": "magic",
+   "roster": [
+    "AW",
+    "MaSvAl",
+    "mo0N",
+    "sFade8",
+    "tenzy"
+   ]
+  },
+  {
+   "rank": 24,
+   "points": 1468,
+   "team": "Luminosity",
+   "roster": [
+    "afro",
+    "AZUWU",
+    "Bymas",
+    "Gizmy",
+    "Rainwaker"
+   ]
+  },
+  {
+   "rank": 25,
+   "points": 1464,
+   "team": "Inner Circle",
+   "roster": [
+    "cptkurtka023",
+    "Dawy",
+    "headtr1ck",
+    "onic",
+    "zeRRoFIX"
+   ]
+  },
+  {
+   "rank": 26,
+   "points": 1446,
+   "team": "paiN",
+   "roster": [
+    "biguzera",
+    "piriajr",
+    "saffee",
+    "snow",
+    "vsm"
+   ]
+  },
+  {
+   "rank": 27,
+   "points": 1444,
+   "team": "Ninjas in Pyjamas",
+   "roster": [
+    "n0te",
+    "sjuush",
+    "Snappi",
+    "stavn",
+    "xKacpersky"
+   ]
+  },
+  {
+   "rank": 28,
+   "points": 1440,
+   "team": "DENDELE",
+   "roster": [
+    "doc",
+    "gafolo",
+    "koala",
+    "maxxkor",
+    "rdnzao"
+   ]
+  },
+  {
+   "rank": 29,
+   "points": 1431,
+   "team": "Lynn Vision",
+   "roster": [
+    "C4LLM3SU3",
+    "EmiliaQAQ",
+    "Starry",
+    "Westmelon",
+    "z4KR"
+   ]
+  },
+  {
+   "rank": 30,
+   "points": 1427,
+   "team": "HEROIC",
+   "roster": [
+    "Brollan",
+    "Chr1zN",
+    "MartinezSa",
+    "nilo",
+    "susp"
+   ]
+  },
+  {
+   "rank": 31,
+   "points": 1410,
+   "team": "3DMAX",
+   "roster": [
+    "Graviti",
+    "Kursy",
+    "Lucky",
+    "Maka",
+    "misutaaa"
+   ]
+  },
+  {
+   "rank": 32,
+   "points": 1397,
+   "team": "Liquid",
+   "roster": [
+    "EliGE",
+    "malbsMd",
+    "NAF",
+    "siuhy",
+    "ultimate"
+   ]
+  },
+  {
+   "rank": 33,
+   "points": 1385,
+   "team": "EYEBALLERS",
+   "roster": [
+    "dex",
+    "JW",
+    "KRIMZ",
+    "maxster",
+    "Ro1f"
+   ]
+  },
+  {
+   "rank": 34,
+   "points": 1374,
+   "team": "Nemesis",
+   "roster": [
+    "mag1k3Y",
+    "r3salt",
+    "Sdaim",
+    "SELLTER",
+    "tex1y"
+   ]
+  },
+  {
+   "rank": 35,
+   "points": 1365,
+   "team": "HOTU",
+   "roster": [
+    "dwushka",
+    "frontales",
+    "kade0",
+    "mizu",
+    "n0rb3r7"
+   ]
+  },
+  {
+   "rank": 36,
+   "points": 1361,
+   "team": "M80",
+   "roster": [
+    "JBa",
+    "Lake",
+    "s1n",
+    "slaxz-",
+    "Swisher"
+   ]
+  },
+  {
+   "rank": 37,
+   "points": 1359,
+   "team": "Virtus.pro",
+   "roster": [
+    "AquaRS",
+    "b1st",
+    "F0R3VER",
+    "mir",
+    "tO0RO"
+   ]
+  },
+  {
+   "rank": 38,
+   "points": 1352,
+   "team": "Wildcard",
+   "roster": [
+    "Cxzi",
+    "HexT",
+    "mhL",
+    "nEMANHA",
+    "reck"
+   ]
+  },
+  {
+   "rank": 39,
+   "points": 1319,
+   "team": "K27",
+   "roster": [
+    "kashl1d",
+    "qw1nk1",
+    "shalfey",
+    "X5G7V",
+    "xeedo"
+   ]
+  },
+  {
+   "rank": 40,
+   "points": 1310,
+   "team": "100 Thieves",
+   "roster": [
+    "Ag1l",
+    "device",
+    "poiii",
+    "rain",
+    "sirah"
+   ]
+  },
+  {
+   "rank": 41,
+   "points": 1295,
+   "team": "FlyQuest",
+   "roster": [
+    "Gratisfaction",
+    "INS",
+    "jks",
+    "nettik",
+    "Vexite"
+   ]
+  },
+  {
+   "rank": 42,
+   "points": 1289,
+   "team": "Echo",
+   "roster": [
+    "Boye",
+    "IceBerg",
+    "leakz",
+    "NickyB",
+    "salazar"
+   ]
+  },
+  {
+   "rank": 43,
+   "points": 1285,
+   "team": "FOKUS",
+   "roster": [
+    "Banjo",
+    "Jorko",
+    "Matheos",
+    "volt",
+    "ztr"
+   ]
+  },
+  {
+   "rank": 44,
+   "points": 1283,
+   "team": "Bulgaria",
+   "roster": [
+    "h4rn",
+    "KalubeR",
+    "REDSTAR",
+    "Skrimo",
+    "SPELLAN"
+   ]
+  },
+  {
+   "rank": 45,
+   "points": 1274,
+   "team": "Gentle Mates",
+   "roster": [
+    "alex",
+    "CRUC1AL",
+    "dav1g",
+    "mopoz",
+    "sausol"
+   ]
+  },
+  {
+   "rank": 46,
+   "points": 1272,
+   "team": "INFINITE",
+   "roster": [
+    "Blytz",
+    "Dytor",
+    "kreaz",
+    "sl3nd",
+    "volt"
+   ]
+  },
+  {
+   "rank": 47,
+   "points": 1259,
+   "team": "Nuclear TigeRES",
+   "roster": [
+    "ayuki",
+    "flouzer",
+    "m1QUSE",
+    "senka",
+    "z1k4"
+   ]
+  },
+  {
+   "rank": 48,
+   "points": 1228,
+   "team": "TDK",
+   "roster": [
+    "ArtFr0st",
+    "Ax1Le",
+    "BELCHONOKK",
+    "fame",
+    "nafany"
+   ]
+  },
+  {
+   "rank": 49,
+   "points": 1228,
+   "team": "NRG",
+   "roster": [
+    "Grim",
+    "hallzerk",
+    "Jeorge",
+    "nitr0",
+    "Sonic"
+   ]
+  },
+  {
+   "rank": 50,
+   "points": 1222,
+   "team": "WW",
+   "roster": [
+    "ct0m",
+    "deko",
+    "kelieN",
+    "m3wsu",
+    "StRoGo"
+   ]
+  },
+  {
+   "rank": 51,
+   "points": 1221,
+   "team": "ex-RUBY",
+   "roster": [
+    "H4SAN4TOR",
+    "relaxxie",
+    "robo",
+    "sh1nejezzz",
+    "YumsaN"
+   ]
+  },
+  {
+   "rank": 52,
+   "points": 1202,
+   "team": "Nemiga",
+   "roster": [
+    "1eeR",
+    "KaiR0N-",
+    "khaN",
+    "sowalio",
+    "syph0"
+   ]
+  },
+  {
+   "rank": 53,
+   "points": 1196,
+   "team": "SINNERS",
+   "roster": [
+    "beastik",
+    "kisserek",
+    "MoDo",
+    "SHOCK",
+    "stressarN"
+   ]
+  },
+  {
+   "rank": 54,
+   "points": 1190,
+   "team": "Walczaki",
+   "roster": [
+    "bajmi",
+    "moonwalk",
+    "olimp",
+    "SaMey",
+    "sk1tt"
+   ]
+  },
+  {
+   "rank": 55,
+   "points": 1179,
+   "team": "Sashi",
+   "roster": [
+    "acoR",
+    "Beccie",
+    "Cabbi",
+    "MistR",
+    "Zyphon"
+   ]
+  },
+  {
+   "rank": 56,
+   "points": 1177,
+   "team": "BESTIA",
+   "roster": [
+    "buda",
+    "cass1n",
+    "nacho",
+    "timo",
+    "tomaszin"
+   ]
+  },
+  {
+   "rank": 57,
+   "points": 1159,
+   "team": "Fluxo",
+   "roster": [
+    "dav1deuS",
+    "exit",
+    "kye",
+    "Ltz",
+    "zevy"
+   ]
+  },
+  {
+   "rank": 58,
+   "points": 1159,
+   "team": "JiJieHao",
+   "roster": [
+    "0SAMAS",
+    "Bibu",
+    "CacaNito",
+    "m1N1",
+    "sinnopsyy"
+   ]
+  },
+  {
+   "rank": 59,
+   "points": 1150,
+   "team": "Imperial",
+   "roster": [
+    "chelo",
+    "decenty",
+    "noway",
+    "saadzin",
+    "VINI"
+   ]
+  },
+  {
+   "rank": 60,
+   "points": 1149,
+   "team": "THUNDER dOWNUNDER",
+   "roster": [
+    "aliStair",
+    "asap",
+    "dexter",
+    "Liazz",
+    "TjP"
+   ]
+  },
+  {
+   "rank": 61,
+   "points": 1141,
+   "team": "fnatic",
+   "roster": [
+    "cairne",
+    "fEAR",
+    "jackasmo",
+    "jambo",
+    "mazay"
+   ]
+  },
+  {
+   "rank": 62,
+   "points": 1141,
+   "team": "ARCRED",
+   "roster": [
+    "Get_Jeka",
+    "Raijin",
+    "Ryujin",
+    "shg",
+    "synyx"
+   ]
+  },
+  {
+   "rank": 63,
+   "points": 1140,
+   "team": "Omega",
+   "roster": [
+    "adai",
+    "Aldikon",
+    "Botpa1",
+    "dan4o",
+    "def1zer"
+   ]
+  },
+  {
+   "rank": 64,
+   "points": 1130,
+   "team": "Phantom",
+   "roster": [
+    "KEi",
+    "Kunai",
+    "Kylar",
+    "mwlky",
+    "TMB"
+   ]
+  },
+  {
+   "rank": 65,
+   "points": 1123,
+   "team": "ex-1win",
+   "roster": [
+    "cronuss",
+    "lattykk",
+    "oz1k",
+    "Qikert",
+    "reyoz"
+   ]
+  },
+  {
+   "rank": 66,
+   "points": 1119,
+   "team": "NOVAQ",
+   "roster": [
+    "AdreN",
+    "neaLaN",
+    "Pump",
+    "tasman"
+   ]
+  },
+  {
+   "rank": 67,
+   "points": 1114,
+   "team": "CYBERSHOKE",
+   "roster": [
+    "Alkaren",
+    "alpha",
+    "bl1x1",
+    "glowiing",
+    "Mokuj1n"
+   ]
+  },
+  {
+   "rank": 68,
+   "points": 1095,
+   "team": "GenOne",
+   "roster": [
+    "bL4SEZ",
+    "Brooxsy",
+    "Chucky",
+    "Djoko",
+    "Keoz"
+   ]
+  },
+  {
+   "rank": 69,
+   "points": 1094,
+   "team": "INOX Division",
+   "roster": [
+    "FenomeN",
+    "finW",
+    "k0s",
+    "k1slll",
+    "notineki"
+   ]
+  },
+  {
+   "rank": 70,
+   "points": 1087,
+   "team": "LP",
+   "roster": [
+    "Alisson",
+    "divine",
+    "happ",
+    "Leomonster",
+    "zmb"
+   ]
+  },
+  {
+   "rank": 71,
+   "points": 1084,
+   "team": "ShindeN",
+   "roster": [
+    "abizz",
+    "guty",
+    "ivz",
+    "naz",
+    "tom1jed"
+   ]
+  },
+  {
+   "rank": 72,
+   "points": 1084,
+   "team": "DEPO",
+   "roster": [
+    "buster",
+    "Krad",
+    "sh1seido",
+    "shoxs",
+    "wetfy"
+   ]
+  },
+  {
+   "rank": 73,
+   "points": 1078,
+   "team": "STATE",
+   "roster": [
+    "kwezz",
+    "Patti",
+    "sL1m3",
+    "thamlike",
+    "Zanto"
+   ]
+  },
+  {
+   "rank": 74,
+   "points": 1077,
+   "team": "Voca",
+   "roster": [
+    "junior",
+    "MarKE",
+    "nosraC",
+    "snav"
+   ]
+  },
+  {
+   "rank": 75,
+   "points": 1077,
+   "team": "BASEMENT BOYS",
+   "roster": [
+    "fakerealityy",
+    "kr1vda",
+    "maggent",
+    "OWNER",
+    "Tr0ublE"
+   ]
+  },
+  {
+   "rank": 76,
+   "points": 1076,
+   "team": "Metizport",
+   "roster": [
+    "F1KU",
+    "forsyy",
+    "isak",
+    "Plopski",
+    "stanislaw"
+   ]
+  },
+  {
+   "rank": 77,
+   "points": 1075,
+   "team": "BRUTE",
+   "roster": [
+    "aidKiT",
+    "hfah",
+    "majky",
+    "nbqq",
+    "ZEDKO"
+   ]
+  },
+  {
+   "rank": 78,
+   "points": 1061,
+   "team": "CYBERSHOKE Prospects",
+   "roster": [
+    "DAN9ARMATURA",
+    "dezl3bio",
+    "pleynnn",
+    "SquEzxc",
+    "tw1sterzaza"
+   ]
+  },
+  {
+   "rank": 79,
+   "points": 1061,
+   "team": "KOLESIE",
+   "roster": [
+    "b1elany",
+    "ex1st",
+    "fr3nd",
+    "innocent",
+    "Qlocuu"
+   ]
+  },
+  {
+   "rank": 80,
+   "points": 1056,
+   "team": "Butterfly",
+   "roster": [
+    "ayano",
+    "Forester",
+    "k1ssly",
+    "Kurama",
+    "nitzie"
+   ]
+  },
+  {
+   "rank": 81,
+   "points": 1051,
+   "team": "BC.Game",
+   "roster": [
+    "electroNic",
+    "Magisk",
+    "mzinho",
+    "s1mple",
+    "Senzu"
+   ]
+  },
+  {
+   "rank": 82,
+   "points": 1045,
+   "team": "EAC",
+   "roster": [
+    "anber",
+    "bekker",
+    "Fessor",
+    "n1Xen",
+    "sSen"
+   ]
+  },
+  {
+   "rank": 83,
+   "points": 1040,
+   "team": "Johnny Speeds",
+   "roster": [
+    "HEAP",
+    "jocab",
+    "Lekr0",
+    "nawwk",
+    "titulus"
+   ]
+  },
+  {
+   "rank": 84,
+   "points": 1034,
+   "team": "Rune Eaters",
+   "roster": [
+    "demente",
+    "forkyz",
+    "her1tage",
+    "kumao",
+    "noni"
+   ]
+  },
+  {
+   "rank": 85,
+   "points": 1032,
+   "team": "OG",
+   "roster": [
+    "adamb",
+    "bodyy",
+    "cadiaN",
+    "pr1metapz",
+    "spooke"
+   ]
+  },
+  {
+   "rank": 86,
+   "points": 1031,
+   "team": "Eternal Fire",
+   "roster": [
+    "DemQQ",
+    "jottAAA",
+    "MisteM",
+    "regali",
+    "rigoN"
+   ]
+  },
+  {
+   "rank": 87,
+   "points": 1024,
+   "team": "The Huns",
+   "roster": [
+    "Annihilation",
+    "Bart4k",
+    "bexyz",
+    "controlez",
+    "nin9"
+   ]
+  },
+  {
+   "rank": 88,
+   "points": 1017,
+   "team": "Just Players",
+   "roster": [
+    "h1te",
+    "kAlash",
+    "sm3t",
+    "spirit",
+    "sstiNiX"
+   ]
+  },
+  {
+   "rank": 89,
+   "points": 1009,
+   "team": "9INE",
+   "roster": [
+    "bnox",
+    "cej0t",
+    "flayy",
+    "kraghen",
+    "raalz"
+   ]
+  },
+  {
+   "rank": 90,
+   "points": 1009,
+   "team": "5star",
+   "roster": [
+    "ariucle",
+    "clouden",
+    "hoolig4n",
+    "NEUZ",
+    "rate"
+   ]
+  },
+  {
+   "rank": 91,
+   "points": 1004,
+   "team": "QUAZAR",
+   "roster": [
+    "gehji",
+    "kaiori",
+    "Ne1XXX",
+    "newt",
+    "Porya"
+   ]
+  },
+  {
+   "rank": 92,
+   "points": 1004,
+   "team": "Galorys",
+   "roster": [
+    "destiny",
+    "gbb",
+    "k1not1",
+    "nython",
+    "tomate"
+   ]
+  },
+  {
+   "rank": 93,
+   "points": 1002,
+   "team": "ASTRAL",
+   "roster": [
+    "gxx-",
+    "meowpop",
+    "Neqy",
+    "RaY5ive",
+    "swiz"
+   ]
+  },
+  {
+   "rank": 94,
+   "points": 1002,
+   "team": "Passion UA",
+   "roster": [
+    "JT",
+    "Kvem",
+    "nicx",
+    "sdy",
+    "try"
+   ]
+  },
+  {
+   "rank": 95,
+   "points": 1001,
+   "team": "BAKS",
+   "roster": [
+    "k9ppy",
+    "Sa1nTy",
+    "turbo",
+    "whisper",
+    "xdENiSZERA"
+   ]
+  },
+  {
+   "rank": 96,
+   "points": 993,
+   "team": "SPARTA",
+   "roster": [
+    "Djon8",
+    "El1an",
+    "k4nfuz",
+    "NickelBack",
+    "TRAVIS"
+   ]
+  },
+  {
+   "rank": 97,
+   "points": 991,
+   "team": "Bounty Hunters",
+   "roster": [
+    "fREQ",
+    "KAISER",
+    "pepe",
+    "ponter",
+    "zock"
+   ]
+  },
+  {
+   "rank": 98,
+   "points": 987,
+   "team": "AM",
+   "roster": [
+    "Altekz",
+    "k1to",
+    "kyuubii",
+    "L00m1",
+    "myltsi"
+   ]
+  },
+  {
+   "rank": 99,
+   "points": 986,
+   "team": "BET-M",
+   "roster": [
+    "bluewh1te",
+    "executor",
+    "kinqie",
+    "KIRO",
+    "z1Nny"
+   ]
+  },
+  {
+   "rank": 100,
+   "points": 986,
+   "team": "Leo",
+   "roster": [
+    "aimy",
+    "amster",
+    "kL1o",
+    "leen",
+    "next1me"
+   ]
+  },
+  {
+   "rank": 101,
+   "points": 984,
+   "team": "The Last Resort",
+   "roster": [
+    "arTisT",
+    "bevve",
+    "Extinct",
+    "Girafffe",
+    "Vacancy"
+   ]
+  },
+  {
+   "rank": 102,
+   "points": 984,
+   "team": "Rebels",
+   "roster": [
+    "Icarus",
+    "NOPEEj",
+    "snapy",
+    "stadodo",
+    "TMKj"
+   ]
+  },
+  {
+   "rank": 103,
+   "points": 983,
+   "team": "Ground Zero",
+   "roster": [
+    "apocdud",
+    "hazr",
+    "Omichella",
+    "sliimey",
+    "tucks"
+   ]
+  },
+  {
+   "rank": 104,
+   "points": 981,
+   "team": "Betclic",
+   "roster": [
+    "Demho",
+    "Dr3nquu",
+    "eskyy",
+    "hades",
+    "Prism"
+   ]
+  },
+  {
+   "rank": 105,
+   "points": 980,
+   "team": "SportsBetExpert",
+   "roster": [
+    "consti",
+    "Infinite",
+    "motm",
+    "Peeping",
+    "shane"
+   ]
+  },
+  {
+   "rank": 106,
+   "points": 972,
+   "team": "Gaimin Gladiators",
+   "roster": [
+    "fer",
+    "HEN1",
+    "JOTA",
+    "Luken",
+    "NEKIZ"
+   ]
+  },
+  {
+   "rank": 107,
+   "points": 971,
+   "team": "NEXVOID",
+   "roster": [
+    "AccuracyTG",
+    "erkaSt",
+    "MiQ",
+    "sergelen19k",
+    "Zesta"
+   ]
+  },
+  {
+   "rank": 108,
+   "points": 970,
+   "team": "Chicken Coop",
+   "roster": [
+    "Crisp",
+    "Drop",
+    "jared",
+    "mds",
+    "REKMEISTER"
+   ]
+  },
+  {
+   "rank": 109,
+   "points": 967,
+   "team": "Black Phoenix",
+   "roster": [
+    "4X1s",
+    "karnez",
+    "Sa1nTy",
+    "Salazar",
+    "topo"
+   ]
+  },
+  {
+   "rank": 110,
+   "points": 966,
+   "team": "Turma do Pagode",
+   "roster": [
+    "felps",
+    "ksloks",
+    "naitte",
+    "pesadelo",
+    "WOOD7"
+   ]
+  },
+  {
+   "rank": 111,
+   "points": 959,
+   "team": "Fisher College",
+   "roster": [
+    "AlekS",
+    "corn",
+    "CrePoW",
+    "ReFuZR",
+    "TH0R"
+   ]
+  },
+  {
+   "rank": 112,
+   "points": 958,
+   "team": "Isurus",
+   "roster": [
+    "atarax1a",
+    "deco",
+    "dott1",
+    "Hezz",
+    "rzk"
+   ]
+  },
+  {
+   "rank": 113,
+   "points": 957,
+   "team": "Marsborne",
+   "roster": [
+    "freshie",
+    "Grizz",
+    "nicx",
+    "ogwizard",
+    "WUMBO"
+   ]
+  },
+  {
+   "rank": 114,
+   "points": 955,
+   "team": "PCIFIC",
+   "roster": [
+    "eNs",
+    "jresy",
+    "lugseN",
+    "maxy0y0",
+    "scolleN"
+   ]
+  },
+  {
+   "rank": 115,
+   "points": 954,
+   "team": "PsychoFace",
+   "roster": [
+    "abiraju",
+    "anttzz",
+    "eightz999",
+    "facecrack",
+    "PsychoDoctor"
+   ]
+  },
+  {
+   "rank": 116,
+   "points": 951,
+   "team": "MASONIC",
+   "roster": [
+    "b0RUP",
+    "Botman",
+    "Frøslev",
+    "kralle",
+    "Noruyp"
+   ]
+  },
+  {
+   "rank": 117,
+   "points": 949,
+   "team": "Lavked",
+   "roster": [
+    "1NVISIBLEE",
+    "KENSI",
+    "sol",
+    "xm1nd"
+   ]
+  },
+  {
+   "rank": 118,
+   "points": 948,
+   "team": "G2 Ares",
+   "roster": [
+    "hitori",
+    "Junyme",
+    "SHiNE",
+    "tAk",
+    "yksjupe"
+   ]
+  },
+  {
+   "rank": 119,
+   "points": 942,
+   "team": "Lazer Cats",
+   "roster": [
+    "Kiy0o",
+    "Magic",
+    "nikitea",
+    "Polbandana",
+    "tripex17"
+   ]
+  },
+  {
+   "rank": 120,
+   "points": 929,
+   "team": "Keyd Stars",
+   "roster": [
+    "ckzao",
+    "lash",
+    "matios",
+    "xureba",
+    "zede"
+   ]
+  },
+  {
+   "rank": 121,
+   "points": 928,
+   "team": "TDK",
+   "roster": [
+    "Ax1Le",
+    "h1te",
+    "nafany",
+    "sugaR",
+    "Xant3r"
+   ]
+  },
+  {
+   "rank": 122,
+   "points": 927,
+   "team": "Nordic Partners",
+   "roster": [
+    "Altekz",
+    "k1to",
+    "L00m1",
+    "Marix",
+    "myltsi"
+   ]
+  },
+  {
+   "rank": 123,
+   "points": 925,
+   "team": "ex-RUSTEC",
+   "roster": [
+    "Brilliance",
+    "jakekeS",
+    "Patsi",
+    "yiksrezo",
+    "youka"
+   ]
+  },
+  {
+   "rank": 124,
+   "points": 923,
+   "team": "DragonClaw",
+   "roster": [
+    "AntyVirus",
+    "Brylu",
+    "fanatyk",
+    "PeTeRoOo",
+    "suonko"
+   ]
+  },
+  {
+   "rank": 125,
+   "points": 917,
+   "team": "Washed",
+   "roster": [
+    "ANSG1",
+    "kiR",
+    "kroK",
+    "Lucky",
+    "suma"
+   ]
+  },
+  {
+   "rank": 126,
+   "points": 916,
+   "team": "ReThink",
+   "roster": [
+    "chucker",
+    "macke",
+    "p1ke",
+    "Rack",
+    "zeak"
+   ]
+  },
+  {
+   "rank": 127,
+   "points": 915,
+   "team": "SemperFi",
+   "roster": [
+    "hazr",
+    "keen",
+    "SaVage",
+    "shadiy",
+    "sliimey"
+   ]
+  },
+  {
+   "rank": 128,
+   "points": 913,
+   "team": "Nexus",
+   "roster": [
+    "fNk",
+    "Nexius",
+    "s0und",
+    "SBT",
+    "shield"
+   ]
+  },
+  {
+   "rank": 129,
+   "points": 907,
+   "team": "RED Canids",
+   "roster": [
+    "chayJESUS",
+    "dav1deuS",
+    "drop",
+    "kauez",
+    "reNTU"
+   ]
+  },
+  {
+   "rank": 130,
+   "points": 905,
+   "team": "Eternal Fire",
+   "roster": [
+    "DemQQ",
+    "EMSTAR",
+    "jottAAA",
+    "rigoN",
+    "Woro2k"
+   ]
+  },
+  {
+   "rank": 131,
+   "points": 899,
+   "team": "PURE",
+   "roster": [
+    "MAGILA",
+    "maty",
+    "Sh1karee",
+    "Toshas",
+    "yakuza"
+   ]
+  },
+  {
+   "rank": 132,
+   "points": 899,
+   "team": "Honvéd",
+   "roster": [
+    "1NSERT2",
+    "esor",
+    "fleav",
+    "iBALLY",
+    "noleN"
+   ]
+  },
+  {
+   "rank": 133,
+   "points": 898,
+   "team": "ENCE",
+   "roster": [
+    "Cliqq",
+    "HENU",
+    "millert",
+    "Schwarz",
+    "teme"
+   ]
+  },
+  {
+   "rank": 134,
+   "points": 897,
+   "team": "Sangal",
+   "roster": [
+    "clax",
+    "CYPHER",
+    "Patsi",
+    "pr1metapz",
+    "smooya"
+   ]
+  },
+  {
+   "rank": 135,
+   "points": 887,
+   "team": "UNO MILLE",
+   "roster": [
+    "ALLE",
+    "cLd",
+    "drg",
+    "pancc",
+    "remix"
+   ]
+  },
+  {
+   "rank": 136,
+   "points": 882,
+   "team": "Enjoy",
+   "roster": [
+    "kurosa",
+    "nbl",
+    "roxesz",
+    "sh1geo",
+    "zazzer"
+   ]
+  },
+  {
+   "rank": 137,
+   "points": 880,
+   "team": "BERG",
+   "roster": [
+    "Askan",
+    "CrePoW",
+    "KiMaRR",
+    "Rezst",
+    "Tree60"
+   ]
+  },
+  {
+   "rank": 138,
+   "points": 880,
+   "team": "Atreides",
+   "roster": [
+    "Chill",
+    "DEPRESHN",
+    "Goody",
+    "Nivera",
+    "Python"
+   ]
+  },
+  {
+   "rank": 139,
+   "points": 877,
+   "team": "Endless Journey",
+   "roster": [
+    "Aliot",
+    "Caleyy",
+    "deb0",
+    "pavlysha666",
+    "swetsi"
+   ]
+  },
+  {
+   "rank": 140,
+   "points": 875,
+   "team": "illwill",
+   "roster": [
+    "7Kick",
+    "hAdji",
+    "Maden",
+    "shalfey",
+    "VLDN"
+   ]
+  },
+  {
+   "rank": 141,
+   "points": 874,
+   "team": "Young Ninjas",
+   "roster": [
+    "joeski",
+    "mASKED",
+    "n0te",
+    "rud",
+    "tein"
+   ]
+  },
+  {
+   "rank": 142,
+   "points": 872,
+   "team": "Yawara",
+   "roster": [
+    "deemO",
+    "edv",
+    "j0w",
+    "r3kt",
+    "tele"
+   ]
+  },
+  {
+   "rank": 143,
+   "points": 870,
+   "team": "Fake do Biru",
+   "roster": [
+    "b4rtiN",
+    "detr0ittJ",
+    "hardzao",
+    "pesadelo",
+    "PKL"
+   ]
+  },
+  {
+   "rank": 144,
+   "points": 870,
+   "team": "ECSTATIC",
+   "roster": [
+    "Anlelele",
+    "Buzz",
+    "nicoodoz",
+    "nut nut",
+    "TMB"
+   ]
+  },
+  {
+   "rank": 145,
+   "points": 870,
+   "team": "Bebop",
+   "roster": [
+    "faydett",
+    "iDISBALANCE",
+    "lov1kus",
+    "redzed"
+   ]
+  },
+  {
+   "rank": 146,
+   "points": 866,
+   "team": "Bushido Wildcats",
+   "roster": [
+    "cacan",
+    "cadnyx",
+    "Darendeli",
+    "Muk0s",
+    "Vej"
+   ]
+  },
+  {
+   "rank": 147,
+   "points": 862,
+   "team": "Entropy",
+   "roster": [
+    "delle",
+    "dottie",
+    "flaw",
+    "L00m1",
+    "tevsii"
+   ]
+  },
+  {
+   "rank": 148,
+   "points": 862,
+   "team": "Strael Bora",
+   "roster": [
+    "5 Star",
+    "AdaMmMm",
+    "maddeN",
+    "newhope",
+    "Wumbo"
+   ]
+  },
+  {
+   "rank": 149,
+   "points": 860,
+   "team": "ex-Zero Tenacity",
+   "roster": [
+    "aVN",
+    "brutmonster",
+    "Cjoffo",
+    "Dragon",
+    "Kind0"
+   ]
+  },
+  {
+   "rank": 150,
+   "points": 857,
+   "team": "Poland",
+   "roster": [
+    "Demho",
+    "Prism",
+    "Qlocuu"
+   ]
+  },
+  {
+   "rank": 151,
+   "points": 857,
+   "team": "Chinggis Warriors",
+   "roster": [
+    "cool4st",
+    "Efire",
+    "Redka",
+    "ROUX",
+    "tikuak"
+   ]
+  },
+  {
+   "rank": 152,
+   "points": 856,
+   "team": "ex-RUBY",
+   "roster": [
+    "danistzz",
+    "H4SAN4TOR",
+    "Kaide",
+    "sh1nejezzz",
+    "YumsaN"
+   ]
+  },
+  {
+   "rank": 153,
+   "points": 854,
+   "team": "Rare Atom",
+   "roster": [
+    "3gl",
+    "chengking",
+    "L1haNg",
+    "Summer",
+    "Trash"
+   ]
+  },
+  {
+   "rank": 154,
+   "points": 854,
+   "team": "HAVU",
+   "roster": [
+    "Alxc",
+    "ottob",
+    "p3kko",
+    "puuha",
+    "uli"
+   ]
+  },
+  {
+   "rank": 155,
+   "points": 852,
+   "team": "Inner Circle Academy",
+   "roster": [
+    "3ippoch",
+    "L1seYoung",
+    "n0rths",
+    "NaYz",
+    "Tamefear"
+   ]
+  },
+  {
+   "rank": 156,
+   "points": 849,
+   "team": "MOUZ NXT",
+   "roster": [
+    "ay0k",
+    "eSx",
+    "mixer",
+    "Nikodeon",
+    "opdust"
+   ]
+  },
+  {
+   "rank": 157,
+   "points": 847,
+   "team": "LAG",
+   "roster": [
+    "Bwills",
+    "Cryptic",
+    "djay",
+    "Sandman",
+    "SLIGHT"
+   ]
+  },
+  {
+   "rank": 158,
+   "points": 845,
+   "team": "HYPERSPIRIT",
+   "roster": [
+    "ADRON",
+    "Ciocardau",
+    "d1maje",
+    "ragga",
+    "starplajerz"
+   ]
+  },
+  {
+   "rank": 159,
+   "points": 833,
+   "team": "regain",
+   "roster": [
+    "dvrk",
+    "grape",
+    "H0NeST",
+    "sasha",
+    "Zucar"
+   ]
+  },
+  {
+   "rank": 160,
+   "points": 831,
+   "team": "Marsborne",
+   "roster": [
+    "chop",
+    "Cxzi",
+    "Grizz",
+    "motm",
+    "WolfY"
+   ]
+  },
+  {
+   "rank": 161,
+   "points": 830,
+   "team": "Noir Verse",
+   "roster": [
+    "fostar",
+    "kirxttu",
+    "Naginat",
+    "Santuriano",
+    "xeNji"
+   ]
+  },
+  {
+   "rank": 162,
+   "points": 830,
+   "team": "Kaleido",
+   "roster": [
+    "chuzhongT",
+    "expSasiKi",
+    "rage",
+    "SPine",
+    "suki"
+   ]
+  },
+  {
+   "rank": 163,
+   "points": 826,
+   "team": "roamsfiest",
+   "roster": [
+    "Realyummy",
+    "Sn0w",
+    "TiiREX"
+   ]
+  },
+  {
+   "rank": 164,
+   "points": 821,
+   "team": "SINQU",
+   "roster": [
+    "Eem3l1",
+    "imbaemba",
+    "MikOne",
+    "Onjib",
+    "wejkko"
+   ]
+  },
+  {
+   "rank": 165,
+   "points": 820,
+   "team": "WBT",
+   "roster": [
+    "fl1peR",
+    "marat2k",
+    "NxStep",
+    "svemyy",
+    "tired73"
+   ]
+  },
+  {
+   "rank": 166,
+   "points": 820,
+   "team": "Alter Ego",
+   "roster": [
+    "BnTeT",
+    "Gratisfaction",
+    "PokemoN",
+    "Polbandana",
+    "tomiko"
+   ]
+  },
+  {
+   "rank": 167,
+   "points": 816,
+   "team": "ODDIK",
+   "roster": [
+    "Ceruttera",
+    "diozera",
+    "nardes",
+    "PremiuM",
+    "righi"
+   ]
+  },
+  {
+   "rank": 168,
+   "points": 815,
+   "team": "Chinggis Warriors",
+   "roster": [
+    "Efire",
+    "hasteka",
+    "ROUX",
+    "tikuak",
+    "yAmi"
+   ]
+  },
+  {
+   "rank": 169,
+   "points": 815,
+   "team": "FAVBET",
+   "roster": [
+    "bondik",
+    "j3kie",
+    "Marix",
+    "s4ltovsk1yy",
+    "Smash"
+   ]
+  },
+  {
+   "rank": 170,
+   "points": 812,
+   "team": "ALGO",
+   "roster": [
+    "adeX",
+    "aNdu",
+    "Bambosh",
+    "nukkye",
+    "szejn"
+   ]
+  },
+  {
+   "rank": 171,
+   "points": 809,
+   "team": "Rooster",
+   "roster": [
+    "ADK",
+    "chelleos",
+    "ju1ces",
+    "rekonz",
+    "SkulL"
+   ]
+  },
+  {
+   "rank": 172,
+   "points": 805,
+   "team": "MIBR Academy",
+   "roster": [
+    "fl4sh",
+    "Jerr1",
+    "lkz",
+    "revoltz",
+    "stormzyn"
+   ]
+  },
+  {
+   "rank": 173,
+   "points": 804,
+   "team": "SAW Youngsters",
+   "roster": [
+    "Jayy2s",
+    "jERK0z",
+    "M1KA",
+    "snowiee",
+    "tuxa"
+   ]
+  },
+  {
+   "rank": 174,
+   "points": 804,
+   "team": "illwill",
+   "roster": [
+    "7Kick",
+    "adamS",
+    "dycha",
+    "hAdji",
+    "nEMANHA"
+   ]
+  },
+  {
+   "rank": 175,
+   "points": 803,
+   "team": "WAZABI",
+   "roster": [
+    "BacH",
+    "BangBang",
+    "Laykinn",
+    "m0vski",
+    "VireZ"
+   ]
+  },
+  {
+   "rank": 176,
+   "points": 800,
+   "team": "MIBR fe",
+   "roster": [
+    "Dani",
+    "GaBi",
+    "Olga",
+    "poppins",
+    "yungher"
+   ]
+  },
+  {
+   "rank": 177,
+   "points": 789,
+   "team": "Spirit Academy",
+   "roster": [
+    "k0gaSs",
+    "Kiryasoo",
+    "Netrix",
+    "s1nside",
+    "VILBy"
+   ]
+  },
+  {
+   "rank": 178,
+   "points": 787,
+   "team": "Falcons Force",
+   "roster": [
+    "grecu",
+    "NaToSaphiX",
+    "NucleonZ",
+    "Tapewaare",
+    "VENO"
+   ]
+  },
+  {
+   "rank": 179,
+   "points": 785,
+   "team": "BMZ",
+   "roster": [
+    "fury5k",
+    "MagnumZ",
+    "QQLIGHTNING",
+    "rhittacrit",
+    "Wonderzce"
+   ]
+  },
+  {
+   "rank": 180,
+   "points": 782,
+   "team": "Sashi Academy",
+   "roster": [
+    "Bl4zE",
+    "Damsi",
+    "Mizi",
+    "Mol011",
+    "Thom"
+   ]
+  },
+  {
+   "rank": 181,
+   "points": 780,
+   "team": "Hashiras",
+   "roster": [
+    "birdfromsky",
+    "Burmylov",
+    "c0llins",
+    "JACKZ",
+    "Queenix"
+   ]
+  },
+  {
+   "rank": 182,
+   "points": 775,
+   "team": "Lavked",
+   "roster": [
+    "1NVISIBLEE",
+    "Djon8",
+    "k4nfuz",
+    "sol",
+    "yuramyata"
+   ]
+  },
+  {
+   "rank": 183,
+   "points": 775,
+   "team": "Liquid",
+   "roster": [
+    "EliGE",
+    "jL",
+    "NAF",
+    "siuhy",
+    "ultimate"
+   ]
+  },
+  {
+   "rank": 184,
+   "points": 774,
+   "team": "BC.Game",
+   "roster": [
+    "aragornN",
+    "electroNic",
+    "krazy",
+    "MUTiRiS",
+    "s1mple"
+   ]
+  },
+  {
+   "rank": 185,
+   "points": 773,
+   "team": "los kogutos",
+   "roster": [
+    "AdrieN",
+    "hotd0g",
+    "maaryy",
+    "Markoś",
+    "tomiko"
+   ]
+  },
+  {
+   "rank": 186,
+   "points": 772,
+   "team": "NuTorious",
+   "roster": [
+    "bones",
+    "cmrn",
+    "Kermi",
+    "neight",
+    "Signal"
+   ]
+  },
+  {
+   "rank": 187,
+   "points": 766,
+   "team": "Last Bullet",
+   "roster": [
+    "B1NGO",
+    "BZA",
+    "lan",
+    "Miami",
+    "Roninbaby"
+   ]
+  },
+  {
+   "rank": 188,
+   "points": 766,
+   "team": "Mindfreak",
+   "roster": [
+    "Bay",
+    "kairo",
+    "phoebe",
+    "void",
+    "zune"
+   ]
+  },
+  {
+   "rank": 189,
+   "points": 766,
+   "team": "Mai Tai",
+   "roster": [
+    "aimy",
+    "chudy",
+    "Melavi",
+    "next1me",
+    "tomiko"
+   ]
+  },
+  {
+   "rank": 190,
+   "points": 766,
+   "team": "UNO MILLE",
+   "roster": [
+    "brokeN",
+    "cLd",
+    "clon7",
+    "Ltz",
+    "remix"
+   ]
+  },
+  {
+   "rank": 191,
+   "points": 766,
+   "team": "Villainous",
+   "roster": [
+    "Burglar",
+    "DYLAN",
+    "Jolts",
+    "Panic",
+    "Sunk"
+   ]
+  },
+  {
+   "rank": 192,
+   "points": 765,
+   "team": "Leo",
+   "roster": [
+    "amster",
+    "leri511",
+    "Malkiss",
+    "marat2k",
+    "OneUn1que"
+   ]
+  },
+  {
+   "rank": 193,
+   "points": 763,
+   "team": "Vexar",
+   "roster": [
+    "ADntZ",
+    "datet",
+    "KarmaN",
+    "KEEMBO",
+    "obsward"
+   ]
+  },
+  {
+   "rank": 194,
+   "points": 760,
+   "team": "aimclub",
+   "roster": [
+    "ERSIN",
+    "waZz",
+    "zewts"
+   ]
+  },
+  {
+   "rank": 195,
+   "points": 757,
+   "team": "Haunted House",
+   "roster": [
+    "fr0k",
+    "icyvl0ne",
+    "malinov",
+    "SasukeQO",
+    "Schwarzkopf"
+   ]
+  },
+  {
+   "rank": 196,
+   "points": 756,
+   "team": "Fortress",
+   "roster": [
+    "As K",
+    "BqreBedre",
+    "Brand",
+    "GrEnNiE",
+    "K1ngShield"
+   ]
+  },
+  {
+   "rank": 197,
+   "points": 753,
+   "team": "HOTU",
+   "roster": [
+    "dukefissura",
+    "gokushima",
+    "kAlash",
+    "mizu",
+    "n0rb3r7"
+   ]
+  },
+  {
+   "rank": 198,
+   "points": 752,
+   "team": "NAVI Junior",
+   "roster": [
+    "FAZERY",
+    "kodak",
+    "MahaR",
+    "skizzyee",
+    "yoki"
+   ]
+  },
+  {
+   "rank": 199,
+   "points": 752,
+   "team": "DONSTU",
+   "roster": [
+    "Due1yant",
+    "gleb86rus",
+    "LAKSHERi",
+    "NeoLife",
+    "phorate"
+   ]
+  },
+  {
+   "rank": 200,
+   "points": 752,
+   "team": "Misa",
+   "roster": [
+    "Ckanic",
+    "EMSTAR",
+    "h0kz",
+    "souv",
+    "Zuedsta"
+   ]
+  },
+  {
+   "rank": 201,
+   "points": 752,
+   "team": "GameHunters",
+   "roster": [
+    "abr",
+    "BK1",
+    "Bruninho",
+    "bsd",
+    "nyezin"
+   ]
+  },
+  {
+   "rank": 202,
+   "points": 749,
+   "team": "aAa",
+   "roster": [
+    "AsI0K",
+    "Rain",
+    "Saax",
+    "SLIE9000",
+    "Tarkky"
+   ]
+  },
+  {
+   "rank": 203,
+   "points": 747,
+   "team": "OLDBOYS PL",
+   "roster": [
+    "Goofy",
+    "MICHU",
+    "rallen",
+    "ToM223",
+    "tudsoN"
+   ]
+  },
+  {
+   "rank": 204,
+   "points": 747,
+   "team": "BOSS",
+   "roster": [
+    "ben1337",
+    "Bwills",
+    "marekiew",
+    "SLIGHT",
+    "WUMBO"
+   ]
+  },
+  {
+   "rank": 205,
+   "points": 747,
+   "team": "Fire Flux",
+   "roster": [
+    "Cizzx",
+    "Quality",
+    "xEternaLxx",
+    "zemix",
+    "zer0UKY"
+   ]
+  },
+  {
+   "rank": 206,
+   "points": 745,
+   "team": "Privateer",
+   "roster": [
+    "Ariant0",
+    "dobbo",
+    "Frazehh",
+    "M1n1maL",
+    "Prime"
+   ]
+  },
+  {
+   "rank": 207,
+   "points": 745,
+   "team": "benched gods",
+   "roster": [
+    "BloodyK",
+    "f1chper",
+    "facer",
+    "K014NZ",
+    "Wign"
+   ]
+  },
+  {
+   "rank": 208,
+   "points": 745,
+   "team": "Iowa Stormboar",
+   "roster": [
+    "aelor",
+    "ayaneuu",
+    "jsfeltner",
+    "Scorchyy",
+    "TyRa"
+   ]
+  },
+  {
+   "rank": 209,
+   "points": 744,
+   "team": "TNC",
+   "roster": [
+    "AdrieN",
+    "maaryy",
+    "Nami",
+    "yvro"
+   ]
+  },
+  {
+   "rank": 210,
+   "points": 742,
+   "team": "brazylijski luz",
+   "roster": [
+    "aimy",
+    "chudy",
+    "elem",
+    "Nami",
+    "next1me"
+   ]
+  },
+  {
+   "rank": 211,
+   "points": 742,
+   "team": "Change The Game",
+   "roster": [
+    "957",
+    "Hack1ng",
+    "LaiKeXu",
+    "ProKiller",
+    "VanceKK"
+   ]
+  },
+  {
+   "rank": 212,
+   "points": 742,
+   "team": "Mai Tai",
+   "roster": [
+    "chudy",
+    "darchevile",
+    "Melavi",
+    "Nami",
+    "Pelle"
+   ]
+  },
+  {
+   "rank": 213,
+   "points": 741,
+   "team": "BESTIA Academy",
+   "roster": [
+    "agt",
+    "F4QQ",
+    "Jotag3",
+    "Lekzi",
+    "lezy"
+   ]
+  },
+  {
+   "rank": 214,
+   "points": 741,
+   "team": "THE UNIT",
+   "roster": [
+    "ad0rfin",
+    "kyrosawa",
+    "nesh"
+   ]
+  },
+  {
+   "rank": 215,
+   "points": 741,
+   "team": "Zomblers",
+   "roster": [
+    "CAJUN",
+    "CoolComs",
+    "FxRE",
+    "Pose1doNN",
+    "Zoker"
+   ]
+  },
+  {
+   "rank": 216,
+   "points": 737,
+   "team": "FengDa",
+   "roster": [
+    "3gl",
+    "afufu",
+    "p5p",
+    "Trash"
+   ]
+  },
+  {
+   "rank": 217,
+   "points": 737,
+   "team": "megoshort",
+   "roster": [
+    "jayzaR",
+    "qvick",
+    "robiin",
+    "Twinkey",
+    "zen"
+   ]
+  },
+  {
+   "rank": 218,
+   "points": 736,
+   "team": "HEROIC Academy",
+   "roster": [
+    "HOLY",
+    "Hrdina",
+    "Muciek",
+    "St0m4k",
+    "Yoghi"
+   ]
+  },
+  {
+   "rank": 219,
+   "points": 736,
+   "team": "Phantom Academy",
+   "roster": [
+    "Ayteel",
+    "Brain47",
+    "kalyambys",
+    "Kunai",
+    "parad17se"
+   ]
+  },
+  {
+   "rank": 220,
+   "points": 734,
+   "team": "ex-MANA",
+   "roster": [
+    "ammar",
+    "BledarD",
+    "cerber",
+    "vAloN",
+    "xonn1k"
+   ]
+  },
+  {
+   "rank": 221,
+   "points": 731,
+   "team": "Club 333",
+   "roster": [
+    "4TAYLOR",
+    "kobruh",
+    "laxiee",
+    "Marro",
+    "SecretAgent"
+   ]
+  },
+  {
+   "rank": 222,
+   "points": 730,
+   "team": "Ground Zero",
+   "roster": [
+    "apocdud",
+    "damyo",
+    "Omichella",
+    "pz",
+    "vision"
+   ]
+  },
+  {
+   "rank": 223,
+   "points": 730,
+   "team": "train launcher",
+   "roster": [
+    "bsover",
+    "Leon1das",
+    "Majkn",
+    "Siz",
+    "timothybtw"
+   ]
+  },
+  {
+   "rank": 224,
+   "points": 728,
+   "team": "Keyd Stars",
+   "roster": [
+    "CutzMeretz",
+    "lash",
+    "matios",
+    "t9rnay",
+    "xureba"
+   ]
+  },
+  {
+   "rank": 225,
+   "points": 726,
+   "team": "UNiTY",
+   "roster": [
+    "K1-FiDa",
+    "M1key",
+    "MoriiSko",
+    "NEOFRAG",
+    "woozzzi"
+   ]
+  },
+  {
+   "rank": 226,
+   "points": 723,
+   "team": "NEW VISION",
+   "roster": [
+    "fen2k",
+    "hahanz0",
+    "w0l33n",
+    "wonimo",
+    "x1nk1n"
+   ]
+  },
+  {
+   "rank": 227,
+   "points": 722,
+   "team": "LAG",
+   "roster": [
+    "consti",
+    "djay",
+    "kmrn",
+    "Sandman",
+    "Wolffe"
+   ]
+  },
+  {
+   "rank": 228,
+   "points": 719,
+   "team": "The QUBE",
+   "roster": [
+    "Cozen",
+    "grizzly",
+    "Kamui",
+    "Paranormal",
+    "soloooS"
+   ]
+  },
+  {
+   "rank": 229,
+   "points": 718,
+   "team": "FarmVille",
+   "roster": [
+    "adam",
+    "BeaKie",
+    "calamity",
+    "cJ dA K1nG",
+    "sleepz0rk"
+   ]
+  },
+  {
+   "rank": 230,
+   "points": 717,
+   "team": "Just Swing",
+   "roster": [
+    "gas",
+    "Purely",
+    "qqGOD",
+    "sATOR1",
+    "skrr"
+   ]
+  },
+  {
+   "rank": 231,
+   "points": 717,
+   "team": "KOLESIE",
+   "roster": [
+    "b1elany",
+    "innocent",
+    "Markoś",
+    "Qlocuu",
+    "Sobol"
+   ]
+  },
+  {
+   "rank": 232,
+   "points": 716,
+   "team": "struggletony",
+   "roster": [
+    "birdfromsky",
+    "Q-Q",
+    "Queenix"
+   ]
+  },
+  {
+   "rank": 233,
+   "points": 714,
+   "team": "BIG Academy",
+   "roster": [
+    "aZe",
+    "doni",
+    "Hrdina",
+    "prosus",
+    "w1dow"
+   ]
+  },
+  {
+   "rank": 234,
+   "points": 713,
+   "team": "BORRACHEIROS",
+   "roster": [
+    "Lacerda",
+    "neozix",
+    "nolkz",
+    "rainny",
+    "zock9"
+   ]
+  },
+  {
+   "rank": 235,
+   "points": 710,
+   "team": "eternal premium",
+   "roster": [
+    "dazzy",
+    "famous",
+    "Innerpeace",
+    "P1kan0",
+    "skept1K"
+   ]
+  },
+  {
+   "rank": 236,
+   "points": 707,
+   "team": "Lilmix",
+   "roster": [
+    "b0denmaster",
+    "Jackinho",
+    "quix",
+    "Wonder"
+   ]
+  },
+  {
+   "rank": 237,
+   "points": 704,
+   "team": "ALKA",
+   "roster": [
+    "bnc",
+    "cerolzin",
+    "proSHOW",
+    "puni",
+    "vinaabEAST"
+   ]
+  },
+  {
+   "rank": 238,
+   "points": 704,
+   "team": "Arcade",
+   "roster": [
+    "74LOR",
+    "Jynx",
+    "Kras",
+    "Mechanical",
+    "N1ghtraid"
+   ]
+  },
+  {
+   "rank": 239,
+   "points": 703,
+   "team": "paiN Academy",
+   "roster": [
+    "k9izer",
+    "Misfit",
+    "Rkzinho",
+    "Tatu",
+    "tsug"
+   ]
+  },
+  {
+   "rank": 240,
+   "points": 698,
+   "team": "ex-Aether",
+   "roster": [
+    "bezymecc",
+    "brett",
+    "H0NeST",
+    "s3rum",
+    "xaler"
+   ]
+  },
+  {
+   "rank": 241,
+   "points": 692,
+   "team": "Patins da Ferrari",
+   "roster": [
+    "CutzMeretz",
+    "history",
+    "mlhzin",
+    "nicks",
+    "t9rnay"
+   ]
+  },
+  {
+   "rank": 242,
+   "points": 689,
+   "team": "Aether",
+   "roster": [
+    "Andrew",
+    "brett",
+    "H0NeST",
+    "Seb",
+    "xaler"
+   ]
+  },
+  {
+   "rank": 243,
+   "points": 688,
+   "team": "insane players",
+   "roster": [
+    "freshie",
+    "Fruitcupx",
+    "ogwizard",
+    "sml",
+    "Wolffe"
+   ]
+  },
+  {
+   "rank": 244,
+   "points": 686,
+   "team": "BORING PLAYERS",
+   "roster": [
+    "D1zzyg",
+    "Jun7",
+    "Miszary",
+    "tutu",
+    "zdr"
+   ]
+  },
+  {
+   "rank": 245,
+   "points": 686,
+   "team": "los kogutos",
+   "roster": [
+    "AdrieN",
+    "maaryy",
+    "POLO",
+    "Showk",
+    "yvro"
+   ]
+  },
+  {
+   "rank": 246,
+   "points": 685,
+   "team": "UNiTY",
+   "roster": [
+    "2high",
+    "KWERTZZ",
+    "M1key",
+    "NEOFRAG",
+    "woozzzi"
+   ]
+  },
+  {
+   "rank": 247,
+   "points": 684,
+   "team": "SHISHKA",
+   "roster": [
+    "danistzz",
+    "Krad",
+    "Norwi",
+    "shalfey",
+    "yiksrezo"
+   ]
+  },
+  {
+   "rank": 248,
+   "points": 683,
+   "team": "Just Players",
+   "roster": [
+    "em0k1d",
+    "rexxie",
+    "Something",
+    "spirit",
+    "sstiNiX"
+   ]
+  },
+  {
+   "rank": 249,
+   "points": 678,
+   "team": "Reign Above",
+   "roster": [
+    "AEROj",
+    "cobalt",
+    "dAVE",
+    "louie",
+    "SeRCEra"
+   ]
+  },
+  {
+   "rank": 250,
+   "points": 677,
+   "team": "EMPIRE",
+   "roster": [
+    "BAGEL",
+    "C0C0",
+    "KmZ",
+    "no1nx",
+    "twigs"
+   ]
+  },
+  {
+   "rank": 251,
+   "points": 674,
+   "team": "cirahvi",
+   "roster": [
+    "8Juho8",
+    "allu",
+    "arvid",
+    "Myggis",
+    "oopee"
+   ]
+  },
+  {
+   "rank": 252,
+   "points": 672,
+   "team": "Back to Back",
+   "roster": [
+    "edv",
+    "fokiu",
+    "perez",
+    "protado",
+    "zede"
+   ]
+  },
+  {
+   "rank": 253,
+   "points": 668,
+   "team": "mellren",
+   "roster": [
+    "Maksilvl",
+    "mdl",
+    "menddel",
+    "shootic"
+   ]
+  },
+  {
+   "rank": 254,
+   "points": 668,
+   "team": "aimclub",
+   "roster": [
+    "Ed1m",
+    "ERSIN",
+    "RoberttMP",
+    "XELLOW",
+    "zewts"
+   ]
+  },
+  {
+   "rank": 255,
+   "points": 668,
+   "team": "Mindfreak",
+   "roster": [
+    "Crunchy",
+    "dpr",
+    "kairo",
+    "tucks",
+    "zune"
+   ]
+  },
+  {
+   "rank": 256,
+   "points": 667,
+   "team": "megoshort",
+   "roster": [
+    "aidKiT",
+    "mogv",
+    "robiin",
+    "titulus",
+    "Twinkey"
+   ]
+  },
+  {
+   "rank": 257,
+   "points": 667,
+   "team": "Shimmer",
+   "roster": [
+    "alicerawr",
+    "AVA174",
+    "empathy",
+    "Serendipity",
+    "Stx"
+   ]
+  },
+  {
+   "rank": 258,
+   "points": 666,
+   "team": "9INE",
+   "roster": [
+    "bnox",
+    "cej0t",
+    "kraghen",
+    "raalz",
+    "shield"
+   ]
+  },
+  {
+   "rank": 259,
+   "points": 666,
+   "team": "Abyssal",
+   "roster": [
+    "blood",
+    "dangeR",
+    "foggers",
+    "gump",
+    "vinhy"
+   ]
+  },
+  {
+   "rank": 260,
+   "points": 663,
+   "team": "yngods",
+   "roster": [
+    "7tetsu",
+    "Muk0s",
+    "Remill",
+    "tommy",
+    "whisper"
+   ]
+  },
+  {
+   "rank": 261,
+   "points": 662,
+   "team": "ROUNDS",
+   "roster": [
+    "Kollo",
+    "Lapa",
+    "Monoxx",
+    "p12",
+    "ykis"
+   ]
+  },
+  {
+   "rank": 262,
+   "points": 662,
+   "team": "Club 333",
+   "roster": [
+    "laxiee",
+    "Marro",
+    "mason",
+    "N2o",
+    "obi"
+   ]
+  },
+  {
+   "rank": 263,
+   "points": 661,
+   "team": "ALTAY",
+   "roster": [
+    "ARSPOWER",
+    "Blackout",
+    "kiytsu",
+    "Plain7"
+   ]
+  },
+  {
+   "rank": 264,
+   "points": 660,
+   "team": "Clutchain fe",
+   "roster": [
+    "Kat",
+    "tory",
+    "twenty3",
+    "vicu",
+    "zAAz"
+   ]
+  },
+  {
+   "rank": 265,
+   "points": 659,
+   "team": "Famalicão",
+   "roster": [
+    "h0t",
+    "M1KA",
+    "P3R3IIRA",
+    "seabraez",
+    "Sprayy"
+   ]
+  },
+  {
+   "rank": 266,
+   "points": 658,
+   "team": "Arch",
+   "roster": [
+    "Dis1",
+    "f1R",
+    "ka1do",
+    "MaLLiC",
+    "web sun"
+   ]
+  },
+  {
+   "rank": 267,
+   "points": 656,
+   "team": "KUUSAMO",
+   "roster": [
+    "epik",
+    "Keksimage",
+    "Orava",
+    "osku",
+    "rbm"
+   ]
+  },
+  {
+   "rank": 268,
+   "points": 653,
+   "team": "bankaPEPSI",
+   "roster": [
+    "HUckLer",
+    "lesswill",
+    "lUMiER",
+    "SEMSYS",
+    "xsepower"
+   ]
+  },
+  {
+   "rank": 269,
+   "points": 651,
+   "team": "Invicta",
+   "roster": [
+    "artie",
+    "Griller",
+    "SinK"
+   ]
+  },
+  {
+   "rank": 270,
+   "points": 650,
+   "team": "Julie&Cie",
+   "roster": [
+    "amanek",
+    "Empera",
+    "Joker",
+    "KIRADODO",
+    "Monkey D Julie"
+   ]
+  },
+  {
+   "rank": 271,
+   "points": 649,
+   "team": "Subtop De France",
+   "roster": [
+    "Razzmo",
+    "Revol",
+    "sanjoCRAKITO",
+    "Supr3me",
+    "XiMaa"
+   ]
+  },
+  {
+   "rank": 272,
+   "points": 647,
+   "team": "METANOIA Wolves",
+   "roster": [
+    "ALENNNCAR",
+    "ntx",
+    "spinnie",
+    "Thuister",
+    "vzn"
+   ]
+  },
+  {
+   "rank": 273,
+   "points": 647,
+   "team": "Procyon",
+   "roster": [
+    "laser",
+    "lenci",
+    "MaxOff",
+    "next",
+    "pavv"
+   ]
+  },
+  {
+   "rank": 274,
+   "points": 646,
+   "team": "Overtake Sector",
+   "roster": [
+    "intra",
+    "jason",
+    "LEARSI",
+    "sacrifice",
+    "Umar"
+   ]
+  },
+  {
+   "rank": 275,
+   "points": 645,
+   "team": "Lilmix",
+   "roster": [
+    "bsover",
+    "doobs",
+    "quix",
+    "walleN",
+    "zen"
+   ]
+  },
+  {
+   "rank": 276,
+   "points": 645,
+   "team": "Dark Moon",
+   "roster": [
+    "d3j4vy",
+    "keiyon",
+    "Maison",
+    "ri0dayungog"
+   ]
+  },
+  {
+   "rank": 277,
+   "points": 644,
+   "team": "A Great Chaos",
+   "roster": [
+    "7EMPORARY",
+    "Pleb0rs",
+    "seilysh",
+    "whitezins",
+    "ynrii"
+   ]
+  },
+  {
+   "rank": 278,
+   "points": 643,
+   "team": "Wanted Goons",
+   "roster": [
+    "hibui",
+    "Johan",
+    "killerPandas",
+    "Magic",
+    "relt"
+   ]
+  },
+  {
+   "rank": 279,
+   "points": 642,
+   "team": "OlyBet",
+   "roster": [
+    "cgk",
+    "ChipaaN",
+    "Frip",
+    "hexoq",
+    "imp"
+   ]
+  },
+  {
+   "rank": 280,
+   "points": 642,
+   "team": "METANOIA Wolves",
+   "roster": [
+    "Lcs",
+    "sakamoto",
+    "spinnie",
+    "Thuister",
+    "vzn"
+   ]
+  },
+  {
+   "rank": 281,
+   "points": 640,
+   "team": "R2",
+   "roster": [
+    "ABM",
+    "fakzwall",
+    "maaxg1",
+    "Rivo",
+    "tutehen"
+   ]
+  },
+  {
+   "rank": 282,
+   "points": 639,
+   "team": "DETONATE",
+   "roster": [
+    "carN",
+    "chante",
+    "duhpe",
+    "Feral",
+    "tatm"
+   ]
+  },
+  {
+   "rank": 283,
+   "points": 638,
+   "team": "XI",
+   "roster": [
+    "Bakorino",
+    "Egelund",
+    "emili0",
+    "ETYYY",
+    "Jiace"
+   ]
+  },
+  {
+   "rank": 284,
+   "points": 636,
+   "team": "Fuzos",
+   "roster": [
+    "Mané",
+    "rafaxF",
+    "Slaxx",
+    "Stepa"
+   ]
+  },
+  {
+   "rank": 285,
+   "points": 634,
+   "team": "Voca",
+   "roster": [
+    "dea",
+    "Infinite",
+    "nosraC",
+    "shane",
+    "snav"
+   ]
+  },
+  {
+   "rank": 286,
+   "points": 634,
+   "team": "LPH",
+   "roster": [
+    "d0mZ1k",
+    "Fajr",
+    "KAD1M",
+    "lojzo",
+    "N1KOLAJ"
+   ]
+  },
+  {
+   "rank": 287,
+   "points": 633,
+   "team": "Voracity",
+   "roster": [
+    "jeyN",
+    "moz",
+    "N0R1",
+    "swaggy",
+    "wfn"
+   ]
+  },
+  {
+   "rank": 288,
+   "points": 630,
+   "team": "Coalesce",
+   "roster": [
+    "D1ntrIXxX",
+    "onder",
+    "sen1ar"
+   ]
+  },
+  {
+   "rank": 289,
+   "points": 628,
+   "team": "FOLHA AMARELA",
+   "roster": [
+    "ckzao",
+    "f4stzin",
+    "mello",
+    "RCF",
+    "s1cko"
+   ]
+  },
+  {
+   "rank": 290,
+   "points": 627,
+   "team": "DNK",
+   "roster": [
+    "dethera",
+    "indoubt",
+    "Plain7",
+    "RamBLBi",
+    "tier0 s"
+   ]
+  },
+  {
+   "rank": 291,
+   "points": 626,
+   "team": "Tricksters",
+   "roster": [
+    "Halfjix",
+    "iRV1NG"
+   ]
+  },
+  {
+   "rank": 292,
+   "points": 626,
+   "team": "Romania",
+   "roster": [
+    "Blytz",
+    "fNk",
+    "fnl",
+    "s0und",
+    "XELLOW"
+   ]
+  },
+  {
+   "rank": 293,
+   "points": 625,
+   "team": "ZEVS",
+   "roster": [
+    "bexyz",
+    "dobo",
+    "FELSADIA",
+    "GEZUU",
+    "versa"
+   ]
+  },
+  {
+   "rank": 294,
+   "points": 620,
+   "team": "Rune Eaters",
+   "roster": [
+    "dako",
+    "fitch",
+    "forkyz",
+    "her1tage",
+    "mo0N"
+   ]
+  },
+  {
+   "rank": 295,
+   "points": 620,
+   "team": "MARKandLARRY",
+   "roster": [
+    "BRACE",
+    "micalis",
+    "Roflko",
+    "yourwombat",
+    "zeph"
+   ]
+  },
+  {
+   "rank": 296,
+   "points": 619,
+   "team": "paiN Academy",
+   "roster": [
+    "akasay",
+    "Markz",
+    "Tatu",
+    "tsug",
+    "vtnn"
+   ]
+  },
+  {
+   "rank": 297,
+   "points": 618,
+   "team": "900FPSvsECO",
+   "roster": [
+    "Gabe",
+    "mds",
+    "Termina",
+    "Valter0k",
+    "Zoker"
+   ]
+  },
+  {
+   "rank": 298,
+   "points": 618,
+   "team": "Sensation",
+   "roster": [
+    "ncl",
+    "Tsogoo"
+   ]
+  },
+  {
+   "rank": 299,
+   "points": 617,
+   "team": "Ding Cuts",
+   "roster": [
+    "biebs",
+    "blood",
+    "delkud",
+    "maxed",
+    "Val"
+   ]
+  },
+  {
+   "rank": 300,
+   "points": 614,
+   "team": "Wampirki",
+   "roster": [
+    "adex",
+    "Arielek",
+    "Kamo",
+    "Kizzzi",
+    "patrikinho"
+   ]
+  },
+  {
+   "rank": 301,
+   "points": 614,
+   "team": "Endless Journey",
+   "roster": [
+    "deb0",
+    "pavlysha666",
+    "sstiNiX",
+    "swetsi"
+   ]
+  },
+  {
+   "rank": 302,
+   "points": 613,
+   "team": "Wingman",
+   "roster": [
+    "la3euka",
+    "Minor",
+    "MoWeL",
+    "xnkka",
+    "Z1W0W"
+   ]
+  },
+  {
+   "rank": 303,
+   "points": 611,
+   "team": "Atrix",
+   "roster": [
+    "bokor",
+    "Eleven",
+    "LyttleZ",
+    "REGIANE",
+    "Sofiaxyz"
+   ]
+  },
+  {
+   "rank": 304,
+   "points": 610,
+   "team": "Jumprava",
+   "roster": [
+    "cgk",
+    "ChipaaN",
+    "whitezins"
+   ]
+  },
+  {
+   "rank": 305,
+   "points": 609,
+   "team": "Wave",
+   "roster": [
+    "Belof",
+    "hayanh",
+    "Katalic",
+    "miksozzz",
+    "sheezy"
+   ]
+  },
+  {
+   "rank": 306,
+   "points": 608,
+   "team": "DXA",
+   "roster": [
+    "c4put",
+    "JiNxZiE",
+    "Myst",
+    "Supers",
+    "Zoot"
+   ]
+  },
+  {
+   "rank": 307,
+   "points": 607,
+   "team": "Crashers",
+   "roster": [
+    "Machado",
+    "mtsGOD",
+    "nikz",
+    "Reix",
+    "trindade"
+   ]
+  },
+  {
+   "rank": 308,
+   "points": 607,
+   "team": "Rave",
+   "roster": [
+    "Cryptic",
+    "junior",
+    "laxiee",
+    "Pluto",
+    "Walco"
+   ]
+  },
+  {
+   "rank": 309,
+   "points": 606,
+   "team": "ex-KRÜ",
+   "roster": [
+    "1962",
+    "ABM",
+    "guidimon",
+    "laser",
+    "reversive"
+   ]
+  },
+  {
+   "rank": 310,
+   "points": 606,
+   "team": "ZOTIX",
+   "roster": [
+    "byr9",
+    "EsD",
+    "kalyambys",
+    "xeNji"
+   ]
+  },
+  {
+   "rank": 311,
+   "points": 605,
+   "team": "BOSS",
+   "roster": [
+    "Bwills",
+    "FaNg",
+    "Fruitcupx",
+    "SLIGHT",
+    "stanislaw"
+   ]
+  },
+  {
+   "rank": 312,
+   "points": 604,
+   "team": "Festina Lente",
+   "roster": [
+    "FRIZZY",
+    "Fruitcupx",
+    "gamble",
+    "Maxuel"
+   ]
+  },
+  {
+   "rank": 313,
+   "points": 601,
+   "team": "EC BANGA",
+   "roster": [
+    "blazekiNho",
+    "keni",
+    "Labreenc",
+    "makaroff"
+   ]
+  },
+  {
+   "rank": 314,
+   "points": 593,
+   "team": "Aurora Young Blud",
+   "roster": [
+    "k1nco",
+    "kurosse",
+    "meetyoxanaji",
+    "r1pa4",
+    "redzed"
+   ]
+  },
+  {
+   "rank": 315,
+   "points": 590,
+   "team": "FarmVille",
+   "roster": [
+    "BeaKie",
+    "cJ dA K1nG",
+    "HAMBOOGA",
+    "sava9e"
+   ]
+  },
+  {
+   "rank": 316,
+   "points": 590,
+   "team": "MAGICOS",
+   "roster": [
+    "Cr1a",
+    "Lcs",
+    "rx",
+    "snow",
+    "zuzu"
+   ]
+  },
+  {
+   "rank": 317,
+   "points": 590,
+   "team": "ENCE",
+   "roster": [
+    "F1KU",
+    "kRaSnaL",
+    "Neityu",
+    "podi",
+    "sdy"
+   ]
+  },
+  {
+   "rank": 318,
+   "points": 589,
+   "team": "Let Her Cook",
+   "roster": [
+    "JennyR",
+    "Joanana",
+    "pauliiee",
+    "spike",
+    "vilga"
+   ]
+  },
+  {
+   "rank": 319,
+   "points": 588,
+   "team": "Players",
+   "roster": [
+    "Lich",
+    "MITHPUTTINI",
+    "souz4h",
+    "space",
+    "xns"
+   ]
+  },
+  {
+   "rank": 320,
+   "points": 588,
+   "team": "playersclub",
+   "roster": [
+    "heis999",
+    "riskyb0b",
+    "sad",
+    "Yakuza",
+    "z3ndeR"
+   ]
+  },
+  {
+   "rank": 321,
+   "points": 587,
+   "team": "CTRL",
+   "roster": [
+    "AliBond",
+    "godkU",
+    "Rhyza"
+   ]
+  },
+  {
+   "rank": 322,
+   "points": 587,
+   "team": "Persona Grata",
+   "roster": [
+    "MAGILA",
+    "nestee",
+    "POLO",
+    "SBT",
+    "sk1tt"
+   ]
+  },
+  {
+   "rank": 323,
+   "points": 582,
+   "team": "M1X KS",
+   "roster": [
+    "Dementor",
+    "gejmzilla",
+    "Lewis",
+    "tripey",
+    "v1w"
+   ]
+  },
+  {
+   "rank": 324,
+   "points": 581,
+   "team": "MTX",
+   "roster": [
+    "EgorMercedes",
+    "frakenzor",
+    "joly",
+    "kyoto666",
+    "md262"
+   ]
+  },
+  {
+   "rank": 325,
+   "points": 579,
+   "team": "B8 Academy",
+   "roster": [
+    "k1n",
+    "La1roN",
+    "r0se",
+    "segukawa",
+    "sherman"
+   ]
+  },
+  {
+   "rank": 326,
+   "points": 578,
+   "team": "Vasco",
+   "roster": [
+    "mawth",
+    "n1cks",
+    "prt",
+    "tatazin",
+    "trindade"
+   ]
+  },
+  {
+   "rank": 327,
+   "points": 578,
+   "team": "ACROBATS",
+   "roster": [
+    "dwushka",
+    "fame",
+    "FL1T",
+    "Krad",
+    "tried"
+   ]
+  },
+  {
+   "rank": 328,
+   "points": 576,
+   "team": "FURIA fe",
+   "roster": [
+    "bizinha",
+    "gabs",
+    "izaa",
+    "kaahSENSEI",
+    "lulitenz"
+   ]
+  },
+  {
+   "rank": 329,
+   "points": 571,
+   "team": "GUARA",
+   "roster": [
+    "fnbJESUS",
+    "Longo",
+    "neskk",
+    "paqueta",
+    "Tineu"
+   ]
+  },
+  {
+   "rank": 330,
+   "points": 565,
+   "team": "Red Feet",
+   "roster": [
+    "Aker",
+    "coxa",
+    "Kaiserzy",
+    "palenscki",
+    "terran"
+   ]
+  },
+  {
+   "rank": 331,
+   "points": 564,
+   "team": "atputies",
+   "roster": [
+    "Brens",
+    "m1kketye",
+    "Pleb0rs",
+    "whitezins"
+   ]
+  },
+  {
+   "rank": 332,
+   "points": 563,
+   "team": "rottweilers",
+   "roster": [
+    "bavar1n",
+    "rafftu",
+    "REDSTAR",
+    "shin",
+    "SHiPZ"
+   ]
+  },
+  {
+   "rank": 333,
+   "points": 563,
+   "team": "BIG EQUIPA",
+   "roster": [
+    "aiM",
+    "ASTRA",
+    "Emmsan",
+    "Hanka",
+    "sosya"
+   ]
+  },
+  {
+   "rank": 334,
+   "points": 560,
+   "team": "Grêmio",
+   "roster": [
+    "balencyy",
+    "MITHPUTTINI",
+    "s1lent",
+    "souz4h",
+    "yeda"
+   ]
+  },
+  {
+   "rank": 335,
+   "points": 560,
+   "team": "Fingers Crossed fe",
+   "roster": [
+    "D7",
+    "irbitka",
+    "Margo",
+    "v1spel",
+    "xia"
+   ]
+  },
+  {
+   "rank": 336,
+   "points": 559,
+   "team": "Trainwrecks",
+   "roster": [
+    "AhMa",
+    "Hattivatti",
+    "LapaSSS",
+    "melty"
+   ]
+  },
+  {
+   "rank": 337,
+   "points": 558,
+   "team": "Basement Bobs",
+   "roster": [
+    "DALIEN",
+    "levantino",
+    "MadeInRed",
+    "Pedrinho2011",
+    "Uzman"
+   ]
+  },
+  {
+   "rank": 338,
+   "points": 555,
+   "team": "NuTorious",
+   "roster": [
+    "Austin",
+    "Msaia",
+    "sayN",
+    "Toasty"
+   ]
+  },
+  {
+   "rank": 339,
+   "points": 551,
+   "team": "Olympus",
+   "roster": [
+    "Bizarre666",
+    "k6rdon",
+    "relan",
+    "tarturb0b"
+   ]
+  },
+  {
+   "rank": 340,
+   "points": 550,
+   "team": "hindsight",
+   "roster": [
+    "Ann4",
+    "Kaoday",
+    "Madam",
+    "mikeri",
+    "pullox"
+   ]
+  },
+  {
+   "rank": 341,
+   "points": 548,
+   "team": "Incognito",
+   "roster": [
+    "AbbyDog",
+    "Juna",
+    "micro",
+    "Sathsea",
+    "Tender"
+   ]
+  },
+  {
+   "rank": 342,
+   "points": 542,
+   "team": "Drama",
+   "roster": [
+    "andr1x",
+    "choiv7",
+    "d0jca",
+    "miwo",
+    "nopzy"
+   ]
+  },
+  {
+   "rank": 343,
+   "points": 540,
+   "team": "Clutchain",
+   "roster": [
+    "Kyojin",
+    "Nivera",
+    "Python",
+    "ScreaM",
+    "SHOGU"
+   ]
+  },
+  {
+   "rank": 344,
+   "points": 533,
+   "team": "Bebop",
+   "roster": [
+    "dwushka",
+    "faydett",
+    "h1kaN",
+    "iDISBALANCE",
+    "Norwi"
+   ]
+  },
+  {
+   "rank": 345,
+   "points": 530,
+   "team": "bond1e",
+   "roster": [
+    "MAGILA",
+    "prelideN",
+    "REL",
+    "StreakN"
+   ]
+  },
+  {
+   "rank": 346,
+   "points": 529,
+   "team": "5Actors",
+   "roster": [
+    "airscape",
+    "Aunkere",
+    "Jerry",
+    "KENSI",
+    "tried"
+   ]
+  },
+  {
+   "rank": 347,
+   "points": 528,
+   "team": "NSN",
+   "roster": [
+    "Niko",
+    "reason",
+    "Yuxz",
+    "z1ayr",
+    "zzi"
+   ]
+  },
+  {
+   "rank": 348,
+   "points": 527,
+   "team": "FURY",
+   "roster": [
+    "cheeseball",
+    "cookie",
+    "rahley",
+    "versa",
+    "Winnieeeee"
+   ]
+  },
+  {
+   "rank": 349,
+   "points": 520,
+   "team": "VP.Prodigy",
+   "roster": [
+    "lasfas",
+    "rokilan",
+    "Stoynes",
+    "sun",
+    "TriBorgg1"
+   ]
+  },
+  {
+   "rank": 350,
+   "points": 516,
+   "team": "Aimhaus",
+   "roster": [
+    "erners",
+    "flairr",
+    "Mairel",
+    "silrak",
+    "Yamero"
+   ]
+  },
+  {
+   "rank": 351,
+   "points": 516,
+   "team": "SINQU",
+   "roster": [
+    "Geni",
+    "J0nneW",
+    "KapiV",
+    "Lene",
+    "Samppa"
+   ]
+  },
+  {
+   "rank": 352,
+   "points": 514,
+   "team": "Imperial Academy",
+   "roster": [
+    "aZe",
+    "hyskeee",
+    "Kragh",
+    "sh1Fu",
+    "ta9z"
+   ]
+  },
+  {
+   "rank": 353,
+   "points": 514,
+   "team": "Young TigeRES",
+   "roster": [
+    "Gashhhi4",
+    "tronic",
+    "z3ndy"
+   ]
+  },
+  {
+   "rank": 354,
+   "points": 514,
+   "team": "FORZE Reload",
+   "roster": [
+    "aloneintokyo",
+    "KusMe",
+    "Something",
+    "spirit"
+   ]
+  },
+  {
+   "rank": 355,
+   "points": 509,
+   "team": "Blitzkrieg",
+   "roster": [
+    "Jardani",
+    "points",
+    "spamzzy",
+    "TORITO",
+    "vanilla"
+   ]
+  },
+  {
+   "rank": 356,
+   "points": 509,
+   "team": "IDoPieca",
+   "roster": [
+    "FOKUSSS",
+    "keis",
+    "mazda",
+    "virtuoso",
+    "Xydoo"
+   ]
+  },
+  {
+   "rank": 357,
+   "points": 509,
+   "team": "Surge",
+   "roster": [
+    "Electrician",
+    "frog",
+    "Molly",
+    "TheJelly"
+   ]
+  },
+  {
+   "rank": 358,
+   "points": 507,
+   "team": "home",
+   "roster": [
+    "BehinDx",
+    "sacred",
+    "stesso",
+    "Viggo",
+    "wasian"
+   ]
+  },
+  {
+   "rank": 359,
+   "points": 507,
+   "team": "Legion",
+   "roster": [
+    "Bloody",
+    "BulleT",
+    "hf",
+    "HZI",
+    "pavast4r"
+   ]
+  },
+  {
+   "rank": 360,
+   "points": 506,
+   "team": "INFINITE",
+   "roster": [
+    "adeX",
+    "DaciaBlue3",
+    "LkS",
+    "mhN1",
+    "RQBY"
+   ]
+  },
+  {
+   "rank": 361,
+   "points": 502,
+   "team": "ALGO",
+   "roster": [
+    "anber",
+    "myltsi",
+    "nukkye",
+    "Scr0b",
+    "szejn"
+   ]
+  },
+  {
+   "rank": 362,
+   "points": 498,
+   "team": "GAMEHARMONY",
+   "roster": [
+    "kriips",
+    "Natre",
+    "P4nc4ke",
+    "pat u",
+    "uCr0"
+   ]
+  },
+  {
+   "rank": 363,
+   "points": 497,
+   "team": "girl kissers",
+   "roster": [
+    "kevin",
+    "lunari",
+    "TeXaSs",
+    "violet"
+   ]
+  },
+  {
+   "rank": 364,
+   "points": 497,
+   "team": "Skele",
+   "roster": [
+    "Arctic",
+    "lucas222",
+    "motion",
+    "neo",
+    "tidy"
+   ]
+  },
+  {
+   "rank": 365,
+   "points": 495,
+   "team": "DAMAJUANA",
+   "roster": [
+    "boke",
+    "Dunn",
+    "leo",
+    "maik",
+    "R4N"
+   ]
+  },
+  {
+   "rank": 366,
+   "points": 492,
+   "team": "Grindas",
+   "roster": [
+    "BaGyZ",
+    "fello",
+    "Sidivo"
+   ]
+  },
+  {
+   "rank": 367,
+   "points": 491,
+   "team": "XDM",
+   "roster": [
+    "darkk",
+    "Kungao",
+    "r1verLaKe",
+    "Shad0w",
+    "taidao"
+   ]
+  },
+  {
+   "rank": 368,
+   "points": 489,
+   "team": "ex-Fingers Crossed",
+   "roster": [
+    "kreaz",
+    "MAGILA",
+    "spardaus"
+   ]
+  },
+  {
+   "rank": 369,
+   "points": 486,
+   "team": "BRUTE",
+   "roster": [
+    "hfah",
+    "KAD1M",
+    "mASKED",
+    "realzen",
+    "Siko"
+   ]
+  },
+  {
+   "rank": 370,
+   "points": 484,
+   "team": "Arise",
+   "roster": [
+    "Anasasis",
+    "Bhavi",
+    "borosto",
+    "Ph1NNN"
+   ]
+  },
+  {
+   "rank": 371,
+   "points": 484,
+   "team": "home",
+   "roster": [
+    "1mackez",
+    "BehinDx",
+    "sacred",
+    "stesso",
+    "Viggo"
+   ]
+  },
+  {
+   "rank": 372,
+   "points": 483,
+   "team": "ELITES",
+   "roster": [
+    "Antuanette",
+    "BabyRage",
+    "Notjuanjo",
+    "Slayerhz",
+    "zockie"
+   ]
+  },
+  {
+   "rank": 373,
+   "points": 480,
+   "team": "Mythic",
+   "roster": [
+    "Cooper",
+    "fl0m",
+    "hyza",
+    "PwnAlone",
+    "Trucklover86"
+   ]
+  },
+  {
+   "rank": 374,
+   "points": 476,
+   "team": "FlyQuest RED",
+   "roster": [
+    "BiBiAhn",
+    "Emy",
+    "Fawx",
+    "marie",
+    "vanessa"
+   ]
+  },
+  {
+   "rank": 375,
+   "points": 474,
+   "team": "Pugdesonesto",
+   "roster": [
+    "KLR",
+    "LIN",
+    "phx",
+    "Thuister",
+    "vzn"
+   ]
+  },
+  {
+   "rank": 376,
+   "points": 473,
+   "team": "raisedbypixels",
+   "roster": [
+    "1luke",
+    "atyla",
+    "bright",
+    "flacko"
+   ]
+  },
+  {
+   "rank": 377,
+   "points": 472,
+   "team": "HereWeGoAgain",
+   "roster": [
+    "fraga",
+    "guizo",
+    "shrr"
+   ]
+  },
+  {
+   "rank": 378,
+   "points": 472,
+   "team": "Charrados",
+   "roster": [
+    "bpg",
+    "ght",
+    "protado",
+    "s1lent",
+    "space"
+   ]
+  },
+  {
+   "rank": 379,
+   "points": 467,
+   "team": "FRZ",
+   "roster": [
+    "brawckzz",
+    "j3nni",
+    "Jachro",
+    "Sharpie",
+    "toasty"
+   ]
+  },
+  {
+   "rank": 380,
+   "points": 466,
+   "team": "BBBMBCBS",
+   "roster": [
+    "ApeX",
+    "Dirty",
+    "Fitzy",
+    "HaZ",
+    "muffin"
+   ]
+  },
+  {
+   "rank": 381,
+   "points": 465,
+   "team": "HereWeGoAgain",
+   "roster": [
+    "flush",
+    "fraga",
+    "guizo",
+    "Ltm"
+   ]
+  },
+  {
+   "rank": 382,
+   "points": 464,
+   "team": "Bad Luck",
+   "roster": [
+    "ALENNNCAR",
+    "phx",
+    "sakamoto",
+    "space",
+    "Thuister"
+   ]
+  },
+  {
+   "rank": 383,
+   "points": 463,
+   "team": "Players",
+   "roster": [
+    "Lich",
+    "MITHPUTTINI",
+    "prisma",
+    "rainny",
+    "souz4h"
+   ]
+  },
+  {
+   "rank": 384,
+   "points": 452,
+   "team": "OverKnight",
+   "roster": [
+    "4TAYLOR",
+    "AMC",
+    "cruzN",
+    "Majesticzz",
+    "spamzzy"
+   ]
+  },
+  {
+   "rank": 385,
+   "points": 449,
+   "team": "6666",
+   "roster": [
+    "auth0ri",
+    "m4d4ra",
+    "rickangel",
+    "skcH"
+   ]
+  },
+  {
+   "rank": 386,
+   "points": 435,
+   "team": "Nas",
+   "roster": [
+    "Biuckmt",
+    "Corazz",
+    "Mirorr",
+    "Mr66",
+    "S1kura"
+   ]
+  },
+  {
+   "rank": 387,
+   "points": 433,
+   "team": "Unitronics",
+   "roster": [
+    "clyd1e",
+    "ImpressioN",
+    "Kuma",
+    "mENTALPLAY",
+    "w1nt3r"
+   ]
+  },
+  {
+   "rank": 388,
+   "points": 428,
+   "team": "LAGUNA",
+   "roster": [
+    "dennyslaw",
+    "Duplicate",
+    "ritchiEE"
+   ]
+  },
+  {
+   "rank": 389,
+   "points": 426,
+   "team": "Sashi Academy",
+   "roster": [
+    "Bl4zE",
+    "Damsi",
+    "Half",
+    "rosen",
+    "Thom"
+   ]
+  },
+  {
+   "rank": 390,
+   "points": 424,
+   "team": "Z7",
+   "roster": [
+    "BestR1flerEu",
+    "Dobo",
+    "Gibsand",
+    "Valtr1x"
+   ]
+  },
+  {
+   "rank": 391,
+   "points": 413,
+   "team": "Younglings",
+   "roster": [
+    "7ckingsam",
+    "arun",
+    "eLa1z",
+    "Shed0Z"
+   ]
+  },
+  {
+   "rank": 392,
+   "points": 407,
+   "team": "UR",
+   "roster": [
+    "0z",
+    "4ever",
+    "drace",
+    "gLong",
+    "yoi"
+   ]
+  },
+  {
+   "rank": 393,
+   "points": 403,
+   "team": "Diamant",
+   "roster": [
+    "Destro",
+    "jernejj",
+    "jkXy",
+    "JuN1",
+    "Libra"
+   ]
+  },
+  {
+   "rank": 394,
+   "points": 399,
+   "team": "AKA HERO KAJO",
+   "roster": [
+    "amyb",
+    "ItzMqss",
+    "miLo",
+    "Siljeeeh",
+    "Waldee"
+   ]
+  },
+  {
+   "rank": 395,
+   "points": 398,
+   "team": "Time Waves",
+   "roster": [
+    "camille",
+    "ElephanT",
+    "Harbor",
+    "Kezza",
+    "lawlkay"
+   ]
+  },
+  {
+   "rank": 396,
+   "points": 397,
+   "team": "ALZON",
+   "roster": [
+    "balencyy",
+    "ianzin",
+    "ntx",
+    "wallz1k",
+    "yeda"
+   ]
+  }
+ ]
+}

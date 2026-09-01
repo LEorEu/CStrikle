@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-06T03:02:22+00:00",
+ "generated_at": "2026-09-01T06:55:17+00:00",
  "source": "liquipedia.net (CC-BY-SA 3.0) + blast.tv puzzle identity list",
  "count": 650,
  "players": [
@@ -2081,17 +2081,9 @@
    "region": "CIS",
    "birth_date": "2003-09-06",
    "team": "",
-   "source_team": "Sangal Esports",
-   "current_team_history": [
-    {
-     "period": "2026-05-24 — Present",
-     "team": "Sangal Esports",
-     "details": [
-      "Inactive"
-     ]
-    }
-   ],
-   "team_resolution": "no_current_player_roster",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "rifle",
@@ -2359,16 +2351,10 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "1991-11-07",
-   "team": "33",
-   "source_team": "33",
-   "current_team_history": [
-    {
-     "period": "2025-06-?? — Present",
-     "team": "33",
-     "details": []
-    }
-   ],
-   "team_resolution": "single_current_player_roster",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "rifle"
@@ -2898,17 +2884,9 @@
    "region": "CIS",
    "birth_date": "2002-06-8",
    "team": "",
-   "source_team": "9Pandas",
-   "current_team_history": [
-    {
-     "period": "2025-04-21 — Present",
-     "team": "9Pandas",
-     "details": [
-      "Inactive"
-     ]
-    }
-   ],
-   "team_resolution": "no_current_player_roster",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "igl"
@@ -3264,16 +3242,10 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "1997-12-03",
-   "team": "SPARTA Esports",
-   "source_team": "SPARTA Esports",
-   "current_team_history": [
-    {
-     "period": "2026-03-18 — Present",
-     "team": "SPARTA Esports",
-     "details": []
-    }
-   ],
-   "team_resolution": "single_current_player_roster",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "rifle"
@@ -3390,10 +3362,16 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2004-03-15",
-   "team": "",
+   "team": "Nemiga Gaming",
    "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "current_team_history": [
+    {
+     "period": "2026-08-15 — Present",
+     "team": "Nemiga Gaming",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "rifle"
@@ -3731,8 +3709,8 @@
    "country": "Russia",
    "region": "CIS",
    "birth_date": "2007-04-28",
-   "team": "",
-   "source_team": "PARIVISION",
+   "team": "CYBERSHOKE Esports",
+   "source_team": "CYBERSHOKE Esports",
    "current_team_history": [
     {
      "period": "2026-06-19 — Present",
@@ -3740,9 +3718,16 @@
      "details": [
       "Inactive"
      ]
+    },
+    {
+     "period": "2026-08-22 — Present",
+     "team": "CYBERSHOKE Esports",
+     "details": [
+      "Loan"
+     ]
     }
    ],
-   "team_resolution": "no_current_player_roster",
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "rifle"
@@ -6054,17 +6039,9 @@
    "region": "Europe",
    "birth_date": "1995-6-12",
    "team": "",
-   "source_team": "Tricked Esport",
-   "current_team_history": [
-    {
-     "period": "2025-09-08 — Present",
-     "team": "Tricked Esport",
-     "details": [
-      "Inactive"
-     ]
-    }
-   ],
-   "team_resolution": "no_current_player_roster",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "igl",
@@ -6252,16 +6229,18 @@
    "country": "Denmark",
    "region": "Europe",
    "birth_date": "1990-6-9",
-   "team": "Ninjas in Pyjamas",
+   "team": "",
    "source_team": "Ninjas in Pyjamas",
    "current_team_history": [
     {
-     "period": "2025-01-15 — Present",
+     "period": "2026-08-31 — Present",
      "team": "Ninjas in Pyjamas",
-     "details": []
+     "details": [
+      "Inactive"
+     ]
     }
    ],
-   "team_resolution": "single_current_player_roster",
+   "team_resolution": "no_current_player_roster",
    "status": "Active",
    "roles": [
     "igl",
@@ -7245,12 +7224,12 @@
    "country": "Denmark",
    "region": "Europe",
    "birth_date": "2004-08-27",
-   "team": "Echo",
-   "source_team": "Echo",
+   "team": "BBL Esports",
+   "source_team": "BBL Esports",
    "current_team_history": [
     {
-     "period": "2026-06-01 — Present",
-     "team": "Echo",
+     "period": "2026-08-30 — Present",
+     "team": "BBL Esports",
      "details": []
     }
    ],
@@ -7408,16 +7387,18 @@
    "country": "Denmark",
    "region": "Europe",
    "birth_date": "2002-05-04",
-   "team": "Eternal Fire",
+   "team": "",
    "source_team": "Eternal Fire",
    "current_team_history": [
     {
-     "period": "2026-07-05 — Present",
+     "period": "2026-08-23 — Present",
      "team": "Eternal Fire",
-     "details": []
+     "details": [
+      "Inactive"
+     ]
     }
    ],
-   "team_resolution": "single_current_player_roster",
+   "team_resolution": "no_current_player_roster",
    "status": "Active",
    "roles": [
     "rifle"
@@ -10257,18 +10238,16 @@
    "country": "Sweden",
    "region": "Europe",
    "birth_date": "2004-10-22",
-   "team": "",
-   "source_team": "HEROIC",
+   "team": "Luminosity Gaming",
+   "source_team": "Luminosity Gaming",
    "current_team_history": [
     {
-     "period": "2026-07-07 — Present",
-     "team": "HEROIC",
-     "details": [
-      "Inactive"
-     ]
+     "period": "2026-08-25 — Present",
+     "team": "Luminosity Gaming",
+     "details": []
     }
    ],
-   "team_resolution": "no_current_player_roster",
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "rifle"
@@ -10406,21 +10385,11 @@
    "region": "Europe",
    "birth_date": "1994-6-5",
    "team": "",
-   "source_team": "3DMAX",
-   "current_team_history": [
-    {
-     "period": "2026-02-24 — Present",
-     "team": "3DMAX",
-     "details": [
-      "Assistant Coach"
-     ]
-    }
-   ],
-   "team_resolution": "staff_role:assistant coach",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
-   "roles": [
-    "assistant coach"
-   ],
+   "roles": [],
    "majors_count": 14,
    "first_major_year": 2013,
    "last_major_year": 2019,
@@ -11650,8 +11619,8 @@
    "team": "",
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "career_status:inactive",
-   "status": "Inactive",
+   "team_resolution": "career_status:retired",
+   "status": "Retired",
    "roles": [
     "support"
    ],
@@ -15428,16 +15397,10 @@
    "country": "Poland",
    "region": "Europe",
    "birth_date": "1993-12-20",
-   "team": "KOLESIE",
-   "source_team": "KOLESIE",
-   "current_team_history": [
-    {
-     "period": "2026-01-15 — Present",
-     "team": "KOLESIE",
-     "details": []
-    }
-   ],
-   "team_resolution": "single_current_player_roster",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "igl",
@@ -16380,18 +16343,16 @@
    "country": "Poland",
    "region": "Europe",
    "birth_date": "2003-11-29",
-   "team": "",
-   "source_team": "Team Liquid",
+   "team": "Betclic Apogee Esports",
+   "source_team": "Betclic Apogee Esports",
    "current_team_history": [
     {
-     "period": "2026-07-09 — Present",
-     "team": "Team Liquid",
-     "details": [
-      "inactive"
-     ]
+     "period": "2026-08-11 — Present",
+     "team": "Betclic Apogee Esports",
+     "details": []
     }
    ],
-   "team_resolution": "no_current_player_roster",
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "awper"
@@ -16917,7 +16878,7 @@
    "current_team_history": [
     {
      "period": "2023-02-05 — Present",
-     "team": "epf",
+     "team": "esports player foundation",
      "details": [
       "org"
      ]
@@ -17045,8 +17006,14 @@
    "region": "Europe",
    "birth_date": "1993-7-23",
    "team": "",
-   "source_team": "",
-   "current_team_history": [],
+   "source_team": "Huskies",
+   "current_team_history": [
+    {
+     "period": "2025-07-13 — Present",
+     "team": "Huskies",
+     "details": []
+    }
+   ],
    "team_resolution": "no_current_head_coach_team",
    "status": "Active",
    "roles": [
@@ -18985,18 +18952,16 @@
    "country": "Kazakhstan",
    "region": "CIS",
    "birth_date": "1999-01-01",
-   "team": "",
-   "source_team": "1w Team",
+   "team": "Color",
+   "source_team": "Color",
    "current_team_history": [
     {
-     "period": "2026-07-31 — Present",
-     "team": "1win Team",
-     "details": [
-      "Inactive"
-     ]
+     "period": "2026-08-11 — Present",
+     "team": "Color",
+     "details": []
     }
    ],
-   "team_resolution": "no_current_player_roster",
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "igl",
@@ -19937,17 +19902,9 @@
    "region": "Europe",
    "birth_date": "1998-7-27",
    "team": "",
-   "source_team": "Eternal Fire",
-   "current_team_history": [
-    {
-     "period": "2026-02-05 — Present",
-     "team": "Eternal Fire",
-     "details": [
-      "Inactive"
-     ]
-    }
-   ],
-   "team_resolution": "no_current_player_roster",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "support"
@@ -20514,18 +20471,9 @@
    "source_team": "Eternal Fire",
    "current_team_history": [
     {
-     "period": "2025-12-27 — Present",
-     "team": "Aurora Gaming",
-     "details": [
-      "Inactive"
-     ]
-    },
-    {
-     "period": "2026-02-02 — Present",
+     "period": "2026-08-23 — Present",
      "team": "Eternal Fire",
-     "details": [
-      "Loan"
-     ]
+     "details": []
     }
    ],
    "team_resolution": "single_current_player_roster",
@@ -20563,18 +20511,16 @@
    "country": "Turkey",
    "region": "Europe",
    "birth_date": "2004-06-16",
-   "team": "",
-   "source_team": "Aurora Gaming",
+   "team": "Eternal Fire",
+   "source_team": "Eternal Fire",
    "current_team_history": [
     {
-     "period": "2026-07-02 — Present",
-     "team": "Aurora Gaming",
-     "details": [
-      "Inactive"
-     ]
+     "period": "2026-08-23 — Present",
+     "team": "Eternal Fire",
+     "details": []
     }
    ],
-   "team_resolution": "no_current_player_roster",
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "rifle"
@@ -21086,10 +21032,16 @@
    "country": "Kosovo",
    "region": "Europe",
    "birth_date": "1995-07-24",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "JiJieHao",
+   "source_team": "JiJieHao",
+   "current_team_history": [
+    {
+     "period": "2025-11-?? — Present",
+     "team": "JiJieHao",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "igl",
@@ -21321,16 +21273,18 @@
    "country": "Lithuania",
    "region": "Europe",
    "birth_date": "2003-8-12",
-   "team": "Luminosity Gaming",
+   "team": "",
    "source_team": "Luminosity Gaming",
    "current_team_history": [
     {
-     "period": "2026-07-01 — Present",
+     "period": "2026-08-24 - Present",
      "team": "Luminosity Gaming",
-     "details": []
+     "details": [
+      "Inactive"
+     ]
     }
    ],
-   "team_resolution": "single_current_player_roster",
+   "team_resolution": "no_current_player_roster",
    "status": "Active",
    "roles": [
     "lurk"
@@ -22852,12 +22806,12 @@
    "country": "Spain",
    "region": "Europe",
    "birth_date": "1995-12-15",
-   "team": "Gentle Mates",
-   "source_team": "Gentle Mates",
+   "team": "Iberian Soul",
+   "source_team": "Iberian Soul",
    "current_team_history": [
     {
-     "period": "2025-08-25 — Present",
-     "team": "Gentle Mates",
+     "period": "2026-08-07 — Present",
+     "team": "Iberian Soul",
      "details": []
     }
    ],
@@ -22889,12 +22843,12 @@
    "country": "Spain",
    "region": "Europe",
    "birth_date": "2001-06-06",
-   "team": "Gentle Mates",
-   "source_team": "Gentle Mates",
+   "team": "Iberian Soul",
+   "source_team": "Iberian Soul",
    "current_team_history": [
     {
-     "period": "2025-08-25 — Present",
-     "team": "Gentle Mates",
+     "period": "2026-08-07 — Present",
+     "team": "Iberian Soul",
      "details": []
     }
    ],
@@ -22963,12 +22917,12 @@
    "country": "Spain",
    "region": "Europe",
    "birth_date": "1996-8-7",
-   "team": "Gentle Mates",
-   "source_team": "Gentle Mates",
+   "team": "Iberian Soul",
+   "source_team": "Iberian Soul",
    "current_team_history": [
     {
-     "period": "2025-08-25 — Present",
-     "team": "Gentle Mates",
+     "period": "2026-08-07 — Present",
+     "team": "Iberian Soul",
      "details": []
     }
    ],
@@ -23475,10 +23429,16 @@
    "country": "Bulgaria",
    "region": "Europe",
    "birth_date": "1999-12-7",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "Without a Roof",
+   "source_team": "Without a Roof",
+   "current_team_history": [
+    {
+     "period": "2026-08-11 — Present",
+     "team": "Without a Roof",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "awp"
@@ -24123,8 +24083,16 @@
    "region": "Europe",
    "birth_date": "1991-6-27",
    "team": "",
-   "source_team": "",
-   "current_team_history": [],
+   "source_team": "SINNERS Esports",
+   "current_team_history": [
+    {
+     "period": "2026-08-29 — Present",
+     "team": "SINNERS Esports",
+     "details": [
+      "Org"
+     ]
+    }
+   ],
    "team_resolution": "no_current_head_coach_team",
    "status": "Active",
    "roles": [
@@ -24179,8 +24147,8 @@
    "team": "",
    "source_team": "",
    "current_team_history": [],
-   "team_resolution": "top_level_fallback",
-   "status": "Active",
+   "team_resolution": "career_status:inactive",
+   "status": "Inactive",
    "roles": [
     "entry"
    ],
@@ -24446,10 +24414,16 @@
    "country": "North Macedonia",
    "region": "Europe",
    "birth_date": "2000-11-9",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "JiJieHao",
+   "source_team": "JiJieHao",
+   "current_team_history": [
+    {
+     "period": "2026-04-?? — Present",
+     "team": "JiJieHao",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "rifle"
@@ -24583,10 +24557,16 @@
    "country": "Portugal",
    "region": "Europe",
    "birth_date": "2002-07-02",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "Rebels Gaming",
+   "source_team": "Rebels Gaming",
+   "current_team_history": [
+    {
+     "period": "2026-08-21 — Present",
+     "team": "Rebels Gaming",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "rifler"
@@ -25919,10 +25899,16 @@
    "country": "United States",
    "region": "North America",
    "birth_date": "1998-1-7",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "Without a Roof",
+   "source_team": "Without a Roof",
+   "current_team_history": [
+    {
+     "period": "2026-08-11 — Present",
+     "team": "Without a Roof",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "igl",
@@ -25998,14 +25984,19 @@
    "country": "United States",
    "region": "North America",
    "birth_date": "1996-9-10",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "career_status:retired",
-   "status": "Retired",
+   "team": "Without a Roof",
+   "source_team": "Without a Roof",
+   "current_team_history": [
+    {
+     "period": "2026-08-11 — Present",
+     "team": "Without a Roof",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
+   "status": "Active",
    "roles": [
-    "rifle",
-    "awp"
+    "rifle"
    ],
    "majors_count": 5,
    "first_major_year": 2017,
@@ -27089,10 +27080,16 @@
    "country": "United States",
    "region": "North America",
    "birth_date": "1998-5-22",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "Without a Roof",
+   "source_team": "Without a Roof",
+   "current_team_history": [
+    {
+     "period": "2026-08-11 — Present",
+     "team": "Without a Roof",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "rifle"
@@ -29346,10 +29343,16 @@
    "country": "Brazil",
    "region": "South America",
    "birth_date": "1995-11-17",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "ODDIK",
+   "source_team": "ODDIK",
+   "current_team_history": [
+    {
+     "period": "2026-08-20 — Present",
+     "team": "ODDIK",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "entry"
@@ -30517,17 +30520,9 @@
    "region": "South America",
    "birth_date": "1995-5-23",
    "team": "",
-   "source_team": "ODDIK",
-   "current_team_history": [
-    {
-     "period": "2026-04-16 — Present",
-     "team": "ODDIK",
-     "details": [
-      "Inactive"
-     ]
-    }
-   ],
-   "team_resolution": "no_current_player_roster",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "igl",
@@ -30623,16 +30618,18 @@
    "country": "Brazil",
    "region": "South America",
    "birth_date": "2003-08-26",
-   "team": "MIBR",
+   "team": "",
    "source_team": "MIBR",
    "current_team_history": [
     {
-     "period": "2025-02-19 — Present",
+     "period": "2026-08-25 — Present",
      "team": "MIBR",
-     "details": []
+     "details": [
+      "Inactive"
+     ]
     }
    ],
-   "team_resolution": "single_current_player_roster",
+   "team_resolution": "no_current_player_roster",
    "status": "Active",
    "roles": [
     "entry"
@@ -31333,10 +31330,16 @@
    "country": "Canada",
    "region": "North America",
    "birth_date": "2002-05-07",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "Without a Roof",
+   "source_team": "Without a Roof",
+   "current_team_history": [
+    {
+     "period": "2026-08-11 — Present",
+     "team": "Without a Roof",
+     "details": []
+    }
+   ],
+   "team_resolution": "single_current_player_roster",
    "status": "Active",
    "roles": [
     "entry"
@@ -31425,14 +31428,21 @@
    "country": "Canada",
    "region": "North America",
    "birth_date": "1989-12-28",
-   "team": "",
-   "source_team": "",
-   "current_team_history": [],
-   "team_resolution": "top_level_fallback",
+   "team": "Without a Roof",
+   "source_team": "Without a Roof",
+   "current_team_history": [
+    {
+     "period": "2026-08-11 — Present",
+     "team": "Without a Roof",
+     "details": [
+      "Coach"
+     ]
+    }
+   ],
+   "team_resolution": "single_current_head_coach_team",
    "status": "Active",
    "roles": [
-    "igl",
-    "rifle"
+    "coach"
    ],
    "majors_count": 1,
    "first_major_year": 2014,
@@ -33188,16 +33198,10 @@
    "country": "Australia",
    "region": "Oceania",
    "birth_date": "1998-4-7",
-   "team": "THUNDERdOWNUNDER",
-   "source_team": "THUNDERdOWNUNDER",
-   "current_team_history": [
-    {
-     "period": "2025-10-14 — Present",
-     "team": "THUNDERdOWNUNDER",
-     "details": []
-    }
-   ],
-   "team_resolution": "single_current_player_roster",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "awp"
@@ -36969,16 +36973,10 @@
    "country": "Jordan",
    "region": "Middle East & Africa",
    "birth_date": "2004-5-4",
-   "team": "Alter Ego",
-   "source_team": "Alter Ego",
-   "current_team_history": [
-    {
-     "period": "2026-03-10 — Present",
-     "team": "Alter Ego",
-     "details": []
-    }
-   ],
-   "team_resolution": "single_current_player_roster",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "top_level_fallback",
    "status": "Active",
    "roles": [
     "rifle"
@@ -37187,18 +37185,18 @@
    "country": "Uzbekistan",
    "region": "CIS",
    "birth_date": "1998-11-18",
-   "team": "RUSTEC",
+   "team": "",
    "source_team": "RUSTEC",
    "current_team_history": [
     {
-     "period": "2026-03-11 — Present",
+     "period": "2026-07-09 — Present",
      "team": "RUSTEC",
      "details": [
-      "Coach"
+      "Inactive Coach"
      ]
     }
    ],
-   "team_resolution": "single_current_head_coach_team",
+   "team_resolution": "no_current_head_coach_team",
    "status": "Active",
    "roles": [
     "coach"
@@ -37394,18 +37392,10 @@
    "country": "South Africa",
    "region": "Middle East & Africa",
    "birth_date": "1992-8-23",
-   "team": "Passion UA",
-   "source_team": "Passion UA",
-   "current_team_history": [
-    {
-     "period": "2025-04-04 — Present",
-     "team": "Passion UA",
-     "details": [
-      "Coach"
-     ]
-    }
-   ],
-   "team_resolution": "single_current_head_coach_team",
+   "team": "",
+   "source_team": "",
+   "current_team_history": [],
+   "team_resolution": "no_current_head_coach_team",
    "status": "Active",
    "roles": [
     "coach"

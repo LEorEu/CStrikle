@@ -17,7 +17,8 @@ AI 对手用**当前阵容 + 当前位置 + 年龄衰减**（`field_source: curr
 | 3 | [卡牌与落地记录.md](卡牌与落地记录.md) | 648 张选手卡怎么生成的、实现时和蓝图差在哪、用真实数据核对的数字 | 要改卡库或生成器之前 |
 | 4 | [原型实测记录.md](原型实测记录.md) | 真人试玩记录，每条结论后面跟着产生它的那组数字和复算方法 | 想知道某个参数为什么是现在这个值 |
 | 5 | [比赛引擎_v0.1.md](比赛引擎_v0.1.md) | 把这五个人放进一届真实 Major 的瑞士轮。§44~§48 是已经跑出来的数和据此改掉的设计，§47 是几个悬案的结论，§48 是拿真实阵容试跑撞出来的，§49 修了 AI 层违反卡库规矩的那处，§50 是补位，§51 记的是「当前实力」这条线的三次尝试和找到的真值数据源，§52 是抓取管线 | 现在 |
-| 6 | [评审_GPT_比赛引擎.md](评审_GPT_比赛引擎.md) | 第三方复核比赛引擎 v0.1，抬头写明哪几条被采纳、哪几条明确不做 | 想知道某个结论被质疑过没有 |
+| 6 | [数据快照.md](数据快照.md) | AI 对手的「现在」从哪来：五个数据源各管什么、怎么刷新、踩过哪些坑 | 要重抓数据、或怀疑阵容/排名不对时 |
+| 7 | [评审_GPT_比赛引擎.md](评审_GPT_比赛引擎.md) | 第三方复核比赛引擎 v0.1，抬头写明哪几条被采纳、哪几条明确不做 | 想知道某个结论被质疑过没有 |
 | — | [原始讨论_ChatGPT.md](原始讨论_ChatGPT.md) | 整个模式的原始素材，从看线上站点开始聊起 | 考古 |
 
 **第 4 份是按时间顺序写的**，二 / 三 / 五节是 v1 / v2 当时的状态，不是现状；
@@ -35,6 +36,8 @@ data/manual/major_field.json  赛场人工层：赛场来源、固定几支、�
 scripts/proto_match.py        比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联
 scripts/proto_ai_teams.py     AI 对手：当前阵容 + 当前位置 + 年龄衰减（赛场候选池）
 scripts/fetch_5e_stats.py     抓 5eplay 当前竞技数据 → data/5e_player_stats.json（本地工具）
+scraper/fetch_rankings.py     队伍快照（当前阵容+位置+HLTV/VRS 排名）→ data/team_snapshot.json
+scraper/build_db.py           重建选手库 → data/players.json（--refresh-existing 只刷新当前队/角色）
 data/manual/5e_aliases.json   卡库昵称 → 5eplay 名字/id 的人工别名表
 tests/test_draft_cards.py     8 项，盯着卡库和「卡牌与落地记录.md」里的 SPEC 块
 ```
@@ -67,7 +70,9 @@ python scripts/proto_match.py --roster "s1mple,electroNic,Magisk,mzinho,Senzu"  
 
 - **比赛引擎调参台** — 7 个参数接在实时模拟上，拖动当场重跑几十届 Major
   重算 §35 的四组读数
-- **AI 对手名册** — 32 支队逐人摊开，年龄曲线可现场调，用来一眼找出判错的人
+- **AI 对手名册** — 32 支队逐人摊开，年龄曲线可现场调，用来一眼找出判错的人（旧版，未同步今日改动）
+- **卡面与现况** — 40 队 200 人，卡面火力与近一年 S 级实测 rating 摆在同一条百分位轴上
+  <https://claude.ai/code/artifact/a062f63f-50d4-4c3f-b68c-da88e16e0e72>
 
 ---
 

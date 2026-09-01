@@ -236,10 +236,15 @@ class PlayerDatabaseTests(unittest.TestCase):
         self.assertEqual(zhoking.team, "TYLOO")
 
     def test_inactive_and_new_team_examples(self):
-        nota = self.db.lookup("nota")
+        # 这条断言的是**数据快照**,所以选人要选不会再变的:nota 原本在这里当
+        # 「无队」样本,2026-09-01 那次刷新他加入了 CYBERSHOKE,测试才挂的——
+        # 数据是对的,样本选错了。换成已退役的 cajunb。
+        cajunb = self.db.lookup("cajunb")
         belchonokk = self.db.lookup("BELCHONOKK")
         xyp9x = self.db.lookup("Xyp9x")
-        self.assertEqual((nota.team or "", nota.primary_role), ("", "Rifler"))
+        self.assertEqual((cajunb.team or "", cajunb.primary_role), ("", "Rifler"))
+        # 队名归一层把 Liquipedia 的 "1w Team" 收敛回 "1win",这里断言的是
+        # 归一之后的对外值,所以上游改名不该影响它
         self.assertEqual(
             (belchonokk.team, belchonokk.primary_role),
             ("1win", "Rifler"),
