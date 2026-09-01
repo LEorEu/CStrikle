@@ -1,0 +1,4 @@
+{
+  "_note": "卡库昵称 -> 5eplay 的名字或 player_id,给 scripts/fetch_5e_stats.py 用。自动匹配做的是「leet 规整后精确相等」(dev1ce -> device 这类自动能过);故意不做模糊匹配,因为实测 cmtry→try、jks→jokes 这种近似全是不同的人,宁可漏也不能悄悄配错。跑 --dry-run 会列出所有对不上的人。值填 5eplay 上的名字,或者直接填 csgo_pl_xxxxx。",
+  "_example": "\"Techno4K\": \"Techno\"   或   \"Techno4K\": \"csgo_pl_12345\""
+}
