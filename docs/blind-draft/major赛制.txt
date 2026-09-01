@@ -1,0 +1,627 @@
+我查了 Valve 的 Major Supplemental Rulebook，再对了当前下一届 **PGL Singapore Major 2026** 的名额分配。你前面对“三个 Stage”的理解基本对，但**地区名额和 Stage 种子是两套不同的排名体系**，这个对我们游戏很重要。
+
+先说最核心的：
+
+> **Major 一共 32 支不同队伍，但每个 Swiss Stage 都只有 16 支。**
+
+流程是：
+
+```text
+32 支参赛队
+│
+├─ 16 支 → Stage 1
+│            │
+│            └─ 8 支晋级
+│
+├─ 8 支直接 → Stage 2
+│              + Stage 1 晋级的 8 支
+│              = 16 支
+│                  │
+│                  └─ 8 支晋级
+│
+└─ 8 支直接 → Stage 3
+               + Stage 2 晋级的 8 支
+               = 16 支
+                   │
+                   └─ 8 支晋级 Playoffs
+```
+
+所以严格讲：
+
+> **16 Stage1 + 8 Stage2直邀 + 8 Stage3直邀 = 32支唯一参赛队。**
+
+每个 Stage 都是 16 队 Swiss，3胜晋级、3负淘汰。([GitHub][1])
+
+---
+
+## 一、欧洲 / 美洲 / 亚洲名额到底怎么来的
+
+现在只有三个 VRS 大区：
+
+> **Europe / Americas / Asia**
+
+队伍属于哪个区，原则上看五人阵容中哪个地区的选手占多数；平票时规则里还有地区优先级处理。Major 邀请使用的是**Regional VRS**，而不是 Global VRS。([GitHub][1])
+
+这里最容易搞错的是：
+
+> **每个地区总共有多少 Major 名额，不是固定不变的。**
+
+它由**上一届 Major 的该地区成绩**继承。
+
+可以把规则理解成：
+
+### Stage 1 是基础席位
+
+当前这一套一直是：
+
+| 地区     | Stage 1 基础名额 |
+| ------ | -----------: |
+| 欧洲     |            6 |
+| 美洲     |            6 |
+| 亚洲     |            4 |
+| **总计** |       **16** |
+
+而 Stage 2 / Stage 3 的8+8个直邀席位，则由上一届Major决定。([GitHub][2])
+
+---
+
+# 二、Stage 2 / Stage 3 名额怎么继承
+
+最容易理解的算法是：
+
+### 上一届有多少该地区队伍进入 Stage 3
+
+决定：
+
+> **下一届这个地区有多少队可以跳过 Stage 1。**
+
+然后：
+
+### 上一届有多少该地区队伍进入 Playoffs
+
+决定：
+
+> **下一届其中多少队可以进一步直接进入 Stage 3。**
+
+所以等价于：
+
+```text
+下一届 Stage3 直邀
+= 上届该地区 Playoff 队数
+
+下一届 Stage2 直邀
+= 上届该地区 Stage3 队数
+  - 上届该地区 Playoff 队数
+```
+
+这个算法拿现在下一届 Singapore Major 一套就特别清楚。
+
+---
+
+# 三、当前下一届 PGL Singapore Major 2026
+
+Cologne Major 结束后，目前已经确定地区名额结构是：
+
+| 地区     | Stage 1 | Stage 2 | Stage 3 |     总计 |
+| ------ | ------: | ------: | ------: | -----: |
+| **欧洲** |       6 |       6 |       6 | **18** |
+| **美洲** |       6 |       1 |       2 |  **9** |
+| **亚洲** |       4 |       1 |       0 |  **5** |
+| **总计** |  **16** |   **8** |   **8** | **32** |
+
+([HLTV.org][3])
+
+为什么会这样？
+
+Cologne 的 Stage 3 最后有：
+
+> 欧洲 12支
+> 美洲 3支
+> 亚洲 1支
+
+所以 Singapore 获得“跳过 Stage1”的名额：
+
+> EU 12
+> AM 3
+> AS 1
+
+而 Cologne Playoffs 中：
+
+> 欧洲 6支
+> 美洲 2支
+> 亚洲 0支
+
+所以其中 Stage3 直邀：
+
+> EU 6
+> AM 2
+> AS 0
+
+剩下自然就是 Stage2：
+
+> EU 12−6 = 6
+> AM 3−2 = 1
+> AS 1−0 = 1
+
+再各加固定 Stage1：
+
+> EU +6
+> AM +6
+> AS +4
+
+最后：
+
+> **18 / 9 / 5 = 32。**
+
+这套继承机制其实很漂亮。([HLTV.org][4])
+
+---
+
+# 四、具体哪些队进 Stage 1 / 2 / 3？
+
+这时候才使用：
+
+> **Regional VRS Ranking**
+
+以 Singapore 当前配额来说：
+
+### 欧洲
+
+```text
+EU VRS #1–6     → Stage 3
+EU VRS #7–12    → Stage 2
+EU VRS #13–18   → Stage 1
+```
+
+### 美洲
+
+```text
+AM VRS #1–2     → Stage 3
+AM VRS #3       → Stage 2
+AM VRS #4–9     → Stage 1
+```
+
+### 亚洲
+
+```text
+AS VRS #1       → Stage 2
+AS VRS #2–5     → Stage 1
+
+没有 Stage 3 直邀
+```
+
+所以你之前说：
+
+> “按32支全球排名直接1-8 Stage3、9-16 Stage2……”
+
+**现实 Major 并不是这么选参赛队的。**
+
+而是：
+
+> **先按地区配额 + Regional VRS 决定32支队以及它们从哪个Stage开始。**
+
+截至现在，Singapore 的 VRS 邀请截止日是 **2026年11月2日**，所以地区配额已经确定，但具体32支队还会继续变。([HLTV.org][5])
+
+---
+
+# 五、等32支队确定以后，才轮到 Global VRS
+
+这点对我们的游戏特别重要。
+
+Valve明确写的是：
+
+> Regional VRS → **决定邀请谁**
+>
+> Global VRS → **决定比赛种子**
+
+也就是说：
+
+```text
+Regional VRS
+    ↓
+确定32支队
+确定谁从 S1/S2/S3 开始
+    ↓
+Global VRS
+    ↓
+Pre-event Seeding
+```
+
+([GitHub][1])
+
+这实际上正好解决我们之前一直混着的：
+
+> Entry Stage
+> Seed
+
+它们现实里本来就是两个概念。
+
+---
+
+# 六、Stage 1 的排名 / 对阵
+
+Stage 1 有16支。
+
+这16支按照它们的 **Global VRS Pre-event Standing** 排成：
+
+```text
+Seed 1
+Seed 2
+...
+Seed 16
+```
+
+第一轮固定：
+
+```text
+1 vs 9
+2 vs 10
+3 vs 11
+4 vs 12
+5 vs 13
+6 vs 14
+7 vs 15
+8 vs 16
+```
+
+([GitHub][1])
+
+所以不是：
+
+> #1打#16。
+
+这一点我们之前好像也曾理解错过。
+
+---
+
+# 七、打一轮以后怎么重新排名
+
+第一轮以后，不再只看原始 VRS。
+
+Mid-stage Seed 的优先级是：
+
+> **① 当前 W-L 战绩**
+>
+> **② Difficulty Score / Buchholz**
+>
+> **③ 这个 Stage 的 Initial Seed**
+
+([GitHub][1])
+
+例如：
+
+```text
+A 2-0
+B 2-0
+C 2-0
+D 2-0
+```
+
+先全部属于2-0池。
+
+然后比较 Difficulty。
+
+---
+
+## Difficulty / Buchholz 怎么算
+
+就是你之前理解的那个。
+
+把所有打过的对手：
+
+> 当前 Wins 加起来
+> 减去
+> 当前 Losses 加起来
+
+例如你打过：
+
+```text
+对手A：2-0
+对手B：1-1
+```
+
+Difficulty：
+
+```text
+(2-0) + (1-1)
+= +2
+```
+
+另一个队打过：
+
+```text
+1-1
+1-1
+```
+
+Difficulty：
+
+```text
+0 + 0 = 0
+```
+
+那么同样都是2-0：
+
+> 第一支队 Seed 更高。
+
+([GitHub][1])
+
+---
+
+# 八、后续对阵也是同战绩池
+
+比如：
+
+```text
+Round 2
+
+1-0 vs 1-0
+0-1 vs 0-1
+```
+
+Round 3：
+
+```text
+2-0
+1-1
+0-2
+```
+
+然后：
+
+> 同战绩池里高 Seed 对低 Seed，
+>
+> 同时尽量避免这个 Stage 内重复交手。
+
+Round 2/3 官方明确要求最高种子找最低可用种子；Round 4/5 还有一套优先配对表处理6队池和避免rematch。([GitHub][1])
+
+对我们游戏来说其实现在的：
+
+> W-L Pool → Difficulty → Initial Seed → High vs Low → Avoid Rematch
+
+已经基本就是正确实现方向。
+
+---
+
+# 九、Stage 2 的种子有一个非常重要的特殊规则
+
+Stage 2：
+
+```text
+8支 Stage2 直邀
++
+8支 Stage1 晋级
+```
+
+但不是把16支重新按 Global VRS 排。
+
+而是强制：
+
+### Stage2直邀
+
+```text
+Seed 1–8
+```
+
+内部按照 Pre-event Global VRS 排。
+
+### Stage1晋级者
+
+```text
+Seed 9–16
+```
+
+按照它们 **Stage1 Final Seed** 排。
+
+([GitHub][1])
+
+所以哪怕一个从 Stage1 杀上来的超级强队 Global VRS 很高：
+
+> 到 Stage2 仍然属于 Seed 9–16 那半区。
+
+然后第一轮：
+
+```text
+Stage2 Direct #1
+vs
+Stage1 Advancer #1
+
+也就是：
+Seed 1 vs Seed 9
+```
+
+这就是你之前说：
+
+> “本来就在 Stage2 的队第一轮打 Stage1 晋级上来的队。”
+
+**完全正确。**
+
+---
+
+# 十、Stage 3 完全一样
+
+```text
+8支 Stage3 Direct
++
+8支 Stage2 Advancers
+```
+
+Stage3：
+
+```text
+Direct     → Seed 1–8
+Advancers  → Seed 9–16
+```
+
+第一轮依然：
+
+```text
+1 vs 9
+2 vs 10
+...
+8 vs 16
+```
+
+然后继续 Swiss。([GitHub][1])
+
+---
+
+# 十一、每个 Stage 怎么晋级
+
+三个 Stage 都：
+
+```text
+3-0  晋级
+3-1  晋级
+3-2  晋级
+
+2-3  淘汰
+1-3  淘汰
+0-3  淘汰
+```
+
+所以每个16队 Swiss：
+
+> **8晋8汰。**
+
+目前 Major 规则仍是：
+
+> 晋级局 / 淘汰局 BO3
+> 其他比赛 BO1
+
+PGL Singapore 的 Stage 页面也按这个格式列出。([Liquipedia][6])
+
+---
+
+# 十二、Stage 3 打完以后怎么排 Playoffs
+
+Stage3 最终8强也是按照：
+
+> W-L
+> → Difficulty
+> → Stage3 Initial Seed
+
+得到最终：
+
+```text
+#1
+#2
+...
+#8
+```
+
+然后淘汰赛：
+
+```text
+1 ─┐
+   ├─
+8 ─┘
+
+4 ─┐
+   ├─
+5 ─┘
+
+
+2 ─┐
+   ├─
+7 ─┘
+
+3 ─┐
+   ├─
+6 ─┘
+```
+
+也就是：
+
+> `1v8`
+>
+> `4v5`
+>
+> `2v7`
+>
+> `3v6`
+
+([GitHub][1])
+
+所以我们之前说：
+
+> “3-0 晋级的打 3-2”
+
+只是**结果上经常如此**。
+
+真正的规则不是：
+
+```text
+3-0 vs 3-2
+```
+
+而是：
+
+> **最终Seed #1 vs #8。**
+
+---
+
+# 对我们项目最关键的结论
+
+这次我觉得可以直接修改我们之前那个 Match Engine 的 **Entry Stage** 设计。
+
+之前是：
+
+```text
+32支AI + 玩家
+按一个总分排序
+#1-8 Stage3
+#9-16 Stage2
+#17-32 Stage1
+```
+
+其实不够真实。
+
+更正确应该是：
+
+```text
+① 确定玩家地区
+      ↓
+② 生成当前 Major Regional Quotas
+   EU / AM / AS
+      ↓
+③ Regional Ranking
+   决定32支参赛队
+   + 各自 Entry Stage
+      ↓
+④ 玩家插入自己的 Regional Ranking
+      ↓
+⑤ 名额顺延
+      ↓
+⑥ 32支队确定后
+   再统一算 Global Seed
+      ↓
+⑦ 进入 Swiss
+```
+
+尤其你现在已经有：
+
+> `team_snapshot.json` 里的 VRS rank / points
+
+那现实的这一层其实突然变得**完全可以复刻**了。
+
+而当前 Singapore 甚至可以直接先写一个 Snapshot：
+
+```text
+REGIONAL_SLOTS = {
+    EU: {stage1: 6, stage2: 6, stage3: 6},
+    AM: {stage1: 6, stage2: 1, stage3: 2},
+    AS: {stage1: 4, stage2: 1, stage3: 0},
+}
+```
+
+这样我觉得比之前“全世界32队直接按分数切8/8/16”合理很多，而且实现复杂度其实没高多少。
+
+还有一点特别有意思：**这样玩家的国籍构成第一次真的会影响 Road to Major。** 因为你的五人梦之队也需要获得一个 Regional Assignment，然后是在欧洲榜、美洲榜还是亚洲榜里抢 Major 名额。这可能会让 `DENMARK CORE / CIS / International Mix` 这类阵容第一次不只是 Trait，而跟入场环境产生一点真实联系。不过这个要不要成为玩法，我建议之后单独讨论，先别急着自动塞进去。
+
+[1]: https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md "https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md"
+[2]: https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md?plain=1 "https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md?plain=1"
+[3]: https://www.hltv.org/news/44921/regional-distribution-set-for-pgl-singapore-major "https://www.hltv.org/news/44921/regional-distribution-set-for-pgl-singapore-major"
+[4]: https://www.hltv.org/news/44851/europe-gains-one-major-slot-for-pgl-singapore-at-the-expense-of-the-americas "https://www.hltv.org/news/44851/europe-gains-one-major-slot-for-pgl-singapore-at-the-expense-of-the-americas"
+[5]: https://www.hltv.org/valve-ranking/invites "https://www.hltv.org/valve-ranking/invites"
+[6]: https://liquipedia.net/counterstrike/PGL/2026/Singapore "https://liquipedia.net/counterstrike/PGL/2026/Singapore"
