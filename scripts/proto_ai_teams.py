@@ -30,6 +30,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gen_draft_cards as G          # 只读:借它的位置模板,不改它
 import proto_draft as P
 import proto_major as M
 
@@ -63,10 +64,45 @@ ROLE_MAP = {"igl": "IGL", "awp": "AWPER",
 NON_PLAYER = {"coach", "assistant coach", "manager", "analyst",
               "broadcast analyst", "commentator"}
 
-# gen_draft_cards.py 的位置模板。改判成 IGL 的人要拿这一档的领导力——
-# 只换标签不换数值只值 +1.8 分，等于没改（实测 spirit 62.8 -> 64.7）。
-IGL_LEAD = {1: 56, 2: 65, 3: 75, 4: 84, 5: 90}
-RIFLE_LEAD = {1: 20, 2: 22, 3: 24, 4: 27, 5: 30}
+# 改判位置 = 换整套模板，不是换一个标签。
+#
+# `gen_draft_cards.build_card` 的注释早就写明了这条：「位置的人工修正必须**在套
+# 模板之前**生效；放在最后 update 只会换掉标签，四维仍旧来自被否掉的那套模板」。
+# 这一层原本正是那个错的做法——只把领导力换成 IGL 档，火力照抄步枪手的，于是
+# 造出 Magisk 火 90 / 领 90 这种卡（全库 648 张里，火≥85 且领≥80 的有 0 张）。
+# 生成器管这叫**六边形怪物**（`gen_draft_cards.py:293`、设计稿 §11.1）。
+#
+# 生成器的解法照抄过来：档位模板决定水平，履历只在**档内**拉开 ±6 分，而
+# **IGL 只继承 0.4 倍的火力履历**——「明星履历 + IGL 模板」不许叠加。
+IGL_FIRE_SHARE = 0.4        # 和 gen_draft_cards.py:295 是同一个数
+
+
+def retemplate(card, new_pos):
+    """把一张卡从它的卡面位置换算到 new_pos 的模板上。
+
+    excess = 这张卡比它自己那档的模板高出多少（履历 + 年轻人加成 + 生成时的
+    随机）。**它必须先还原成「步枪手口径」再换过去**——一张 IGL 卡上的 +2 火力
+    背后是 +5 的履历，因为它当初只按 0.4 倍记进去；反向换算时要除回来，不然
+    指挥改判成步枪手会被白扣一次。
+
+    领导力两个方向都只取该档基准值，不继承。因为「他会不会喊」和「他枪法多好」
+    没有关系——生成器给 IGL 的领导力走的是另一条证据通道（`igl_score`：以指挥
+    身份拿过多少冠军），一个刚接手喊战术的枪男在那条通道上是空的。
+    """
+    g = card["grade"]
+    old = G.TEMPLATE[card["position"]][g]
+    new = G.TEMPLATE[new_pos][g]
+    share = lambda pos: IGL_FIRE_SHARE if pos == "IGL" else 1.0
+    out = dict(card)
+    for i, key in enumerate(G.ATTRS):
+        if key == "leadership":
+            out[key] = new[i]
+            continue
+        excess = card[key] - old[i]
+        if key == "firepower":
+            excess = excess / share(card["position"]) * share(new_pos)
+        out[key] = max(1, min(99, int(round(new[i] + excess))))
+    return out
 
 # 补位用的占位卡：RIFLER G2 模板。它代表「这个位置上有个我们数据库里没有的
 # 新人」——卡库只收打过 Major 的人，而现在一线队里确实有还没打过 Major 的人。
@@ -190,19 +226,18 @@ def settle(card):
     notes = []
     pos = c.pop("_pos")
     if pos != card["position"]:
+        c = retemplate(c, pos)
         c["position"] = pos
-        # 位置换了，领导力得跟着换，否则只是贴了个标签(实测只值 +1.8 分)
-        if pos == "IGL":
-            c["leadership"] = IGL_LEAD[card["grade"]]
-        elif card["position"] == "IGL":
-            c["leadership"] = RIFLE_LEAD[card["grade"]]
-        notes.append("位置 %s→%s，领导 %d→%d"
-                     % (card["position"], pos, card["leadership"], c["leadership"]))
+        notes.append("位置 %s→%s，火 %d→%d 领 %d→%d 稳 %d→%d"
+                     % (card["position"], pos, card["firepower"], c["firepower"],
+                        card["leadership"], c["leadership"],
+                        card["stability"], c["stability"]))
 
     loss = age_loss(card.get("age"))
     if loss > 0.05:
-        c["firepower"] = max(int(round(card["firepower"] - loss)), 1)
-        notes.append("%d 岁，火力 %d→%d" % (card["age"], card["firepower"], c["firepower"]))
+        was = c["firepower"]
+        c["firepower"] = max(int(round(was - loss)), 1)
+        notes.append("%d 岁，火力 %d→%d" % (card["age"], was, c["firepower"]))
 
     c["_notes"] = notes
     c["_filler"] = False
