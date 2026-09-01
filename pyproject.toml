@@ -22,7 +22,7 @@ description = "CStrikle 猜选手 + Blind Draft，共用一份 CS 选手库"
 requires-python = ">=3.11"
 
 [tool.setuptools]
-packages = ["playerdb", "server", "gtptools", "blinddraft", "bdtools"]
+packages = ["playerdb", "server", "gtptools", "blinddraft", "bdtools", "bdserver"]
 
 [tool.setuptools.package-dir]
 playerdb = "packages/playerdb"
@@ -30,6 +30,7 @@ server = "apps/guess_the_player/server"
 gtptools = "apps/guess_the_player/tools"
 blinddraft = "apps/blind_draft/blinddraft"
 bdtools = "apps/blind_draft/tools"
+bdserver = "apps/blind_draft/server"
 
 [tool.pytest.ini_options]
 # tests/ 放跨包的仓库级不变量（依赖方向）；各包自己的测试跟着各包走。

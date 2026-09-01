@@ -320,7 +320,12 @@ def corrections(p, grade, pos, ranks, champs, ref_year):
     return d
 
 
-def build_card(p, grade, pos, ranks, champs, overrides, ref_year):
+#: 人工层允许覆盖的字段。`grade`/`position` 在套模板之前生效,四维在之后替换;
+#: 其余键(reason / draft_exclude)是**元数据,不上卡**。
+OVERRIDABLE = ATTRS + ("grade", "position")
+
+
+def build_card(p, grade, pos, ranks, champs, overrides, ref_year, trace=False):
     """Algorithm First, Override Last(§21)。
 
     位置和档位的人工修正必须**在套模板之前**生效:放在最后 update 只会换掉
@@ -329,15 +334,21 @@ def build_card(p, grade, pos, ranks, champs, overrides, ref_year):
     位置真值优先在 `data/manual/player_overrides.json` 的 `played_role` 里改
     (那个字段就是选手期位置,且不影响主游戏显示);这里的 position 只是
     平衡层的应急出口。
+
+    `trace=True` 时额外挂一份 `_trace`,记下每一维是怎么算出来的
+    (模板 → 履历修正 → 抖动 → 人工覆盖)以及背后的证据。后台的卡牌页靠它
+    展示推导过程——**必须走这条同一份代码**,在服务端另抄一遍公式就等于
+    埋了一个迟早会和生成器对不上的第二实现。`_trace` 不写进 draft_cards.json。
     """
     ov = dict(overrides.get(p.page, {}))
+    auto_grade, auto_pos = grade, pos
     grade = int(ov.pop("grade", grade))
     pos = ov.pop("position", pos)
     base = TEMPLATE[pos][grade]
     delta = corrections(p, grade, pos, ranks, champs, ref_year)
     rng = _rng(p.page)
     evidence = grade in EVIDENCE_GRADES
-    card = {}
+    card, steps = {}, {}
     for i, key in enumerate(ATTRS):
         # 同一张卡的随机只在这里发生一次,种子来自 page + 版本号,可重现
         if evidence:
@@ -345,17 +356,62 @@ def build_card(p, grade, pos, ranks, champs, overrides, ref_year):
         else:
             jitter = rng.uniform(-4, 4) if key == "firepower" else rng.uniform(-3, 3)
         card[key] = max(1, min(99, round(base[i] + delta[key] + jitter)))
+        # 不在这里四舍五入:trace 里存原值,显示端自己截位。存成两位小数的话
+        # 「模板 + 履历 + 抖动」在边界上会加不回自动值,而这份 trace 的全部
+        # 意义就是让人能把这笔账算平。
+        steps[key] = {"base": base[i], "delta": delta[key],
+                      "jitter": jitter, "auto": card[key]}
     card.update(page=p.page, nickname=p.nickname, position=pos, grade=grade,
                 country=p.country, team=p.team, age=p.age(),
                 majors=p.majors_count, champions=champs,
                 titles=[(m["event"], (m.get("team") or "").lower())
                         for m in (p.majors or []) if str(m.get("placement")) == "1"])
-    card.update(ov)
+    # 只让四维参与覆盖。原先是 `card.update(ov)`,于是 override 里的 reason
+    # 会一路并进卡、再被卡带进 AI 名单和导出的网页——一个只在肉眼看 JSON 时
+    # 才发现得了的污染。
+    for key in ATTRS:
+        if key in ov:
+            card[key] = max(1, min(99, int(ov[key])))
     card["overall"] = round(sum(card[k] * w for k, w in zip(ATTRS, WEIGHT[pos])), 1)
+    if trace:
+        for key in ATTRS:
+            steps[key]["override"] = ov.get(key)
+            steps[key]["final"] = card[key]
+        card["_trace"] = {
+            "grade": {"auto": auto_grade, "final": grade},
+            "position": {"auto": auto_pos, "final": pos},
+            "attrs": steps,
+            "weight": dict(zip(ATTRS, WEIGHT[pos])),
+            "jitter": not evidence,
+            "evidence": {
+                "top20": sorted(ranks.get(p.page, []), reverse=True),
+                "top20_score": round(top20_score(ranks.get(p.page, []), ref_year), 3),
+                "fire_anchor": FIRE_ANCHOR[grade],
+                "igl_score": round(igl_score(p, ref_year), 3),
+                "lead_anchor": LEAD_ANCHOR[grade],
+                "majors": p.majors_count, "champions": champs,
+                "best_placement": best_major_placement(p), "age": p.age(),
+            },
+            "reason": ov.get("reason", ""),
+        }
     return card
 
 
-def generate():
+def write_cards(cards) -> Path:
+    """写出生成物。`_trace` 只服务于后台展示,不进文件。"""
+    clean = [{k: v for k, v in c.items() if k != "_trace"} for c in cards]
+    OUT_PATH.write_text(json.dumps(
+        {"card_version": CARD_VERSION, "count": len(clean), "cards": clean},
+        ensure_ascii=False, indent=1), encoding="utf-8")
+    return OUT_PATH
+
+
+def load_overrides() -> dict:
+    return (json.loads(OVERRIDE_PATH.read_text(encoding="utf-8"))
+            if OVERRIDE_PATH.exists() else {})
+
+
+def generate(trace=False):
     """-> (卡牌, 待定位置的人, 人工确认排除的人)
 
     「待定」和「确认排除」必须分开:前者是还没人看过、看完可能进池的,后者是
@@ -365,8 +421,7 @@ def generate():
     db = PlayerDB()
     ranks, ref_year = load_top20()
     played = played_role_map()
-    overrides = (json.loads(OVERRIDE_PATH.read_text(encoding="utf-8"))
-                 if OVERRIDE_PATH.exists() else {})
+    overrides = load_overrides()
     excluded = {k for k, v in overrides.items()
                 if isinstance(v, dict) and v.get("draft_exclude")}
     cards, pending, confirmed = [], [], []
@@ -380,7 +435,7 @@ def generate():
             continue
         champs = champion_count(p)
         cards.append(build_card(p, career_grade(p, ranks, champs, pos, ref_year),
-                                pos, ranks, champs, overrides, ref_year))
+                                pos, ranks, champs, overrides, ref_year, trace))
     return cards, pending, confirmed
 
 
@@ -558,10 +613,7 @@ def main():
         return
     audit(cards, pending, confirmed)
     if args.write:
-        OUT_PATH.write_text(json.dumps(
-            {"card_version": CARD_VERSION, "count": len(cards), "cards": cards},
-            ensure_ascii=False, indent=1), encoding="utf-8")
-        print(f"\n已写入 {OUT_PATH.relative_to(ROOT)}")
+        print(f"\n已写入 {write_cards(cards).relative_to(ROOT)}")
     else:
         print("\n(只体检,没写盘。确认没问题后加 --write)")
 

@@ -1,0 +1,164 @@
+/* Blind Draft 调参后台。本地工具,不上线,所以不做响应式与主题切换。 */
+:root {
+  --bg: #12141a;  --panel: #191c24;  --line: #272b36;
+  --fg: #dfe3ec;  --dim: #8b93a6;    --acc: #f0a83c;
+  --ok: #57b96a;  --warn: #e06a4a;   --ov: #f0a83c;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 14.5px/1.6 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+}
+/* 数字一律等宽,否则同一列的 88.1 和 9 会左右乱跳,扫一眼看不出大小关系 */
+.n, td, th, .num { font-variant-numeric: tabular-nums; }
+.hidden { display: none !important; }
+.dim { color: var(--dim); }
+.n { text-align: right; }
+
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel);
+}
+h1 { margin: 0; font-size: 17px; letter-spacing: .5px; }
+h1 .sub { margin-left: 8px; color: var(--dim); font-weight: 400; font-size: 13px; }
+.meta { display: flex; align-items: center; gap: 8px; }
+.chip {
+  padding: 4px 11px; border-radius: 11px; background: #22262f;
+  color: var(--dim); font-size: 13px; border: 0;
+}
+.chip.warn { background: #3a251f; color: var(--warn); cursor: pointer; }
+.mini-btn {
+  padding: 4px 10px; border: 1px solid var(--line); border-radius: 5px;
+  background: #232733; color: var(--fg); cursor: pointer; font-size: 13px;
+}
+.mini-btn:hover { border-color: var(--acc); }
+
+/* 全库分布。调一张卡很容易把整档带歪,所以让它一直在眼前。 */
+.stats {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  padding: 8px 18px; border-bottom: 1px solid var(--line);
+  font-size: 13px; color: var(--dim);
+}
+.stats b { color: var(--fg); font-weight: 600; }
+
+/* 只给卡牌页。裸 `main {}` 会连 AI 页一起套上——那页的 <main> 不是两栏,
+   于是整张队伍表被挤进右边那根 420px 的柱子里,左边空一大片。 */
+main.split { display: grid; grid-template-columns: 1fr 460px;
+             height: calc(100vh - 104px); }
+.list { display: flex; flex-direction: column; min-width: 0; }
+.bar {
+  display: flex; gap: 8px; align-items: center;
+  padding: 8px 16px; border-bottom: 1px solid var(--line);
+}
+.bar input[type=text], .bar input:not([type]), .bar select {
+  padding: 6px 10px; background: #1e222b; color: var(--fg);
+  border: 1px solid var(--line); border-radius: 5px; font-size: 13.5px;
+}
+#q { width: 260px; }
+.ck { display: flex; align-items: center; gap: 4px; color: var(--dim); }
+
+.table-wrap { overflow: auto; flex: 1; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  position: sticky; top: 0; z-index: 1; background: var(--panel);
+  padding: 8px 10px; text-align: left; font-weight: 600; color: var(--dim);
+  border-bottom: 1px solid var(--line); font-size: 12.5px;
+}
+tbody td { padding: 5px 10px; border-bottom: 1px solid #1d212a; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: #1c2029; }
+tbody tr.on { background: #232a38; }
+.face { width: 32px; height: 32px; border-radius: 4px; object-fit: cover;
+        background: #22262f; display: block; }
+.who { display: flex; align-items: center; gap: 6px; }
+.who img.flag { width: 18px; height: 13px; object-fit: cover; border-radius: 2px; }
+.g { display: inline-block; min-width: 22px; padding: 1px 0; text-align: center;
+     border-radius: 4px; font-size: 12.5px; font-weight: 700; }
+.g5 { background: #4a2f18; color: #f0a83c; }
+.g4 { background: #3a2c40; color: #c58ad6; }
+.g3 { background: #1f3448; color: #6fa8dc; }
+.g2 { background: #26332a; color: #7fb98a; }
+.g1 { background: #2a2d36; color: #8b93a6; }
+/* 列宽写死,末尾留一根 .sp 吃掉富余。
+   不这么做的话「战队」是唯一的弹性列,它会把整片空白全吞下去,
+   四维和 OVR 被顶到最右边——中间隔着两百多像素的空档,一行数看下来眼睛要跳两次。 */
+#tbl th:nth-child(1) { width: 48px; }
+#tbl th:nth-child(2) { width: 190px; }
+#tbl th:nth-child(3) { width: 66px; }
+#tbl th:nth-child(4) { width: 56px; }
+#tbl th:nth-child(5) { width: 168px; }
+#tbl th:nth-child(n+6):nth-child(-n+10) { width: 62px; }
+#tbl th.sp { width: auto; }
+
+td.ov { color: var(--ov); font-weight: 600; }
+.dot { color: var(--ov); }
+
+/* ------------------------------------------------------------ 详情面板 */
+.panel { border-left: 1px solid var(--line); background: var(--panel);
+         overflow: auto; padding: 14px; }
+.panel .empty { color: var(--dim); text-align: center; padding-top: 60px; }
+.phead { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.phead img.big { width: 84px; height: 84px; border-radius: 6px; object-fit: cover;
+                 background: #22262f; }
+.phead h3 { margin: 0 0 4px; font-size: 19px; }
+.pmeta { color: var(--dim); font-size: 13px; line-height: 1.8; }
+
+h4 { margin: 18px 0 7px; font-size: 12.5px; color: var(--acc); font-weight: 700;
+     letter-spacing: .8px; }
+
+table.derive { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.derive th { padding: 3px 4px; color: var(--dim); font-weight: 500;
+                  border-bottom: 1px solid var(--line); text-align: right; }
+table.derive th:first-child { text-align: left; }
+table.derive td { padding: 3px 4px; text-align: right;
+                  border-bottom: 1px solid #1d212a; font-variant-numeric: tabular-nums; }
+table.derive td:first-child { text-align: left; color: var(--dim); }
+table.derive td.fin { font-weight: 600; }
+table.derive tr.has-ov td.fin { color: var(--ov); }
+table.derive td.zero { color: #4a505e; }
+
+.ev { font-size: 13px; line-height: 1.9; }
+.ev b { color: var(--fg); font-weight: 600; }
+.ev .row { display: flex; justify-content: space-between; gap: 10px;
+           border-bottom: 1px solid #1d212a; padding: 2px 0; }
+.ev .row span:first-child { color: var(--dim); }
+
+form.edit { margin-top: 6px; }
+form.edit .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+form.edit label { display: block; font-size: 12px; color: var(--dim); margin-bottom: 3px; }
+form.edit input, form.edit select, form.edit textarea {
+  width: 100%; padding: 6px 9px; background: #1e222b; color: var(--fg);
+  border: 1px solid var(--line); border-radius: 5px; font-size: 13.5px;
+  font-family: inherit;
+}
+form.edit input::placeholder { color: #4a505e; }
+form.edit textarea { min-height: 66px; resize: vertical; }
+form.edit .actions { display: flex; gap: 8px; margin-top: 10px; }
+form.edit button {
+  flex: 1; padding: 7px; border-radius: 5px; cursor: pointer; font-size: 13.5px;
+  border: 1px solid var(--line); background: #232733; color: var(--fg);
+}
+form.edit button.primary { background: #3a3018; border-color: var(--acc); color: var(--acc); }
+form.edit button.danger { color: var(--warn); }
+.note { font-size: 12px; color: var(--dim); margin-top: 10px; line-height: 1.7; }
+
+/* ---------------------------------------------------------------- 弹窗 */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.6);
+         display: flex; align-items: center; justify-content: center; z-index: 20; }
+.modal-box { width: min(720px, 90vw); max-height: 80vh; display: flex;
+             flex-direction: column; background: var(--panel);
+             border: 1px solid var(--line); border-radius: 8px; }
+.modal-head { display: flex; justify-content: space-between; align-items: center;
+              padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.modal-head h2 { margin: 0; font-size: 15px; }
+.modal-body { overflow: auto; padding: 14px 16px; font-size: 13px; line-height: 1.7; }
+.modal-body table { width: 100%; }
+.modal-body td { padding: 5px 7px; border-bottom: 1px solid #1d212a; vertical-align: top; }
+.kind-added { color: var(--ok); }
+.kind-removed { color: var(--warn); }
+.kind-changed { color: var(--acc); }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+         padding: 10px 20px; font-size: 14px; border-radius: 6px; background: #2a3040;
+         border: 1px solid var(--line); z-index: 30; }
+.toast.bad { border-color: var(--warn); color: var(--warn); }

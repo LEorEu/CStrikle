@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Blind Draft · 卡牌调参</title>
+<link rel="stylesheet" href="/static/cards.css">
+<link rel="stylesheet" href="/static/ai.css">
+</head>
+<body>
+
+<header>
+  <h1>Blind Draft<span class="sub">卡牌调参</span></h1>
+  <nav class="nav">
+    <a href="/" class="on">卡牌调参</a>
+    <a href="/ai">AI 对手</a>
+  </nav>
+  <div class="meta">
+    <span id="metaVer" class="chip">--</span>
+    <span id="metaCount" class="chip">--</span>
+    <button id="btnDiff" class="chip warn hidden"></button>
+    <button id="btnPublish" class="mini-btn">写出 draft_cards.json</button>
+  </div>
+</header>
+
+<div id="stats" class="stats"></div>
+
+<main class="split">
+  <section class="list">
+    <div class="bar">
+      <input id="q" placeholder="搜昵称 / page / 战队" autocomplete="off">
+      <select id="fPos">
+        <option value="">全部位置</option>
+        <option>RIFLER</option><option>AWPER</option><option>IGL</option>
+      </select>
+      <select id="fGrade">
+        <option value="">全部档位</option>
+        <option value="5">G5</option><option value="4">G4</option>
+        <option value="3">G3</option><option value="2">G2</option>
+        <option value="1">G1</option>
+      </select>
+      <select id="sort">
+        <option value="overall">按 overall</option>
+        <option value="firepower">按火力</option>
+        <option value="leadership">按领导</option>
+        <option value="experience">按经验</option>
+        <option value="stability">按稳定</option>
+        <option value="nickname">按昵称</option>
+      </select>
+      <label class="ck"><input type="checkbox" id="fOv"> 只看有覆盖</label>
+      <span id="listCount" class="dim"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead><tr>
+          <th></th><th>选手</th><th>位</th><th>档</th><th>战队</th>
+          <th class="n">火</th><th class="n">领</th><th class="n">经</th>
+          <th class="n">稳</th><th class="n">OVR</th><th class="sp"></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <aside id="panel" class="panel">
+    <div class="empty">左边点一个人</div>
+  </aside>
+</main>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="mTitle">待发布</h2>
+      <button id="mClose" class="mini-btn">关闭</button>
+    </div>
+    <div id="mBody" class="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="/static/cards.js"></script>
+</body>
+</html>

@@ -33,6 +33,7 @@ PACKAGES = {
     "gtptools": "apps/guess_the_player/tools",
     "blinddraft": "apps/blind_draft/blinddraft",
     "bdtools": "apps/blind_draft/tools",
+    "bdserver": "apps/blind_draft/server",
 }
 
 #: 每个包允许依赖的内部包。没列出的一律算违规。
@@ -42,6 +43,9 @@ ALLOWED = {
     "gtptools": {"playerdb", "server"},
     "blinddraft": {"playerdb"},
     "bdtools": {"playerdb", "blinddraft"},
+    # 调参后台。它读 blinddraft 的生成器、写 blinddraft 的人工层,但反过来
+    # 不行:玩法代码一旦 import bdserver,命令行跑一局就要拖起 FastAPI。
+    "bdserver": {"playerdb", "blinddraft"},
 }
 
 

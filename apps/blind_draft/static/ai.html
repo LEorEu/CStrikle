@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Blind Draft · AI 对手</title>
+<link rel="stylesheet" href="/static/cards.css">
+<link rel="stylesheet" href="/static/ai.css">
+</head>
+<body>
+
+<header>
+  <h1>Blind Draft<span class="sub">AI 对手</span></h1>
+  <nav class="nav">
+    <a href="/">卡牌调参</a>
+    <a href="/ai" class="on">AI 对手</a>
+  </nav>
+  <div class="meta">
+    <span id="mRho" class="chip" title="我们的 entry 顺位和 HLTV 排名的秩相关">--</span>
+    <span id="mCov" class="chip" title="赛场上有多少人拿得到 5E 实测数据">--</span>
+    <span id="mAsof" class="chip">--</span>
+  </div>
+</header>
+
+<div class="banner" id="banner"></div>
+
+<main class="ai-main">
+  <div class="bar">
+    <input id="q" placeholder="搜队名 / 选手" autocomplete="off">
+    <select id="sort">
+      <option value="our">按我们的顺位</option>
+      <option value="hltv">按 HLTV 排名</option>
+      <option value="delta">按分歧最大</option>
+    </select>
+    <label class="ck"><input type="checkbox" id="expandAll"> 全部展开</label>
+    <span id="count" class="dim"></span>
+  </div>
+  <div id="teams"></div>
+
+  <section id="skipped" class="skipped"></section>
+</main>
+
+<script src="/static/ai.js"></script>
+</body>
+</html>
