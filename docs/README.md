@@ -3,6 +3,11 @@
 这个仓库里有**两个游戏**，共用同一份选手数据库。之前所有文档堆在根目录，
 分不清哪份属于哪个，所以按游戏拆开了。
 
+## 先看这份
+
+- **[架构.md](架构.md)** — 三个包怎么分、依赖只许往哪个方向走、数据放哪、
+  怎么跑、什么进镜像什么不进。**动代码之前先看它**，边界是有测试盯着的。
+
 ## [guess-the-player/](guess-the-player/) — 猜选手（已上线）
 
 CStrikle，blast.tv 那个 Counter-Strikle 的自建版：猜一名神秘 CS 职业选手，
@@ -21,6 +26,24 @@ CStrikle，blast.tv 那个 Counter-Strikle 的自建版：猜一名神秘 CS 职
   也是它的下游。
 
 ---
+
+## 关于文档里的路径
+
+代码在 2026-09-01 拆成了三个包（见 [架构.md](架构.md)）。「照着做」的那几份
+文档已经改成新路径；**历史记录类的没改**——`原型实测记录.md`、
+`玩法蓝图_v0.2.md`、`原始讨论_ChatGPT.md`、`guess-the-player/项目记忆.md`
+里写的是当时跑过什么，把路径改成今天的等于篡改记录。读到 `scripts/proto_*.py`
+这类旧路径，对照下表换算：
+
+| 旧 | 新 |
+|---|---|
+| `scripts/proto_draft.py` | `python -m blinddraft.draft` |
+| `scripts/proto_major.py` / `proto_match.py` / `proto_ai_teams.py` | `python -m blinddraft.major` / `.match` / `.ai_teams` |
+| `scripts/gen_draft_cards.py` | `python -m blinddraft.cards` |
+| `scraper/build_db.py` / `fetch_images.py` | `python -m playerdb.build_db` / `.fetch_images` |
+| `scraper/fetch_rankings.py` | `python -m bdtools.fetch_rankings` |
+| `server/players.py` / `regions.py` | `playerdb/players.py` / `regions.py` |
+| `data/draft_cards.json` 等 Blind Draft 数据 | `data/blind_draft/` 下 |
 
 ## 还留在根目录的
 

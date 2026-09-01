@@ -1,0 +1,41 @@
+# 这个仓库有两个游戏，共用一份选手库。文件按 apps/ + packages/ 摆，但 import
+# 名保持扁平——靠下面的 package-dir 映射实现。
+#
+# 这么做有两个具体理由：
+#   1. `apps/guess-the-player` 这种带连字符的目录不能当 Python 模块路径；
+#   2. 生产入口是 `uvicorn server.main:app`，映射后这一行不用改，
+#      部署脚本和 compose 卷路径都不受目录调整影响。
+#
+# 装上之后，散落在各文件顶部的 `sys.path.insert(...)` 就都可以删掉了。
+#     pip install -e .
+#
+# 依赖仍然只在 requirements.txt 里写一份，这里不重复声明，免得两处漂移。
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cstrikle"
+version = "0.1.0"
+description = "CStrikle 猜选手 + Blind Draft，共用一份 CS 选手库"
+requires-python = ">=3.11"
+
+[tool.setuptools]
+packages = ["playerdb", "server", "gtptools", "blinddraft", "bdtools"]
+
+[tool.setuptools.package-dir]
+playerdb = "packages/playerdb"
+server = "apps/guess_the_player/server"
+gtptools = "apps/guess_the_player/tools"
+blinddraft = "apps/blind_draft/blinddraft"
+bdtools = "apps/blind_draft/tools"
+
+[tool.pytest.ini_options]
+# tests/ 放跨包的仓库级不变量（依赖方向）；各包自己的测试跟着各包走。
+testpaths = [
+    "tests",
+    "packages/playerdb/tests",
+    "apps/guess_the_player/tests",
+    "apps/blind_draft/tests",
+]

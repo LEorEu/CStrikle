@@ -37,12 +37,16 @@
 ## 运行
 
 ```powershell
-cd D:\TTS\cstrikle
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
+.\.venv\Scripts\pip install -e .          # 装包映射,只需一次
 .\.venv\Scripts\uvicorn server.main:app --host 127.0.0.1 --port 8620
 # 浏览器打开 http://127.0.0.1:8620
 ```
+
+`pip install -e .` 把 `playerdb` / `server` / `gtptools` 等包名映射到
+`apps/` 和 `packages/` 下的实际目录（见 [docs/架构.md](docs/架构.md)）。
+少这一步会 `ModuleNotFoundError: No module named 'server'`。
 
 ## AI 对手
 
@@ -82,7 +86,7 @@ AI 有三种强度：
 需要评估不支持 function calling 的兼容接口时，可使用隔离基准工具：
 
 ```bash
-python scripts/benchmark_text_provider.py \
+python -m gtptools.benchmark_text_provider \
   --base-url https://provider.example/v1 \
   --model model-name \
   --key-config /secure/provider-config.json \
@@ -124,8 +128,8 @@ docker compose ps
 更新数据(遵守 Liquipedia API 速率限制,约 3 分钟):
 
 ```powershell
-.\.venv\Scripts\python -X utf8 scraper\build_db.py       # 选手数据 -> data/players.json
-.\.venv\Scripts\python -X utf8 scraper\fetch_images.py   # 照片(600px)/队标/国旗 -> data/img/
+.\.venv\Scripts\python -m playerdb.scrape.build_db      # 选手数据 -> data/players.json
+.\.venv\Scripts\python -m playerdb.scrape.fetch_images  # 照片(600px)/队标/国旗 -> data/img/
 ```
 
 直接跑会立即覆盖正式库;更稳的方式是走 staging(管理页「数据更新」
@@ -143,9 +147,9 @@ docker compose ps
 - **PNG 照片自动转同尺寸 WebP**:Liquipedia 常给抠图 PNG,照片内容用
   无损格式存等于白扔几百 KB(最大一张 935KB → 56KB);四分之三真的带
   透明背景,所以只能转 WebP 不能转 JPEG。`fetch_images.py` 下载后就转,
-  老库补转一次用 `scraper/convert_photos_webp.py`(需要 Pillow,见
-  `requirements-maintenance.txt`;`scraper/` 不进运行时镜像)
-- **URL 带内容哈希**:`server/players.py` 的 `_img()` 给每个图片地址加
+  老库补转一次用 `playerdb.scrape.convert_photos_webp`(需要 Pillow,见
+  `requirements-maintenance.txt`;`playerdb.scrape` 不进运行时镜像)
+- **URL 带内容哈希**:`playerdb/players.py` 的 `_img()` 给每个图片地址加
   `?v=<内容哈希>`,配 `Cache-Control: immutable` 永久缓存。哈希按
   (大小, mtime) 缓存但取自内容,所以重新部署把时间戳刷了也不会让全站
   图片缓存失效——只有图真的换了 URL 才变。裸地址(不带 `?v=`)只给一天,
@@ -163,7 +167,7 @@ Cloudflare 拒绝。维护工具使用本机普通 Chrome 低速访问公开选�
 .\.venv\Scripts\pip install -r requirements-maintenance.txt
 
 # “2k” 通过人工映射明确指 Stewie2K，不会误配 Woro2k
-.\.venv\Scripts\python -X utf8 scripts\sync_hltv_roles.py collect `
+.\.venv\Scripts\python -m gtptools.sync_hltv_roles collect `
   --players 2k Maka SmithZz --with-igl-news
 
 # 查看并编辑 .cache/hltv/role_review.json：
@@ -171,8 +175,8 @@ Cloudflare 拒绝。维护工具使用本机普通 Chrome 低速访问公开选�
 # (也可以不手编 JSON,直接在管理页「HLTV 审核」标签里表单填写)
 
 # 第一次仅预览；确认无误后才实际写入 player_overrides.json
-.\.venv\Scripts\python -X utf8 scripts\sync_hltv_roles.py apply
-.\.venv\Scripts\python -X utf8 scripts\sync_hltv_roles.py apply --write
+.\.venv\Scripts\python -m gtptools.sync_hltv_roles apply
+.\.venv\Scripts\python -m gtptools.sync_hltv_roles apply --write
 ```
 
 默认打开可见 Chrome、页面间隔至少 8 秒并缓存 7 天。`--all` 必须显式
@@ -266,17 +270,49 @@ APP_GID=1001" >> .env
 对不上时的表现是写入报 `Permission denied`(而不是只读卷的
 `Read-only file system`),管理页会把这个错误原样显示出来。
 
-**「数据更新」标签在生产环境不可用**:Dockerfile 不 COPY `scraper/`
-(镜像不带爬虫和它的依赖),三个抓取任务会直接报「启动失败」。全库刷新
+**「数据更新」标签在生产环境不可用**:`.dockerignore` 挡掉了
+`packages/playerdb/scrape`(镜像不带爬虫和它的依赖),三个抓取任务会
+直接报「启动失败」。全库刷新
 始终在本地跑,过 staging 发布后连同镜像一起部署。
 
 ## 结构
 
+仓库分成三个包，猜选手只是其中一个 app；整体分层、依赖方向和数据布局见
+**[docs/架构.md](docs/架构.md)**。下面只列猜选手这一侧。
+
+**共享底座** `packages/playerdb/` → `import playerdb`
+
 ```
-scraper/build_db.py       选手数据爬虫(可重跑)
-scraper/fetch_images.py   照片/队标/国旗爬虫(可重跑)
-scraper/iso.py            国名 -> ISO 代码(国旗用)
-scripts/sync_hltv_roles.py 本地 HLTV 匹配/角色证据/人工审核
+playerdb/players.py           选手库加载/筛选/名字解析
+playerdb/regions.py           国籍 -> 赛区(server 与爬虫共用)
+playerdb/rankings.py          队名归一 + 队伍排名
+playerdb/major_results.py     Major 战绩修正
+playerdb/paths.py             所有数据文件的唯一路径锚点
+playerdb/scrape/build_db.py       选手数据爬虫(可重跑)
+playerdb/scrape/fetch_images.py   照片/队标/国旗爬虫(可重跑)
+playerdb/scrape/iso.py            国名 -> ISO 代码(国旗用)
+```
+
+**猜选手** `apps/guess_the_player/` → `import server` / `import gtptools`
+
+```
+server/main.py            FastAPI 入口
+server/game.py            反馈比对 + 单人对局
+server/rooms.py           对战房间 + WebSocket + 整局限时 + AI 调度
+server/ai_player.py       LLM agent(native/text 双协议 + 全程转录)
+server/solver.py          确定性求解器(作弊档 + 候选过滤)
+server/admin.py           管理页接口(反馈收件箱/override 编辑/新增选手/
+                          头像上传/体检/热重载)
+static/                   前端(原生 JS 单页,无构建;admin.* 为管理页;
+                          style2.css 为「新版 UI」转播风皮肤,页头按钮切换,
+                          偏好存 localStorage,旧版样式不受影响)
+gtptools/sync_hltv_roles.py   本地 HLTV 匹配/角色证据/人工审核
+gtptools/benchmark_*.py       AI 对手的接口/推理基准
+```
+
+**数据** `data/`（Blind Draft 的那份在 `data/blind_draft/`，猜选手不读）
+
+```
 data/players.json         选手库(生成物,约 650+ 人)
 data/hltv_player_map.json 已人工确认的本地 page -> HLTV ID 映射
 data/images.json          图片索引(生成物)
@@ -284,15 +320,4 @@ data/img/                 照片/队标/国旗(生成物)
 data/manual/              人工层(可写卷,线上为准):player_overrides.json
                           人工修正 / players_manual.json 人工新增选手 /
                           images_manual.json + img/ 后台上传的照片
-server/players.py         选手库加载/筛选/名字解析
-server/game.py            反馈比对 + 单人对局
-server/rooms.py           对战房间 + WebSocket + 整局限时 + AI 调度
-server/ai_player.py       LLM agent(native/text 双协议 + 全程转录)
-server/main.py            FastAPI 入口
-server/admin.py           管理页接口(反馈收件箱/override 编辑/新增选手/
-                          头像上传/体检/热重载)
-server/regions.py         国籍 -> 赛区(server 与 scraper 共用)
-static/                   前端(原生 JS 单页,无构建;admin.* 为管理页;
-                          style2.css 为「新版 UI」转播风皮肤,页头按钮切换,
-                          偏好存 localStorage,旧版样式不受影响)
 ```

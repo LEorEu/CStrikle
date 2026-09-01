@@ -1,0 +1,25 @@
+[
+  {
+    "name": "cliproxy-gpt5.5",
+    "base_url": "https://cliproxy.estia.moe/v1",
+    "api_key": "REPLACE_ME",
+    "model": "gpt-5.5",
+    "tools_mode": "auto",
+    "reasoning_effort": "low"
+  },
+  {
+    "name": "中转站A-gpt-4o-mini",
+    "base_url": "https://your-relay.example.com/v1",
+    "api_key": "sk-xxx",
+    "model": "gpt-4o-mini",
+    "tools_mode": "auto"
+  },
+  {
+    "name": "中转站B-deepseek",
+    "base_url": "https://another-relay.example.com/v1",
+    "api_key": "sk-yyy",
+    "model": "deepseek-chat",
+    "tools_mode": "auto",
+    "thinking": "disabled"
+  }
+]

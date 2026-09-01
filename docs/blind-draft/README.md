@@ -26,24 +26,31 @@ AI 对手用**当前阵容 + 当前位置 + 年龄衰减**（`field_source: curr
 
 ## 代码在哪
 
-```
-scripts/gen_draft_cards.py    卡牌生成器 → data/draft_cards.json（v6，已提交）
-scripts/proto_draft.py        命令行原型（选人这一层的全部逻辑都在这）
-scripts/proto_draft_web.html  网页原型模板
-scripts/export_draft_web.py   把卡和常量注进模板 → .cache/proto_draft_web.html
-scripts/proto_major.py        入场层：生成赛场 → 玩家插队 → 定 Stage → 首轮对阵
-data/manual/major_field.json  赛场人工层：赛场来源、固定几支、权重、阵容、磨合度上限
-scripts/proto_match.py        比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联
-scripts/proto_ai_teams.py     AI 对手：当前阵容 + 当前位置 + 年龄衰减（赛场候选池）
-scripts/fetch_5e_stats.py     抓 5eplay 当前竞技数据 → data/5e_player_stats.json（本地工具）
-scraper/fetch_rankings.py     队伍快照（当前阵容+位置+HLTV/VRS 排名）→ data/team_snapshot.json
-scraper/build_db.py           重建选手库 → data/players.json（--refresh-existing 只刷新当前队/角色）
-data/manual/5e_aliases.json   卡库昵称 → 5eplay 名字/id 的人工别名表
-tests/test_draft_cards.py     8 项，盯着卡库和「卡牌与落地记录.md」里的 SPEC 块
-```
+整个模式住在 `apps/blind_draft/`，是一个叫 `blinddraft` 的包；抓数据的工具在
+隔壁 `bdtools`。它只依赖共享底座 `playerdb`，**不碰猜选手那一侧**——这条边界
+由 `tests/test_architecture.py` 盯着。整体分层见 [../架构.md](../架构.md)。
 
-一条一直守着的规矩：**原型不改 `data/` 和 `gen_draft_cards.py`。**
-所有实验只活在 `proto_draft.py` 里，哪一版验证成立了再决定回写什么。
+| 模块 | 管什么 | 产出 |
+|---|---|---|
+| `blinddraft.cards` | 卡牌生成器 | `data/blind_draft/draft_cards.json`（v6，已提交） |
+| `blinddraft.draft` | 命令行原型，选人这一层的全部逻辑都在这 | — |
+| `blinddraft.major` | 入场层：生成赛场 → 玩家插队 → 定 Stage → 首轮对阵 | — |
+| `blinddraft.match` | 比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联 | — |
+| `blinddraft.ai_teams` | AI 对手：当前阵容 + 当前位置 + 年龄衰减 | — |
+| `bdtools.fetch_rankings` | 队伍快照（阵容+位置+HLTV/VRS 排名）、5E 选手照片与队标 | `team_snapshot.json`、`5e_images.json`、`img/` |
+| `bdtools.fetch_5e_stats` | 5eplay 当前个人竞技数据 | `5e_player_stats.json` |
+| `bdtools.export_web` | 把卡和常量注进网页模板 | `.cache/proto_draft_web.html` |
+| `playerdb.build_db` | 重建选手库（共享层，`--refresh-existing` 只刷新当前队/角色） | `data/players.json` |
+
+人工层都在 `data/blind_draft/` 下：`major_field.json`（赛场来源、固定几支、
+权重、阵容、磨合度上限）、`5e_aliases.json`（卡库昵称 → 5eplay 名字/id）、
+`team_roles.json`、`draft_overrides.json`。
+
+测试在 `apps/blind_draft/tests/test_cards.py`——8 项，盯着卡库和
+「卡牌与落地记录.md」里的 SPEC 块不许漂移。
+
+一条一直守着的规矩：**原型不改 `data/` 和 `blinddraft/cards.py`。**
+所有实验只活在 `blinddraft/draft.py` 里，哪一版验证成立了再决定回写什么。
 
 ## 一句话状态
 
@@ -52,18 +59,18 @@ tests/test_draft_cards.py     8 项，盯着卡库和「卡牌与落地记录.md
 从第几个阶段进场取决于你抽得怎么样。**
 
 ```
-python scripts/proto_major.py --seed 1              # 只看入场：排第几、挤掉谁
-python scripts/proto_major.py --sweep-field        # 每局赛场翻新几支
-python scripts/proto_match.py --seed 50296 --cap 4  # 打完整届
-python scripts/proto_match.py --selftest            # 两条不变量
-python scripts/proto_match.py --stats --cap 4       # §35 的 Q1/Q2
-python scripts/proto_match.py --lab  --cap 4        # §35 的 Q3/Q4（控制变量）
-python scripts/proto_ai_teams.py                   # AI 赛场 32 队名单
-python scripts/proto_ai_teams.py --changes         # 只看被改判/衰减/占位的人
-python scripts/proto_match.py --roster "s1mple,electroNic,Magisk,mzinho,Senzu"        --label BC.GAME                             # 拿一支真实阵容直接上场
+python -m blinddraft.major --seed 1              # 只看入场：排第几、挤掉谁
+python -m blinddraft.major --sweep-field        # 每局赛场翻新几支
+python -m blinddraft.match --seed 50296 --cap 4  # 打完整届
+python -m blinddraft.match --selftest            # 两条不变量
+python -m blinddraft.match --stats --cap 4       # §35 的 Q1/Q2
+python -m blinddraft.match --lab  --cap 4        # §35 的 Q3/Q4（控制变量）
+python -m blinddraft.ai_teams                   # AI 赛场 32 队名单
+python -m blinddraft.ai_teams --changes         # 只看被改判/衰减/占位的人
+python -m blinddraft.match --roster "s1mple,electroNic,Magisk,mzinho,Senzu"        --label BC.GAME                             # 拿一支真实阵容直接上场
 ```
 
-赛场用哪一套口径由 `data/manual/major_field.json` 的 `field_source` 决定：
+赛场用哪一套口径由 `data/blind_draft/major_field.json` 的 `field_source` 决定：
 `current`（默认，当前阵容）/ `major_pool`（旧口径，按参赛那届的阵容）。
 
 两个可交互的页面（Artifact，私有）：

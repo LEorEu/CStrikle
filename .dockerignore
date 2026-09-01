@@ -6,8 +6,24 @@ feedback
 __pycache__
 *.py[cod]
 *.log
-scraper
-memory.md
+
+# Blind Draft 整个不进构建上下文。data/blind_draft 里有 890 张 5E 照片(12MB),
+# 猜选手一张都用不到——它读的是 data/img/ 那套。
+apps/blind_draft
+data/blind_draft
+
+# 爬虫不进运行时镜像(和拆包之前的 `scraper` 一行是同一个意思)。容器是只读的、
+# 也没装 Pillow,爬虫在里面本来就跑不动;放进去只会让管理页那个「数据更新」
+# 按钮看起来可用,然后以很难看懂的方式失败。数据由本机跑完随镜像发布。
+packages/playerdb/scrape
+
+# 测试和文档不进运行时镜像
+apps/guess_the_player/tests
+packages/playerdb/tests
+docs
+
 *.png
-!static/cs2-bg.png
+!apps/guess_the_player/static/cs2-bg.png
+!apps/guess_the_player/static/cs2-bg-bk.png
 .design-ref
+cstrikle.egg-info
