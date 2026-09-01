@@ -21,8 +21,9 @@
   VRS 排名与积分（v_club_rank / v_club_integral，周更，比 Valve 的月更文件还新）
   教练、平均年龄、每周排名历史
 
-位置这一项尤其值钱：原来要从 Liquipedia 的 `roles` 猜主位置、再全队去重、
-再人工钉 caller/awper（设计稿 §46.6），现在是队伍页直接写着的事实。
+位置这一项尤其值钱，但**不能单独用**：它不排他（Legacy 三个人都标狙击手），
+也有缺口（FaZe 五个人没一个标指挥，而 Twistzz 就是指挥）。所以 `resolve_roles`
+拿它和 Liquipedia 的生涯角色一起判——队内角色优先，生涯角色兜底。
 
 ## 快照
 
@@ -67,27 +68,78 @@ COACH = "教练"   # positions 里出现它就不是队员——教练顶掉一�
 STARTER = "首发"
 
 
+LP_PATH = ROOT / "data" / "players.json"
+LEET = str.maketrans({"1": "i", "0": "o", "3": "e", "4": "a",
+                      "$": "s", "5": "s", "7": "t"})
+_LP_CACHE = {}
+
+
+def norm(s: str) -> str:
+    return re.sub(r"[^a-z]", "", (s or "").casefold().translate(LEET))
+
+
+def lp_roles() -> dict:
+    """Liquipedia 的生涯角色表,给 5eplay 的位置做第二个证据源。"""
+    if not _LP_CACHE and LP_PATH.exists():
+        raw = json.loads(LP_PATH.read_text(encoding="utf-8"))
+        for x in (raw.get("players") if isinstance(raw, dict) else raw):
+            _LP_CACHE.setdefault(norm(x.get("nickname")),
+                                 set(x.get("roles") or []) - {"coach"})
+    return _LP_CACHE
+
+
+TAGS = {"IGL": ("指挥", "igl"), "AWPER": ("狙击手", "awp")}
+
+
 def resolve_roles(players):
-    """定位置。`positions` 是**无序的角色集合**,不是"主位置在前"。
+    """定位置。两个源都不够用,必须一起看。
 
-    ZywOo 是 ['步枪手','狙击手']、FalleN 是 ['步枪手','指挥'],取第一个会把
-    他们判成步枪手——和 §46.2 踩的是同一个坑,只是换了个数据源。
+    `positions` 是**无序集合**不是"主位置在前"(ZywOo 是 ['步枪手','狙击手']),
+    这是 §46.2 那个坑。但队内角色表也不够——实测两种失效方式:
 
-    但这次的输入好得多:它是**队内**角色表,不是生涯角色。所以规则很直接——
-    一支队里谁列了「指挥」谁就是指挥,谁列了「狙击手」谁就是狙。两个人都列的
-    极少,真遇到就按 top20 次数多的那个留(打得更久的那个更可能是定位角色),
-    并把冲突报出来让人看见。
+      **不排他**:Legacy 的 latto / dumau / try 三个人都标了「狙击手」。
+      **有缺口**:FaZe 五个人没有一个标「指挥」,而 Twistzz 就是指挥。
+
+    所以规则是"5eplay 优先、Liquipedia 兜底、独占者优先":
+
+      1. 有人标了该 tag -> 只在这些人里挑;都没标 -> 才拿 Liquipedia 的
+         生涯角色兜底。队内角色永远压过生涯角色,因为前者说的是"现在"。
+      2. 同 tag 多人时,按"该源里只有这一个 tag"决胜——`try` 只标狙,
+         latto 标了步枪+狙,所以狙是 try 的。两边都平才看 top20 次数。
+      3. 两个位置都找不到人时**如实留空**(Inner Circle 全队没人标指挥),
+         写进 role_gaps,不假装。
     """
-    conflicts = []
+    lp = lp_roles()
+    notes = {"conflicts": [], "gaps": [], "fallback": []}
     out = {p["id"]: "RIFLER" for p in players}
-    for tag, pos in (("指挥", "IGL"), ("狙击手", "AWPER")):
+    taken = set()
+
+    def lp_of(p):
+        return lp.get(norm(p.get("name")), set())
+
+    for pos, (tag, key) in TAGS.items():
         cands = [p for p in players if tag in (p.get("positions") or [])]
+        src = "5e"
+        if not cands:
+            cands = [p for p in players if key in lp_of(p)]
+            src = "lp"
+        cands = [p for p in cands if p["id"] not in taken] or cands
+        if not cands:
+            notes["gaps"].append(pos)
+            continue
         if len(cands) > 1:
-            conflicts.append((pos, [p["name"] for p in cands]))
-            cands.sort(key=lambda p: -(as_int(p.get("top20_num")) or 0))
-        if cands:
-            out[cands[0]["id"]] = pos
-    return out, conflicts
+            notes["conflicts"].append([pos, [p["name"] for p in cands]])
+        cands.sort(key=lambda p: (
+            set(p.get("positions") or []) == {tag},      # 5e 里独占该 tag
+            key in lp_of(p),                             # Liquipedia 也这么说
+            lp_of(p) == {key},                           # 且它那边也独占
+            as_int(p.get("top20_num")) or 0,
+        ), reverse=True)
+        out[cands[0]["id"]] = pos
+        taken.add(cands[0]["id"])
+        if src == "lp":
+            notes["fallback"].append([pos, cands[0]["name"]])
+    return out, notes
 
 
 def get(url: str, as_json: bool = True, tries: int = 3):
@@ -181,7 +233,7 @@ def fetch_team(tid: str, unknown_roles: set) -> dict | None:
     # 就是 §46.4 记的那个坑(gla1ve 挂 coach 却被算成 100T 的队员)。
     players = [p for p in players if COACH not in (p.get("positions") or [])]
     starters = [p for p in players if p.get("position") == STARTER] or players
-    roles, conflicts = resolve_roles(starters)
+    roles, notes = resolve_roles(starters)
     roster = []
     for p in players:
         for raw in (p.get("positions") or []):
@@ -203,7 +255,9 @@ def fetch_team(tid: str, unknown_roles: set) -> dict | None:
         "vrs_rank": as_int(info.get("v_club_rank")),
         "vrs_points": as_int(info.get("v_club_integral")),
         "roster": roster,
-        "role_conflicts": conflicts or None,
+        "role_conflicts": notes["conflicts"] or None,
+        "role_gaps": notes["gaps"] or None,
+        "role_fallback": notes["fallback"] or None,
     }
 
 

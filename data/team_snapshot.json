@@ -1,6 +1,6 @@
 {
  "_note": "5eplay 队伍快照,由 scraper/fetch_rankings.py --teams 生成,勿手改。阵容/位置/首发都来自队伍页,是**当前事实**——不要用 VRS 的阵容(那份月更,实测会把同一个人列在两支队里),也不要用卡库的 team 字段(Liquipedia 滞后,而且说不出首发和队内位置)。hltv_* 和 vrs_* 是两套排名,都只做参考不当种子(设计稿 §51.2)。",
- "generated_at": "2026-09-01 07:35:20Z",
+ "generated_at": "2026-09-01 08:13:16Z",
  "snapshot_date": "2026-09-01",
  "source": "https://esports-data.5eplaycdn.com/v1/api/csgo/teams/<id>/overview",
  "counts": {
@@ -76,7 +76,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11283",
@@ -140,7 +142,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8297",
@@ -209,7 +213,9 @@
      "top20": 3
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9565",
@@ -278,7 +284,9 @@
      "top20": 8
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4494",
@@ -348,7 +356,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13286",
@@ -418,7 +428,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12468",
@@ -435,7 +447,7 @@
     {
      "id": "csgo_pl_19045",
      "name": "latto",
-     "role": "AWPER",
+     "role": "RIFLER",
      "roles_raw": [
       "步枪手",
       "狙击手"
@@ -481,7 +493,7 @@
     {
      "id": "csgo_pl_19869",
      "name": "try",
-     "role": "RIFLER",
+     "role": "AWPER",
      "roles_raw": [
       "狙击手"
      ],
@@ -499,7 +511,9 @@
       "try"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4608",
@@ -567,7 +581,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5995",
@@ -638,7 +654,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11861",
@@ -707,7 +725,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9996",
@@ -773,7 +793,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6667",
@@ -801,7 +823,7 @@
     {
      "id": "csgo_pl_10394",
      "name": "Twistzz",
-     "role": "RIFLER",
+     "role": "IGL",
      "roles_raw": [
       "辅助"
      ],
@@ -843,7 +865,14 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": [
+    [
+     "IGL",
+     "Twistzz"
+    ]
+   ]
   },
   {
    "id": "csgo_tm_6665",
@@ -913,7 +942,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6248",
@@ -925,7 +956,7 @@
    "hltv_rank": 14,
    "hltv_points": 218,
    "vrs_rank": 18,
-   "vrs_points": 1503,
+   "vrs_points": 1502,
    "roster": [
     {
      "id": "csgo_pl_20194",
@@ -980,7 +1011,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11241",
@@ -1043,7 +1076,7 @@
     {
      "id": "csgo_pl_25619",
      "name": "s1zzi",
-     "role": "RIFLER",
+     "role": "AWPER",
      "roles_raw": [],
      "starter": true,
      "birthday": null,
@@ -1057,6 +1090,13 @@
       "npl",
       "alex666"
      ]
+    ]
+   ],
+   "role_gaps": null,
+   "role_fallback": [
+    [
+     "AWPER",
+     "s1zzi"
     ]
    ]
   },
@@ -1130,7 +1170,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12467",
@@ -1199,7 +1241,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9928",
@@ -1227,7 +1271,7 @@
     {
      "id": "csgo_pl_9278",
      "name": "REZ",
-     "role": "AWPER",
+     "role": "RIFLER",
      "roles_raw": [
       "步枪手",
       "狙击手"
@@ -1239,7 +1283,7 @@
     {
      "id": "csgo_pl_23766",
      "name": "hypex",
-     "role": "RIFLER",
+     "role": "AWPER",
      "roles_raw": [
       "狙击手"
      ],
@@ -1277,7 +1321,9 @@
       "hypex"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4773",
@@ -1346,7 +1392,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13592",
@@ -1416,7 +1464,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4914",
@@ -1488,7 +1538,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5973",
@@ -1553,7 +1605,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7532",
@@ -1624,7 +1680,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13117",
@@ -1693,7 +1751,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9215",
@@ -1764,7 +1826,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4411",
@@ -1835,7 +1899,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10245",
@@ -1906,7 +1974,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11581",
@@ -1984,7 +2056,11 @@
       "dwushka"
      ]
     ]
-   ]
+   ],
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8840",
@@ -2055,7 +2131,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7175",
@@ -2134,7 +2212,9 @@
       "Brollan"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12376",
@@ -2206,7 +2286,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13926",
@@ -2277,7 +2359,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8474",
@@ -2356,7 +2440,9 @@
       "Gizmy"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4863",
@@ -2368,7 +2454,7 @@
    "hltv_rank": 34,
    "hltv_points": 58,
    "vrs_rank": 26,
-   "vrs_points": 1386,
+   "vrs_points": 1385,
    "roster": [
     {
      "id": "csgo_pl_19645",
@@ -2427,7 +2513,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6290",
@@ -2439,7 +2527,7 @@
    "hltv_rank": 35,
    "hltv_points": 51,
    "vrs_rank": 43,
-   "vrs_points": 1277,
+   "vrs_points": 1276,
    "roster": [
     {
      "id": "csgo_pl_20563",
@@ -2499,7 +2587,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12474",
@@ -2527,7 +2617,7 @@
     {
      "id": "csgo_pl_7443",
      "name": "twist",
-     "role": "AWPER",
+     "role": "IGL",
      "roles_raw": [
       "步枪手",
       "狙击手",
@@ -2551,7 +2641,7 @@
     {
      "id": "csgo_pl_16487",
      "name": "eraa",
-     "role": "RIFLER",
+     "role": "AWPER",
      "roles_raw": [
       "狙击手"
      ],
@@ -2571,13 +2661,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": [
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": [
     [
-     "AWPER",
-     [
-      "twist",
-      "eraa"
-     ]
+     "IGL",
+     "twist"
     ]
    ]
   },
@@ -2647,7 +2736,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4991",
@@ -2659,7 +2752,7 @@
    "hltv_rank": 38,
    "hltv_points": 44,
    "vrs_rank": 32,
-   "vrs_points": 1339,
+   "vrs_points": 1340,
    "roster": [
     {
      "id": "csgo_pl_17803",
@@ -2716,7 +2809,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12257",
@@ -2794,7 +2889,9 @@
       "Cxzi"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12916",
@@ -2866,7 +2963,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13679",
@@ -2935,7 +3034,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11737",
@@ -3003,7 +3104,11 @@
      "top20": 5
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10621",
@@ -3075,7 +3180,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13355",
@@ -3145,7 +3252,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6673",
@@ -3173,7 +3284,7 @@
     {
      "id": "csgo_pl_8711",
      "name": "Sonic",
-     "role": "AWPER",
+     "role": "RIFLER",
      "roles_raw": [
       "狙击手",
       "自由人"
@@ -3207,7 +3318,7 @@
     {
      "id": "csgo_pl_12840",
      "name": "hallzerk",
-     "role": "RIFLER",
+     "role": "AWPER",
      "roles_raw": [
       "狙击手"
      ],
@@ -3224,7 +3335,9 @@
       "hallzerk"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13104",
@@ -3284,7 +3397,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12833",
@@ -3350,7 +3467,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12774",
@@ -3410,7 +3532,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12426",
@@ -3478,7 +3604,9 @@
       "try"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12878",
@@ -3559,7 +3687,9 @@
       "Senzu"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10577",
@@ -3585,7 +3715,7 @@
     {
      "id": "csgo_pl_11199",
      "name": "beastik",
-     "role": "RIFLER",
+     "role": "IGL",
      "roles_raw": [],
      "starter": true,
      "birthday": "1998-01-05",
@@ -3625,7 +3755,14 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": [
+    [
+     "IGL",
+     "beastik"
+    ]
+   ]
   },
   {
    "id": "csgo_tm_5378",
@@ -3695,7 +3832,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11712",
@@ -3765,7 +3904,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11609",
@@ -3835,7 +3978,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13027",
@@ -3895,7 +4040,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13644",
@@ -3909,7 +4059,12 @@
    "vrs_rank": null,
    "vrs_points": null,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5347",
@@ -3968,7 +4123,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13173",
@@ -4037,7 +4194,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9455",
@@ -4106,7 +4265,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12604",
@@ -4174,7 +4335,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10503",
@@ -4246,7 +4409,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11837",
@@ -4315,7 +4480,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13814",
@@ -4377,7 +4544,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7969",
@@ -4447,7 +4618,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10567",
@@ -4518,7 +4693,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10278",
@@ -4586,7 +4763,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12065",
@@ -4621,7 +4800,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10823",
@@ -4691,7 +4874,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11251",
@@ -4762,7 +4947,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13486",
@@ -4824,7 +5011,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12144",
@@ -4884,7 +5075,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13908",
@@ -4946,7 +5141,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13617",
@@ -4992,7 +5192,12 @@
      "top20": null
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13375",
@@ -5061,7 +5266,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13499",
@@ -5121,7 +5331,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11641",
@@ -5189,7 +5401,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13924",
@@ -5245,7 +5459,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12380",
@@ -5314,7 +5532,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13106",
@@ -5381,7 +5601,9 @@
       "slump"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11514",
@@ -5393,7 +5615,7 @@
    "hltv_rank": 90,
    "hltv_points": 10,
    "vrs_rank": 157,
-   "vrs_points": 791,
+   "vrs_points": 792,
    "roster": [
     {
      "id": "csgo_pl_7028",
@@ -5452,7 +5674,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11699",
@@ -5519,7 +5743,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13178",
@@ -5577,7 +5805,9 @@
      "top20": 1
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9958",
@@ -5646,7 +5876,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13304",
@@ -5713,7 +5945,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12677",
@@ -5764,7 +6000,7 @@
     {
      "id": "csgo_pl_6593",
      "name": "PKL",
-     "role": "RIFLER",
+     "role": "IGL",
      "roles_raw": [
       "步枪手",
       "指挥",
@@ -5794,7 +6030,9 @@
       "PKL"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11518",
@@ -5863,7 +6101,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12889",
@@ -5927,7 +6167,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7653",
@@ -5992,15 +6236,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": [
-    [
-     "AWPER",
-     [
-      "atarax1a",
-      "Hezz"
-     ]
-    ]
-   ]
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12536",
@@ -6077,7 +6315,9 @@
       "buster"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12491",
@@ -6125,7 +6365,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13667",
@@ -6153,7 +6397,7 @@
     {
      "id": "csgo_pl_11141",
      "name": "erkaSt",
-     "role": "RIFLER",
+     "role": "IGL",
      "roles_raw": [
       "步枪手"
      ],
@@ -6203,6 +6447,13 @@
       "AccuracyTG"
      ]
     ]
+   ],
+   "role_gaps": null,
+   "role_fallback": [
+    [
+     "IGL",
+     "erkaSt"
+    ]
    ]
   },
   {
@@ -6220,7 +6471,7 @@
     {
      "id": "csgo_pl_11205",
      "name": "stadodo",
-     "role": "AWPER",
+     "role": "IGL",
      "roles_raw": [
       "狙击手",
       "指挥"
@@ -6252,7 +6503,7 @@
     {
      "id": "csgo_pl_21136",
      "name": "Shr",
-     "role": "RIFLER",
+     "role": "AWPER",
      "roles_raw": [
       "步枪手",
       "狙击手"
@@ -6273,15 +6524,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": [
-    [
-     "AWPER",
-     [
-      "stadodo",
-      "Shr"
-     ]
-    ]
-   ]
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10333",
@@ -6347,7 +6592,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13124",
@@ -6413,7 +6662,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12510",
@@ -6430,7 +6683,7 @@
     {
      "id": "csgo_pl_15072",
      "name": "nin9",
-     "role": "AWPER",
+     "role": "IGL",
      "roles_raw": [
       "狙击手"
      ],
@@ -6461,7 +6714,7 @@
     {
      "id": "csgo_pl_18689",
      "name": "Annihilation",
-     "role": "RIFLER",
+     "role": "AWPER",
      "roles_raw": [
       "狙击手"
      ],
@@ -6470,13 +6723,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": [
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": [
     [
-     "AWPER",
-     [
-      "nin9",
-      "Annihilation"
-     ]
+     "IGL",
+     "nin9"
     ]
    ]
   },
@@ -6531,7 +6783,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11768",
@@ -6597,7 +6854,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7865",
@@ -6663,7 +6924,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10371",
@@ -6723,7 +6988,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12609",
@@ -6801,7 +7071,11 @@
       "Norwi"
      ]
     ]
-   ]
+   ],
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4869",
@@ -6812,7 +7086,7 @@
    "avg_age": 20,
    "hltv_rank": 125,
    "hltv_points": 7,
-   "vrs_rank": 125,
+   "vrs_rank": 124,
    "vrs_points": 873,
    "roster": [
     {
@@ -6872,7 +7146,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5158",
@@ -6943,7 +7219,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11011",
@@ -7012,7 +7292,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11446",
@@ -7078,7 +7363,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13724",
@@ -7146,7 +7435,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11838",
@@ -7209,7 +7503,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13799",
@@ -7275,7 +7574,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9881",
@@ -7344,7 +7645,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11176",
@@ -7356,7 +7659,7 @@
    "hltv_rank": 156,
    "hltv_points": 5,
    "vrs_rank": 202,
-   "vrs_points": 721,
+   "vrs_points": 720,
    "roster": [
     {
      "id": "csgo_pl_25254",
@@ -7408,7 +7711,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6298",
@@ -7457,7 +7764,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10254",
@@ -7517,7 +7828,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13623",
@@ -7585,7 +7901,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13081",
@@ -7666,7 +7986,9 @@
       "detr0ittJ"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12684",
@@ -7737,7 +8059,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11555",
@@ -7794,7 +8120,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12646",
@@ -7860,7 +8191,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13718",
@@ -7914,7 +8250,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10976",
@@ -7926,7 +8264,7 @@
    "hltv_rank": 250,
    "hltv_points": null,
    "vrs_rank": 375,
-   "vrs_points": 465,
+   "vrs_points": 464,
    "roster": [
     {
      "id": "csgo_pl_11872",
@@ -7983,7 +8321,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11497",
@@ -8016,7 +8356,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_12000",
@@ -8052,7 +8397,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7092",
@@ -8066,7 +8415,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13882",
@@ -8080,7 +8434,12 @@
    "vrs_rank": 161,
    "vrs_points": 783,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11883",
@@ -8108,7 +8467,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8068",
@@ -8178,7 +8541,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13142",
@@ -8243,7 +8608,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4501",
@@ -8303,7 +8673,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11561",
@@ -8340,7 +8715,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9943",
@@ -8354,7 +8733,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12312",
@@ -8432,7 +8816,11 @@
       "AccuracyTG"
      ]
     ]
-   ]
+   ],
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8120",
@@ -8499,7 +8887,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5293",
@@ -8513,7 +8905,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8848",
@@ -8527,7 +8924,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6685",
@@ -8541,7 +8943,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9806",
@@ -8555,7 +8962,12 @@
    "vrs_rank": 0,
    "vrs_points": 685,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13991",
@@ -8569,7 +8981,12 @@
    "vrs_rank": 123,
    "vrs_points": 874,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11567",
@@ -8617,7 +9034,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12966",
@@ -8691,7 +9113,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7733",
@@ -8705,7 +9129,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7567",
@@ -8719,7 +9148,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12534",
@@ -8797,7 +9231,11 @@
       "snav"
      ]
     ]
-   ]
+   ],
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13691",
@@ -8862,7 +9300,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9799",
@@ -8916,7 +9358,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13984",
@@ -8930,7 +9376,12 @@
    "vrs_rank": 266,
    "vrs_points": 641,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6710",
@@ -8944,7 +9395,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12431",
@@ -8992,7 +9448,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6669",
@@ -9006,7 +9466,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6762",
@@ -9020,7 +9485,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10605",
@@ -9034,7 +9504,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10206",
@@ -9048,7 +9523,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5974",
@@ -9062,7 +9542,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6242",
@@ -9076,7 +9561,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9085",
@@ -9090,7 +9580,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13519",
@@ -9132,7 +9627,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6010",
@@ -9146,7 +9646,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5752",
@@ -9173,7 +9678,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5005",
@@ -9253,7 +9762,9 @@
       "Cxzi"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6292",
@@ -9267,7 +9778,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7461",
@@ -9281,7 +9797,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6503",
@@ -9295,7 +9816,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11003",
@@ -9309,7 +9835,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8902",
@@ -9323,7 +9854,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13803",
@@ -9383,7 +9919,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7018",
@@ -9397,7 +9938,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5139",
@@ -9411,7 +9957,12 @@
    "vrs_rank": null,
    "vrs_points": null,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5422",
@@ -9425,7 +9976,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7640",
@@ -9439,7 +9995,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6158",
@@ -9453,7 +10014,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13704",
@@ -9509,7 +10075,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6226",
@@ -9523,7 +10093,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7441",
@@ -9537,7 +10112,12 @@
    "vrs_rank": 0,
    "vrs_points": null,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11735",
@@ -9551,7 +10131,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7856",
@@ -9565,7 +10150,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7234",
@@ -9647,7 +10237,9 @@
       "Surreal"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7348",
@@ -9661,7 +10253,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10831",
@@ -9706,7 +10303,11 @@
       "mwlky"
      ]
     ]
-   ]
+   ],
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5991",
@@ -9720,7 +10321,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4688",
@@ -9734,7 +10340,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8669",
@@ -9748,7 +10359,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10948",
@@ -9762,7 +10378,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8135",
@@ -9799,7 +10420,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12818",
@@ -9871,7 +10494,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11066",
@@ -9885,7 +10510,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10276",
@@ -9899,7 +10529,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7660",
@@ -9913,7 +10548,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6902",
@@ -9927,7 +10567,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5817",
@@ -9941,7 +10586,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12471",
@@ -9955,7 +10605,12 @@
    "vrs_rank": 0,
    "vrs_points": 1200,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10764",
@@ -9969,7 +10624,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6651",
@@ -9983,7 +10643,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9976",
@@ -9997,7 +10662,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13944",
@@ -10011,7 +10681,12 @@
    "vrs_rank": 329,
    "vrs_points": 542,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8008",
@@ -10025,7 +10700,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5310",
@@ -10039,7 +10719,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8346",
@@ -10053,7 +10738,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13687",
@@ -10120,7 +10810,11 @@
      "top20": null
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11585",
@@ -10184,7 +10878,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7010",
@@ -10198,7 +10897,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7701",
@@ -10212,7 +10916,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11164",
@@ -10292,7 +11001,9 @@
       "REDSTAR"
      ]
     ]
-   ]
+   ],
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11716",
@@ -10362,7 +11073,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7244",
@@ -10430,7 +11143,11 @@
       "Raijin"
      ]
     ]
-   ]
+   ],
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8021",
@@ -10444,7 +11161,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6134",
@@ -10458,7 +11180,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6418",
@@ -10472,7 +11199,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_4674",
@@ -10486,7 +11218,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9945",
@@ -10500,7 +11237,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11300",
@@ -10514,7 +11256,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12260",
@@ -10528,7 +11275,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8362",
@@ -10542,7 +11294,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8543",
@@ -10556,7 +11313,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7354",
@@ -10570,7 +11332,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6474",
@@ -10584,7 +11351,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7148",
@@ -10601,7 +11373,7 @@
     {
      "id": "csgo_pl_8994",
      "name": "HS",
-     "role": "RIFLER",
+     "role": "IGL",
      "roles_raw": [
       "步枪手",
       "突破"
@@ -10643,7 +11415,16 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": [
+    [
+     "IGL",
+     "HS"
+    ]
+   ]
   },
   {
    "id": "csgo_tm_7557",
@@ -10657,7 +11438,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11811",
@@ -10729,7 +11515,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7718",
@@ -10743,7 +11531,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11675",
@@ -10757,7 +11550,12 @@
    "vrs_rank": null,
    "vrs_points": null,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10918",
@@ -10825,7 +11623,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11681",
@@ -10896,7 +11699,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7533",
@@ -10910,7 +11715,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7713",
@@ -10924,7 +11734,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11948",
@@ -10961,7 +11776,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10994",
@@ -11031,7 +11848,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13524",
@@ -11045,7 +11864,12 @@
    "vrs_rank": 223,
    "vrs_points": 694,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8668",
@@ -11059,7 +11883,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6615",
@@ -11073,7 +11902,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6133",
@@ -11087,7 +11921,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7397",
@@ -11101,7 +11940,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11595",
@@ -11115,7 +11959,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11174",
@@ -11142,7 +11991,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11425",
@@ -11210,7 +12063,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10669",
@@ -11269,7 +12127,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7077",
@@ -11283,7 +12145,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8038",
@@ -11297,7 +12164,12 @@
    "vrs_rank": null,
    "vrs_points": null,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11914",
@@ -11311,7 +12183,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7176",
@@ -11357,7 +12234,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12694",
@@ -11426,7 +12308,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7344",
@@ -11450,7 +12337,12 @@
      "top20": null
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7613",
@@ -11464,7 +12356,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6211",
@@ -11478,7 +12375,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10164",
@@ -11492,7 +12394,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7924",
@@ -11506,7 +12413,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7157",
@@ -11520,7 +12432,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6137",
@@ -11534,7 +12451,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10386",
@@ -11548,7 +12470,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13214",
@@ -11606,7 +12533,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12901",
@@ -11639,7 +12568,12 @@
      "top20": null
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8113",
@@ -11710,7 +12644,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6774",
@@ -11724,7 +12660,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5929",
@@ -11738,7 +12679,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8637",
@@ -11762,7 +12708,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12942",
@@ -11823,7 +12774,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5133",
@@ -11837,7 +12792,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7726",
@@ -11851,7 +12811,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10661",
@@ -11865,7 +12830,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5996",
@@ -11902,7 +12872,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7517",
@@ -11916,7 +12891,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6947",
@@ -11940,7 +12920,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6118",
@@ -11954,7 +12939,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9785",
@@ -11968,7 +12958,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11079",
@@ -11982,7 +12977,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10304",
@@ -11996,7 +12996,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_5144",
@@ -12010,7 +13015,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10672",
@@ -12079,7 +13089,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6773",
@@ -12093,7 +13107,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8481",
@@ -12107,7 +13126,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12455",
@@ -12162,7 +13186,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7606",
@@ -12176,7 +13205,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7830",
@@ -12190,7 +13224,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13014",
@@ -12244,7 +13283,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8895",
@@ -12258,7 +13301,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13184",
@@ -12318,7 +13366,11 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8513",
@@ -12332,7 +13384,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_9183",
@@ -12346,7 +13403,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_10426",
@@ -12360,7 +13422,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7059",
@@ -12374,7 +13441,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_8728",
@@ -12388,7 +13460,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13797",
@@ -12450,7 +13527,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6238",
@@ -12464,7 +13546,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13858",
@@ -12478,7 +13565,12 @@
    "vrs_rank": 277,
    "vrs_points": 625,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7106",
@@ -12492,7 +13584,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6745",
@@ -12506,7 +13603,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_6621",
@@ -12520,7 +13622,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13662",
@@ -12587,7 +13694,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_12858",
@@ -12659,7 +13771,9 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": null,
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_11018",
@@ -12723,7 +13837,12 @@
      "top20": 0
     }
    ],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "csgo_tm_7898",
@@ -12737,7 +13856,12 @@
    "vrs_rank": 0,
    "vrs_points": 0,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   },
   {
    "id": "hltv_team_13643",
@@ -12751,7 +13875,12 @@
    "vrs_rank": 346,
    "vrs_points": 519,
    "roster": [],
-   "role_conflicts": null
+   "role_conflicts": null,
+   "role_gaps": [
+    "IGL",
+    "AWPER"
+   ],
+   "role_fallback": null
   }
  ]
 }

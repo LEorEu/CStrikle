@@ -1,6 +1,6 @@
 {
  "_note": "5eplay 的选手当前竞技数据，由 scripts/fetch_5e_stats.py 生成，勿手改。口径是**指标定义**不是旋钮：近 12 个月 + Major + S+ + S。map_count 少的人必须按 n/(n+k) 往均值收缩后再用（xKacpersky 1.52 是 6 张图打的）。查不到的人不是数据缺失，是他没有顶级赛事样本——应当回退卡面。人工别名写在 data/manual/5e_aliases.json。详见设计稿 §51。",
- "generated_at": "2026-09-01 07:37:56Z",
+ "generated_at": "2026-09-01 08:22:09Z",
  "source": "https://esports-data.5eplaycdn.com/v1/api/csgo/mfilter/player/multidimension/list",
  "window": {
   "months": 12,
@@ -13,11 +13,11 @@
  ],
  "grade_label": "Major + S+ + S",
  "counts": {
-  "matched": 305,
-  "added": 0,
-  "updated": 0,
-  "unchanged": 213,
-  "no_top_tier_sample": 92,
+  "matched": 307,
+  "added": 4,
+  "updated": 1,
+  "unchanged": 211,
+  "no_top_tier_sample": 91,
   "failed": 0
  },
  "players": {
@@ -103,19 +103,19 @@
   },
   "Alex (Spanish player)": {
    "rating": "1.00",
-   "adr": "68.12",
-   "kast": "70.2",
-   "kd": "0.90",
-   "kpr": "0.61",
-   "dpr": "0.68",
-   "hs_rate": "48.8%",
-   "first_blood": "224",
-   "first_death": "291",
-   "map_count": "128",
-   "win_rate": "46.09",
-   "kddiff": "-187",
-   "5e_name": "alex666",
-   "5e_id": "csgo_pl_20112"
+   "adr": "68.53",
+   "kast": "69.4",
+   "kd": "0.89",
+   "kpr": "0.62",
+   "dpr": "0.69",
+   "hs_rate": "45.0%",
+   "first_blood": "68",
+   "first_death": "78",
+   "map_count": "38",
+   "win_rate": "44.74",
+   "kddiff": "-60",
+   "5e_name": "alex",
+   "5e_id": "csgo_pl_8371"
   },
   "Alex666": {
    "rating": "1.00",
@@ -228,6 +228,22 @@
    "kddiff": "-254",
    "5e_name": "BELCHONOKK",
    "5e_id": "csgo_pl_19235"
+  },
+  "BLitz": {
+   "rating": "0.99",
+   "adr": "73.32",
+   "kast": "69.4",
+   "kd": "0.89",
+   "kpr": "0.62",
+   "dpr": "0.69",
+   "hs_rate": "49.2%",
+   "first_blood": "378",
+   "first_death": "470",
+   "map_count": "164",
+   "win_rate": "51.22",
+   "kddiff": "-279",
+   "5e_name": "bLitz",
+   "5e_id": "csgo_pl_20194"
   },
   "Bart4k": {
    "rating": "0.91",
@@ -1733,6 +1749,22 @@
    "5e_name": "luchov",
    "5e_id": "csgo_pl_20394"
   },
+  "Lucky (French player)": {
+   "rating": "1.05",
+   "adr": "71.87",
+   "kast": "73.1",
+   "kd": "0.96",
+   "kpr": "0.62",
+   "dpr": "0.65",
+   "hs_rate": "44.4%",
+   "first_blood": "241",
+   "first_death": "212",
+   "map_count": "129",
+   "win_rate": "45.74",
+   "kddiff": "-69",
+   "5e_name": "Lucky",
+   "5e_id": "csgo_pl_13497"
+  },
   "Luken": {
    "rating": "1.08",
    "adr": "77.08",
@@ -2565,6 +2597,22 @@
    "5e_name": "S1ren",
    "5e_id": "csgo_pl_18506"
   },
+  "S1zzi": {
+   "rating": "1.02",
+   "adr": "68.71",
+   "kast": "69.3",
+   "kd": "1.00",
+   "kpr": "0.67",
+   "dpr": "0.67",
+   "hs_rate": "29.8%",
+   "first_blood": "214",
+   "first_death": "163",
+   "map_count": "91",
+   "win_rate": "45.05",
+   "kddiff": "+5",
+   "5e_name": "s1zzi",
+   "5e_id": "csgo_pl_25619"
+  },
   "SHOCK": {
    "rating": "1.06",
    "adr": "68.19",
@@ -3332,6 +3380,22 @@
    "kddiff": "-74",
    "5e_name": "zeRRoFIX",
    "5e_id": "csgo_pl_23415"
+  },
+  "Zero (Su Jingshen)": {
+   "rating": "1.04",
+   "adr": "71.60",
+   "kast": "68.5",
+   "kd": "0.91",
+   "kpr": "0.63",
+   "dpr": "0.70",
+   "hs_rate": "44.2%",
+   "first_blood": "63",
+   "first_death": "93",
+   "map_count": "33",
+   "win_rate": "39.39",
+   "kddiff": "-44",
+   "5e_name": "Zero",
+   "5e_id": "csgo_pl_24857"
   },
   "Zevy": {
    "rating": "0.93",

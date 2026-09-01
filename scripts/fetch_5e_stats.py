@@ -49,6 +49,7 @@ CARDS_PATH = ROOT / "data" / "draft_cards.json"
 OUT_PATH = ROOT / "data" / "5e_player_stats.json"
 ALIAS_PATH = ROOT / "data" / "manual" / "5e_aliases.json"
 IDS_CACHE = ROOT / ".cache" / "5e" / "player_ids.json"
+SNAP_PATH = ROOT / "data" / "team_snapshot.json"
 
 API = "https://esports-data.5eplaycdn.com/v1/api/csgo/mfilter/player/"
 UA = "Mozilla/5.0 (compatible; cstrikle-local-tool)"
@@ -145,25 +146,72 @@ def load_aliases() -> dict:
     return {k: v for k, v in raw.items() if not k.startswith("_")}
 
 
-def match(cards, ids: dict, aliases: dict):
+def snapshot_ids() -> dict:
+    """队伍快照里的 id。**权威层**：它来自 `teams/<id>/overview`,是队伍页自己
+    列出来的人,根本不经过名字匹配,所以不可能配错人。"""
+    if not SNAP_PATH.exists():
+        return {}
+    raw = json.loads(SNAP_PATH.read_text(encoding="utf-8"))
+    out = {}
+    for t in raw.get("teams") or []:
+        for r in t.get("roster") or []:
+            if r.get("id") and r.get("name"):
+                out[r["id"]] = r["name"]
+    return out
+
+
+def build_index(*layers):
+    """按名字查 id 的索引。三档由严到宽，每档内部撞名的键整个丢掉。
+
+    原来只有 leet 规整这一档，而规整会**撞名**：`BL1TZ` 和 `bLitz` 归一后
+    都是 `blitz`，实测 29 组，NiKo/niko、b1t/BIT、frozen/FROZ3N 全在里面。
+    先到先得的 `setdefault` 让 bLitz 拿到了另一个人的 id，查出来没有顶级赛事
+    样本，于是被记成"这人没打过 S 级赛"。**静默配错人比漏掉更糟**，
+    因为它看起来像一条正常数据。
+
+    三档是：原名 -> 忽略大小写 -> leet 规整。`NiKo` 和 `niko` 在第一档就
+    分开了，根本不必走到会撞的那一档；只有真同名（两个 `Lucky`）才落到
+    人工别名表。层与层之间：队伍快照先进，它来自队伍页，不经过名字匹配。
+    """
+    keys = (lambda n: n, lambda n: n.casefold(), norm)
+    index, dropped = [{} for _ in keys], []
+    for layer in layers:
+        for tier, keyf in enumerate(keys):
+            cand = {}
+            for pid, name in layer.items():
+                cand.setdefault(keyf(name), set()).add((pid, name))
+            for k, v in cand.items():
+                if k in index[tier]:
+                    continue
+                if len(v) > 1:
+                    if tier == len(keys) - 1:
+                        dropped.append(sorted(n for _, n in v))
+                        continue
+                    continue
+                index[tier][k] = next(iter(v))
+    # 上面按档收集的 dropped 里，大部分在更严的那档已经分开了（NiKo/niko）——
+    # 只有一个成员都没进原名档的组才是真丢了。
+    dropped = [g for g in dropped if not any(n in index[0] for n in g)]
+    return index, dropped
+
+
+def match(cards, index: list, aliases: dict):
     """卡库昵称 -> 5eplay player_id。别名表优先，其次 leet 规整后精确匹配。
 
     故意**不做模糊匹配**：实测 cmtry→try、jks→jokes 这类近似全是不同的人，
     宁可漏一个让人工补别名，也不能悄悄配错人。
     """
-    by_norm = {}
-    for pid, name in ids.items():
-        by_norm.setdefault(norm(name), (pid, name))
     hit, miss = {}, []
     for c in cards:
         nick = c["nickname"]
         want = aliases.get(nick) or aliases.get(c["page"])
         if want:
-            if str(want).startswith("csgo_pl_"):
-                hit[c["page"]] = (want, ids.get(want, nick))
+            if str(want).startswith(("csgo_pl_", "cg_pl_", "hltv_pl_")):
+                hit[c["page"]] = (want, nick)
                 continue
             nick = str(want)
-        got = by_norm.get(norm(nick))
+        got = next((ix[k] for ix, k in
+                    zip(index, (nick, nick.casefold(), norm(nick))) if k in ix), None)
         if got:
             hit[c["page"]] = got
         else:
@@ -250,9 +298,16 @@ def main():
         ids = json.loads(IDS_CACHE.read_text(encoding="utf-8"))
         print("用缓存的 id 表 %d 人（--refresh-ids 重抓）" % len(ids))
 
+    snap = snapshot_ids()
+    print("队伍快照 id %d 个（权威层，来自队伍页，不经过名字）" % len(snap))
+    index, dropped = build_index(snap, ids)
+    if dropped:
+        print("  三档都分不开、只能丢掉 %d 组（在别名表里直接钉 player_id 可救）：\n     %s"
+              % (len(dropped), "  ".join("/".join(v) for v in dropped[:12])))
+
     cards = load_cards()
     target = cards if args.all else [c for c in cards if c.get("team")]
-    hit, miss = match(target, ids, load_aliases())
+    hit, miss = match(target, index, load_aliases())
     print("匹配：%d/%d = %.0f%%（%s）"
           % (len(hit), len(target), 100.0 * len(hit) / max(len(target), 1),
              "全部卡" if args.all else "当前有队的人"))
