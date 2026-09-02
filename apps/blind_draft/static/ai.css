@@ -101,7 +101,14 @@ td.down { color: var(--warn); font-weight: 600; }
 td.up { color: var(--ok); font-weight: 600; }
 td.na, .na { color: #414855; }
 .note2 { color: var(--acc); font-size: 12px; white-space: normal; min-width: 150px; }
-tr.filler td { opacity: .5; font-style: italic; }
+/* 卡库里没有的人：左边两组本来就没有数，压暗但不隐藏——他们是真人，
+   不是占位卡，正是这一页要让人看见的那 53 个。 */
+tr.nocard td { opacity: .62; }
+tr.nocard td.l .pname span { font-style: italic; }
+.team-head.reserve .pos { opacity: .45; }
+.team-head.reserve .nm { opacity: .8; }
+i.guess { font-style: normal; font-weight: 700; margin-left: 3px; opacity: .6; cursor: help; }
+.conv { color: var(--acc); cursor: help; }
 
 .skipped { padding: 18px; color: var(--dim); font-size: 13px; line-height: 2; }
 .skipped h4 { margin: 0 0 8px; color: var(--acc); font-size: 12.5px; letter-spacing: .8px; }

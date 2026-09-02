@@ -23,7 +23,7 @@ import random
 import statistics as st
 import sys
 
-from playerdb.paths import DATA as DATA_DIR
+from playerdb.paths import BLIND_DRAFT, DATA as DATA_DIR
 
 from . import draft as P
 
@@ -134,7 +134,12 @@ def real_field(event, rosters, cohesion_cap=COHESION_CAP):
 
 # ------------------------------------------------------------------ 可配置赛场
 
-CONFIG_PATH = os.path.join(os.path.dirname(DATA), "manual", "major_field.json")
+# 改组时这里一度还写着 data/manual/,而文件已经搬到 data/blind_draft/。
+# load_config 把 IOError 咽掉、静默退回 DEFAULT_CONFIG,于是整个人工层
+# (teams 里的 adjust / caller / max_filler,以及 regional_slots、candidate_pool)
+# 全都不生效,而页面照常渲染——正是 playerdb/paths.py 开头警告的那种错法。
+# 所以路径只从 BLIND_DRAFT 取,不再自己拼。
+CONFIG_PATH = str(BLIND_DRAFT / "major_field.json")
 
 DEFAULT_CONFIG = {
     "pool": [DEFAULT_EVENT, "BLAST Austin 2025", "StarLadder Budapest 2025"],

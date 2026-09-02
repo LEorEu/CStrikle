@@ -56,18 +56,20 @@ def snapshot_index() -> dict:
     return out
 
 
-def stats_by_page() -> dict:
-    """5E 个人数据,card_page -> 那一行(附带 5e_id,用来取照片)。
+def stats_index() -> tuple:
+    """5E 个人数据。返回 (按 5e_id, 按 card_page) 两份索引。
 
-    没有 card_page 的行是卡库里查不到的人(从没打过 Major 的新人),
-    AI 赛场上他们是 G1 占位卡,对不上号很正常。
+    **主键是 5e_id**,因为当前世界里本来就有卡库没有的人——53 个候选池首发
+    没有 card_page,按 page 索引就整批查不到。card_page 那份只是给还在按卡
+    走的老路径用的桥。
     """
-    out = {}
+    by_id, by_page = {}, {}
     for sid, row in _load(STATS_PATH).get("players", {}).items():
-        page = row.get("card_page")
-        if page:
-            out[page] = dict(row, _id=sid)
-    return out
+        r = dict(row, _id=sid)
+        by_id[sid] = r
+        if row.get("card_page"):
+            by_page[row["card_page"]] = r
+    return by_id, by_page
 
 
 def _num(v):
@@ -77,13 +79,13 @@ def _num(v):
         return None
 
 
-def _photo(page, srow, img5e, lq):
+def _photo(page, sid, img5e, lq):
     """优先 5E 的头像(当前世界的脸),没有就退回 Liquipedia 那套。"""
-    if srow:
-        p = img5e.get("players", {}).get(srow["_id"])
+    if sid:
+        p = img5e.get("players", {}).get(sid)
         if p:
             return "/bd/" + p
-    p = lq.get("players", {}).get(page)
+    p = lq.get("players", {}).get(page) if page else None
     return "/img/" + p if p else ""
 
 
@@ -97,51 +99,70 @@ def _spearman(pairs) -> float:
 
 
 def build_view(size=None) -> dict:
+    """候选池 45 支队,阵容和位置直接来自队伍快照。
+
+    以前这里是 `build_ai_field`:按 HLTV top100 挑队、从卡上的 `team` 字段拼
+    阵容、位置靠猜、凑不满就补 G1 占位。三处都换掉了——**占位卡尤其**:
+    The MongolZ 现在首发里三个人没打过 Major,补三张占位卡等于把这支队换成
+    三个虚构的人。现在他们以本人身份进来,只是四维那一侧空着。
+
+    代价是 entry 只算得出一部分:队里五个人都有卡才算得动(45 支里 25 支)。
+    没算的不填数,页面留白——那正是接下来那套映射要补上的位置。
+    """
     cfg = M.load_config()
     cap = float(cfg.get("cohesion_cap", 4.0))
     idx = P.load_rosters()
-    field, skipped, asof = A.build_ai_field(
-        size if size is not None else A.FIELD_SIZE, cfg=cfg)
+    field, asof = A.build_pool_field(cfg)
 
-    snap = snapshot_index()
-    srows = stats_by_page()
+    by_id, _by_page = stats_index()
     img5e = _load(IMG5E_PATH)
     lq = _load(IMAGES_PATH, {"players": {}, "flags": {}})
     career = {c["page"]: c for c in P.load_cards()}
-    aliases = (_load(DATA / "hltv_top100.json").get("aliases") or {})
+    snap = snapshot_index()
 
-    rated = []
+    # entry 只在五人全有卡的队上算得动。算得出的那些之间再排名次,
+    # 算不出的 our=None——不要拿一个残缺的 entry 去和别人比顺位。
+    scored = []
     for t in field:
-        r = A.entry_of(t, idx, cap)
-        rated.append((r["entry"], t, r))
-    rated.sort(key=lambda x: -x[0])
-
-    # 两条顺位在同一批队里比较:HLTV 的名次是全球 1..100,这个赛场只取了
-    # 其中 32 支,直接拿名次做差会被"中间跳过的队"污染。
-    by_hltv = {t["name"]: i for i, (_, t, _) in
-               enumerate(sorted(rated, key=lambda x: x[1]["rank"]), 1)}
+        if t["real"] == 5:
+            r = A.entry_of(t, idx, cap)
+            scored.append((r["entry"], t["name"], r))
+    scored.sort(key=lambda x: -x[0])
+    our = {name: i for i, (_e, name, _r) in enumerate(scored, 1)}
+    rate = {name: r for _e, name, r in scored}
+    # HLTV 顺位也只在同一批队里比：这个池子是按大区配额挑的,中间跳过的队
+    # 会污染名次做差。
+    hltv_order = {t["name"]: i for i, t in enumerate(
+        sorted([t for t in field if t["name"] in our and t["rank"]],
+               key=lambda t: t["rank"]), 1)}
 
     teams, ranks = [], []
-    covered = total = 0
-    for pos, (entry, t, r) in enumerate(rated, 1):
-        st = snap.get(t["name"].casefold()) or snap.get(
-            (aliases.get(t["name"], "") or "").casefold()) or {}
-        logo = img5e.get("teams", {}).get(st.get("id", ""), "")
+    covered = total = nocard = 0
+    for t in field:
+        st = snap.get(t["name"].casefold()) or {}
+        logo = img5e.get("teams", {}).get(t["id"], "") or img5e.get(
+            "teams", {}).get(st.get("id", ""), "")
         roster = []
         for c in t["roster"]:
-            srow = srows.get(c["page"])
-            base = career.get(c["page"])
+            sid = c.get("_5e_id")
+            srow = by_id.get(sid or "")
+            base = career.get(c.get("page") or "")
             total += 1
             if srow:
                 covered += 1
+            if c.get("_nocard"):
+                nocard += 1
             roster.append({
-                "page": c["page"], "nickname": c["nickname"],
-                "position": c["position"], "grade": c["grade"],
+                "page": c.get("page"), "nickname": c["nickname"],
+                "position": c["position"], "grade": c.get("grade"),
                 "age": c.get("age"), "country": c.get("country", ""),
-                "filler": c.get("_filler", False), "notes": c.get("_notes") or [],
-                "cur": {k: c[k] for k in C.ATTRS} | {"overall": c["overall"]},
-                # 卡面。占位卡在卡库里本来就没有对应的人,给 None 让页面留白,
-                # 而不是拿现况去填——那会让"两列一样"看起来像个结论。
+                "nocard": bool(c.get("_nocard")),
+                "role_src": c.get("_role_src"),
+                "notes": c.get("_notes") or [],
+                # 卡库里没有的人四维整块留空。留白比编一个数诚实,
+                # 也让"这里还缺一套映射"在页面上看得见。
+                "cur": (None if c.get("_nocard") else
+                        {k: c[k] for k in C.ATTRS} | {"overall": c["overall"]}),
                 "card": ({k: base[k] for k in C.ATTRS} | {"overall": base["overall"],
                           "position": base["position"], "grade": base["grade"]}
                          if base else None),
@@ -149,38 +170,45 @@ def build_view(size=None) -> dict:
                          | {"hs_rate": _num(srow.get("hs_rate")),
                             "maps": _num(srow.get("map_count")),
                             "tier": srow.get("tier", ""),
+                            "conv": _num(srow.get("rating_s_equiv")),
                             "fb": _num(srow.get("first_blood")),
                             "fd": _num(srow.get("first_death"))}
                          if srow else None),
-                "photo": _photo(c["page"], srow, img5e, lq),
+                "photo": _photo(c.get("page"), sid, img5e, lq),
                 "flag": ("/img/" + lq["flags"][c["country"]]
                          if c.get("country") in lq.get("flags", {}) else ""),
             })
+        pos = our.get(t["name"])
+        r = rate.get(t["name"])
+        ho = hltv_order.get(t["name"])
         teams.append({
-            "name": t["name"], "hltv": t["rank"], "our": pos,
-            "hltv_order": by_hltv[t["name"]],
-            "delta": by_hltv[t["name"]] - pos,
-            "entry": round(entry, 1), "chem": round(r["chem_raw"], 1),
-            "cohesion": round(r["cohesion"], 1), "adjust": t.get("adjust") or 0.0,
+            "name": t["name"], "hltv": t["rank"], "vrs": t["vrs"],
+            "region": t["region"], "seat": t["seat"], "stage": t["stage"],
+            "our": pos, "hltv_order": ho,
+            "delta": (ho - pos) if (ho and pos) else None,
+            "entry": round(r["entry"], 1) if r else None,
+            "chem": round(r["chem_raw"], 1) if r else None,
+            "cohesion": round(r["cohesion"], 1) if r else None,
+            "adjust": t.get("adjust") or 0.0,
             "real": t["real"], "source": t["source"],
-            "region": st.get("region", ""), "vrs": st.get("vrs_rank"),
-            # 这支队在 5eplay 的队伍快照里有没有。两份数据的口径和日期都不同
-            # (赛场按 HLTV top100 挑队,快照来自 5eplay,两者差着好几周),
-            # 对不上的队不是名字配错了,是那边真的没有这支队——不标出来的话,
-            # 页面上只表现为"队标图挂了"。
-            "in_5e": bool(st),
+            "gaps": t.get("gaps"), "conflicts": t.get("conflicts"),
             "logo": "/bd/" + logo if logo else "",
             "roster": roster,
         })
-        ranks.append((by_hltv[t["name"]], pos))
+        if ho and pos:
+            ranks.append((ho, pos))
 
+    slots = cfg.get("regional_slots") or {}
     return {
         "teams": teams,
-        "skipped": [{"rank": rk, "name": nm, "have": n} for rk, nm, n in skipped],
+        "skipped": [],
         "asof": asof,
         "cap": cap,
         "rho": _spearman(ranks),
-        "coverage": {"with_stats": covered, "total": total},
+        "scored": len(our),
+        "coverage": {"with_stats": covered, "total": total, "nocard": nocard},
+        "slots": {k: v for k, v in slots.items()},
+        "pool": cfg.get("candidate_pool") or {},
         "snapshot_date": _load(SNAP_PATH).get("snapshot_date", ""),
         "age_curve": {"knee": A.AGE_KNEE, "rate": A.AGE_RATE, "exp": A.AGE_EXP},
         "stats_window": (_load(STATS_PATH).get("window") or {}).get("value", ""),

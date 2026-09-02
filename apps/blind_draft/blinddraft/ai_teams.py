@@ -37,6 +37,7 @@ from . import major as M
 
 RANKING = str(DATA_DIR / "hltv_top100.json")
 PLAYERS = str(DATA_DIR / "players.json")
+SNAPSHOT = DATA_DIR / "blind_draft" / "team_snapshot.json"
 
 FIELD_SIZE = 32
 
@@ -281,6 +282,108 @@ def fill(roster, team):
         have[pos] += 1
         out.append(make_filler(team, pos, n))
     return out
+
+
+# ------------------------------------------------------------ 候选池(当前世界)
+
+def _pool_spec(cfg):
+    pool = dict(cfg.get("candidate_pool") or {"欧洲": 30, "美洲": 10, "亚洲": 5})
+    pin = {str(x).casefold() for x in (pool.pop("pin", None) or [])}
+    return {k: v for k, v in pool.items() if isinstance(v, int)}, pin
+
+
+def _age_at(birthday, asof):
+    """快照日那天多大。生日缺失就返回 None——别拿卡上的年龄冒充。"""
+    if not birthday or not asof:
+        return None
+    try:
+        b = [int(x) for x in str(birthday).split("-")[:3]]
+        a = [int(x) for x in str(asof).split("-")[:3]]
+    except ValueError:
+        return None
+    if len(b) < 3 or len(a) < 3:
+        return None
+    return a[0] - b[0] - ((a[1], a[2]) < (b[1], b[2]))
+
+
+def build_pool_field(cfg=None):
+    """**当前世界的候选池**：各大区 VRS 前 N 支，阵容和队内位置直接查队伍快照。
+
+    和 `build_ai_field` 的区别不是参数，是**证据来源**：
+
+        build_ai_field   HLTV top100 排名 + 卡上的 `team` 字段 + 猜位置 + G1 占位
+        build_pool_field 队伍快照的当前首发 + 队伍页写着的队内位置 + 不补人
+
+    不补占位人是关键。卡库只收打过 Major 的人，而当前世界本来就装得下卡库
+    没有的人——The MongolZ 现在首发里有三个从没打过 Major。原来拿 G1 占位去顶
+    那三个位置，等于把一支真队换成了三个虚构的人。这里让他们**以本人身份进来**，
+    只是四维那一侧暂时空着（映射还没做，见 §52.6）。
+
+    名额（`regional_slots`）决定谁入选 32 席，候选池（`candidate_pool`）
+    比它大 13 支——余量是留给 VRS 变动的，不是多打几场。
+    """
+    cfg = cfg if cfg is not None else M.load_config()
+    keep, pin = _pool_spec(cfg)
+    slots = cfg.get("regional_slots") or {}
+    raw = json.loads(SNAPSHOT.read_text(encoding="utf-8")) if SNAPSHOT.exists() else {}
+    asof = raw.get("snapshot_date", "")
+    cards = {c["nickname"].casefold(): c for c in P.load_cards()}
+
+    ranked = {}
+    for t in raw.get("teams", []):
+        if t.get("vrs_rank"):
+            ranked.setdefault(t.get("region") or "?", []).append(t)
+    for v in ranked.values():
+        v.sort(key=lambda t: t["vrs_rank"])
+
+    picked, seen = [], set()
+    for reg, n in keep.items():
+        for i, t in enumerate(ranked.get(reg, [])[:n], 1):
+            seen.add(t["id"])
+            picked.append((t, reg, i))
+    for t in raw.get("teams", []):                     # pin 里点名的队掉出去也留着
+        if t["id"] not in seen and (t["name"].casefold() in pin
+                                    or (t.get("abbr") or "").casefold() in pin):
+            reg = t.get("region") or "?"
+            after = len(ranked.get(reg, []))
+            picked.append((t, reg, after + 1))
+
+    field = []
+    for t, reg, seat in sorted(picked, key=lambda x: x[0].get("vrs_rank") or 9999):
+        s = slots.get(reg) or {}
+        n3, n2, n1 = s.get("stage3", 0), s.get("stage2", 0), s.get("stage1", 0)
+        stage = (3 if seat <= n3 else 2 if seat <= n3 + n2
+                 else 1 if seat <= n3 + n2 + n1 else None)
+        roster, real = [], 0
+        for r in t.get("roster", []):
+            if not r.get("starter"):
+                continue
+            base = cards.get(r["name"].casefold())
+            age = _age_at(r.get("birthday"), asof)
+            if base:
+                real += 1
+                c = dict(base)
+                c["_pos"] = r["role"]
+                if age:
+                    c["age"] = age
+                c = settle(c)
+            else:
+                # 卡库里没有他。**不造占位卡**——空着比编一个数诚实。
+                c = {"page": None, "nickname": r["name"], "position": r["role"],
+                     "grade": None, "age": age, "country": "",
+                     "_notes": ["卡库里没有这个人：生涯世界只收打过 Major 的人"],
+                     "_filler": False, "_nocard": True}
+            c["_5e_id"] = r.get("id")
+            c["_role_src"] = r.get("role_source")
+            roster.append(c)
+        field.append({
+            "name": t["name"], "id": t["id"], "region": reg, "seat": seat,
+            "stage": stage, "vrs": t.get("vrs_rank"), "rank": t.get("hltv_rank"),
+            "roster": roster, "real": real, "source": "队伍快照",
+            "adjust": float(((cfg.get("teams") or {}).get(t["name"]) or {}).get("adjust") or 0.0),
+            "gaps": t.get("role_gaps"), "conflicts": t.get("role_conflicts"),
+        })
+    return field, asof
 
 
 # ------------------------------------------------------------------ 赛场
