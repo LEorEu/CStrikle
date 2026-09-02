@@ -23,6 +23,7 @@ import math
 import random
 import statistics as st
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from playerdb.paths import BLIND_DRAFT, DATA, ROOT
@@ -197,14 +198,14 @@ def igl_score(p, ref_year) -> float:
     return score + IGL_APPEARANCE * (p.majors_count or 0)
 
 
-def career_grade(p, ranks, champs, pos=None, ref_year=None):
+def career_grade(p, ranks, champs, pos=None, ref_year=None, asof=None):
     """设计稿 §3.2。自上而下互斥,一个人只落一档。
 
     分档只看「进没进过前五 / 上过几次」,不做年代衰减:Grade 是证据等级,
     2013 年的年度第三也是实打实的超巨证据。年代只影响档内的火力排序。
     指挥另有一套基于团队荣誉的通道,见 igl_score;两条通道取更高的那一档。
     """
-    generic = _generic_grade(p, ranks, champs)
+    generic = _generic_grade(p, ranks, champs, asof)
     if pos == "IGL" and ref_year is not None:
         score = igl_score(p, ref_year)
         for cut, grade in IGL_GRADE_CUT:
@@ -214,7 +215,7 @@ def career_grade(p, ranks, champs, pos=None, ref_year=None):
     return generic
 
 
-def _generic_grade(p, ranks, champs):
+def _generic_grade(p, ranks, champs, asof=None):
     rs = [rank for _, rank in ranks.get(p.page, [])]
     if rs and min(rs) <= 5:
         return 5                                    # G5 超巨证据
@@ -230,7 +231,7 @@ def _generic_grade(p, ranks, champs):
     # 典型症状:TYLOO 的 Jee(21 岁 4 届全部止步 9 名开外)进 G3、底板火力 70,
     # 而同队同战绩的 JamYoung 只因为 25 岁就掉到 G1、底板 52,一个生日 18 点火力。
     # 年轻人该得的是 §15 的档内特色(火力上限 +、稳定 -),不是跨两档。
-    if ((p.age() or 99) <= 24 and p.team and p.majors_count >= 3
+    if ((p.age(asof) or 99) <= 24 and p.team and p.majors_count >= 3
             and best_major_placement(p) <= 8):
         return 3
     # G2 只看出勤,不看现役:是否在编是**当前状态**,不该改变**生涯证据等级**
@@ -302,7 +303,7 @@ def overall(card) -> float:
     return ((total + 5) // 10) / 10.0
 
 
-def corrections(p, grade, pos, ranks, champs, ref_year):
+def corrections(p, grade, pos, ranks, champs, ref_year, asof=None):
     """设计稿 §20:在基础模板上做有限修正,只定方向不追求还原真实 rating。
 
     返回四维的增量。原则:Top20 证明火力、Major 证明经验、冠军证明经验与
@@ -337,7 +338,7 @@ def corrections(p, grade, pos, ranks, champs, ref_year):
     # 「可能还会更强」就是同一件事记两遍(上一版 m0NESY 因此算到 100.0 被截断,
     # 顶到天花板等于和任何更强的人都不可区分)。波动惩罚对所有档都保留——
     # 年轻人打得飘是事实,和证据多少无关。
-    age = p.age()
+    age = p.age(asof)
     if age is not None and age <= 22:
         if grade not in EVIDENCE_GRADES:
             d["firepower"] += 2.5
@@ -350,7 +351,8 @@ def corrections(p, grade, pos, ranks, champs, ref_year):
 OVERRIDABLE = ATTRS + ("grade", "position")
 
 
-def build_card(p, grade, pos, ranks, champs, overrides, ref_year, trace=False):
+def build_card(p, grade, pos, ranks, champs, overrides, ref_year, trace=False,
+               asof=None):
     """Algorithm First, Override Last(§21)。
 
     位置和档位的人工修正必须**在套模板之前**生效:放在最后 update 只会换掉
@@ -370,7 +372,7 @@ def build_card(p, grade, pos, ranks, champs, overrides, ref_year, trace=False):
     grade = int(ov.pop("grade", grade))
     pos = ov.pop("position", pos)
     base = TEMPLATE[pos][grade]
-    delta = corrections(p, grade, pos, ranks, champs, ref_year)
+    delta = corrections(p, grade, pos, ranks, champs, ref_year, asof)
     rng = _rng(p.page)
     evidence = grade in EVIDENCE_GRADES
     card, steps = {}, {}
@@ -387,7 +389,7 @@ def build_card(p, grade, pos, ranks, champs, overrides, ref_year, trace=False):
         steps[key] = {"base": base[i], "delta": delta[key],
                       "jitter": jitter, "auto": card[key]}
     card.update(page=p.page, nickname=p.nickname, position=pos, grade=grade,
-                country=p.country, team=p.team, age=p.age(),
+                country=p.country, team=p.team, age=p.age(asof),
                 majors=p.majors_count, champions=champs,
                 titles=[(m["event"], (m.get("team") or "").lower())
                         for m in (p.majors or []) if str(m.get("placement")) == "1"])
@@ -415,7 +417,7 @@ def build_card(p, grade, pos, ranks, champs, overrides, ref_year, trace=False):
                 "igl_score": round(igl_score(p, ref_year), 3),
                 "lead_anchor": LEAD_ANCHOR[grade],
                 "majors": p.majors_count, "champions": champs,
-                "best_placement": best_major_placement(p), "age": p.age(),
+                "best_placement": best_major_placement(p), "age": p.age(asof),
             },
             "reason": ov.get("reason", ""),
         }
@@ -449,6 +451,10 @@ def generate(trace=False, apply_perf=True):
     辨认哪些已经处理过,时间一长就没人看了。
     """
     db = PlayerDB()
+    # 卡面是由这份身份快照生成的，年龄也必须冻结在同一天。若用 date.today()，
+    # 每逢生日午夜就会凭空出现“待发布卡”，同一份输入无法重建同一份生成物。
+    asof = (datetime.fromisoformat(db.generated_at).date()
+            if db.generated_at else None)
     ranks, ref_year = load_top20()
     played = played_role_map()
     overrides = load_overrides()
@@ -464,8 +470,9 @@ def generate(trace=False, apply_perf=True):
             pending.append(p.nickname)
             continue
         champs = champion_count(p)
-        cards.append(build_card(p, career_grade(p, ranks, champs, pos, ref_year),
-                                pos, ranks, champs, overrides, ref_year, trace))
+        cards.append(build_card(
+            p, career_grade(p, ranks, champs, pos, ref_year, asof),
+            pos, ranks, champs, overrides, ref_year, trace, asof))
     if apply_perf:
         apply_firepower(cards, overrides, trace)
     return cards, pending, confirmed

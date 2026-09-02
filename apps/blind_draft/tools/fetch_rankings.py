@@ -422,6 +422,49 @@ def repair_roles():
     print("写回 %s" % TEAMS_OUT.relative_to(ROOT))
 
 
+def refresh_teams(team_ids: list[str]) -> dict:
+    """定点刷新一支或几支队，不重抓整个 288 队快照。
+
+    适合网页已经换人、仓库快照仍旧的情况。只替换明确给出的 team id；其余队
+    保留原快照，并在顶层记录这是 partial refresh，不能冒充一次完整全库抓取。
+    """
+    raw = json.loads(TEAMS_OUT.read_text(encoding="utf-8"))
+    teams = list(raw.get("teams") or [])
+    by_id = {t["id"]: i for i, t in enumerate(teams)}
+    unknown, refreshed = set(), []
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
+    for tid in dict.fromkeys(team_ids):
+        team = fetch_team(tid, unknown)
+        if not team:
+            raise RuntimeError("5E 队伍页没有返回可用数据：%s" % tid)
+        team["refreshed_at"] = stamp
+        if tid in by_id:
+            teams[by_id[tid]] = team
+        else:
+            teams.append(team)
+        refreshed.append([tid, team["name"],
+                          sum(1 for p in team["roster"] if p["starter"])])
+        time.sleep(SLEEP)
+
+    fill_role_gaps(teams)                 # 人工角色层和竞技兜底重新压一遍
+    teams.sort(key=lambda t: (t["hltv_rank"] is None,
+                              t["hltv_rank"] or 0, t["name"]))
+    ranked = [t for t in teams if t.get("hltv_rank")]
+    five = [t for t in teams
+            if len([p for p in t["roster"] if p.get("starter")]) == 5]
+    raw["teams"] = teams
+    raw["generated_at"] = stamp
+    raw["partial_refresh_at"] = stamp
+    raw["partial_refresh_ids"] = list(dict.fromkeys(team_ids))
+    raw["counts"] = {**(raw.get("counts") or {}), "teams": len(teams),
+                     "with_hltv_rank": len(ranked), "five_starters": len(five)}
+    TEAMS_OUT.write_text(json.dumps(raw, ensure_ascii=False, indent=1) + "\n",
+                         encoding="utf-8")
+    if unknown:
+        print("  没见过的位置字符串：%s" % "、".join(sorted(unknown)))
+    return {"refreshed": refreshed, "counts": raw["counts"]}
+
+
 def fetch_teams(asof: date, refresh_ids: bool):
     if refresh_ids or not IDS_CACHE.exists():
         print("抓队伍 id 表…")
@@ -792,10 +835,18 @@ def main():
                          "（队伍列表接口漏掉 MongolZ / BC.Game 这类队，只能这么补）")
     ap.add_argument("--fill-roles", action="store_true",
                     help="只补 role_gaps，就地改已有快照（要先抓过竞技数据）")
+    ap.add_argument("--team-id", action="append", default=[],
+                    help="只定点刷新这个 5E team id；可重复给，不重抓全库")
     ap.add_argument("--date", default=None, help="快照日期 YYYY-MM-DD,默认今天")
     args = ap.parse_args()
     if args.fill_roles:
         repair_roles()
+        return 0
+    if args.team_id:
+        p = refresh_teams(args.team_id)
+        for tid, name, starters in p["refreshed"]:
+            print("  %s  %-22s 首发 %d 人" % (tid, name, starters))
+        print("定点刷新 -> %s" % TEAMS_OUT.relative_to(ROOT))
         return 0
 
     if not (args.teams or args.vrs or args.discover or args.photos

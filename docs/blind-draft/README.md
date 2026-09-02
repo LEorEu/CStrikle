@@ -57,9 +57,9 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 
 测试在 `apps/blind_draft/tests/`：`test_anchor.py` 12 项，盯着打锚台的口径
 （peak 与 firepower 不许混、键必须真实存在、指挥不给建议值）；
-`test_cards.py` 9 项，盯着卡库、已发布文件与
+`test_cards.py` 11 项，盯着卡库、确定性取整、快照年龄、已发布文件与
 「卡牌与落地记录.md」里的 SPEC 块不许漂移；`test_tuning_console.py` 10 项，
-盯着后台展示的推导和卡上的数不许对不上；`test_ai_view.py` 18 项，盯着
+盯着后台展示的推导和卡上的数不许对不上；`test_ai_view.py` 19 项，盯着
 AI 页与 Match 共用同一份阵容、四维和来源口径。
 
 ## 调参后台
@@ -70,6 +70,9 @@ uvicorn bdserver.main:app --host 127.0.0.1 --port 8621
 
 本地工具，不上线。地址栏支持两个快捷入口：卡牌页 `#<page>` 直接定位到那张卡
 （选中时会写回地址栏，可以把链接发给别人）；AI 页 `#all` 一次展开候选池全部 45 支队。
+
+玩家体验入口是 `http://127.0.0.1:8621/play`：选满五人后按 Projected Seed
+进入真实三段 Swiss Run。
 
 左边 648 张卡可搜可筛，右边把选中那张摊开成
 **模板 → 履历修正 → 抖动 → 人工覆盖 → 最终值**，附带背后的证据
@@ -126,14 +129,14 @@ Firepower；其余维度保留带置信度的生涯先验。在有证据的地�
 ## 一句话状态
 
 卡是固定的，市场会给他报错价，卡面只给球探区间；选人时你看得见可以去追哪几种
-阵容，散场时每一张牌都会翻开。当前 Match 已统一使用队伍快照和 AI 当前卡；
-下一里程碑是把这套命令行模拟收成玩家可感知的 BO1 / BO3 / 高压极简 Run。
+阵容，散场时每一张牌都会翻开。当前网页已能把选出的五人送进真实三段 Swiss，
+并展示 BO1 / BO3、压力、MVP 与 Life Game；下一步是用真人试玩校准反馈与节奏。
 
 ```
 python -m blinddraft.major --seed 1              # 只看入场：排第几、挤掉谁
 python -m blinddraft.major --sweep-field        # 每局赛场翻新几支
 python -m blinddraft.match --seed 50296 --cap 4  # 打完整届
-python -m blinddraft.match --seed 50296 --quick-run # M2 三关体验切片
+python -m blinddraft.match --seed 50296 --quick-run # M2 控制变量三场切片
 python -m blinddraft.match --duel 80 50          # 两个 Entry 的 BO1/BO3 胜率
 python -m blinddraft.match --selftest            # 两条不变量
 python -m blinddraft.match --stats --cap 4       # §35 的 Q1/Q2

@@ -1,12 +1,12 @@
 {
  "_note": "5eplay 队伍快照,由 scraper/fetch_rankings.py --teams 生成,勿手改。阵容/位置/首发都来自队伍页,是**当前事实**——不要用 VRS 的阵容(那份月更,实测会把同一个人列在两支队里),也不要用卡库的 team 字段(Liquipedia 滞后,而且说不出首发和队内位置)。hltv_* 和 vrs_* 是两套排名,都只做参考不当种子(设计稿 §51.2)。",
- "generated_at": "2026-09-02 11:03:07Z",
+ "generated_at": "2026-09-02 15:07:06Z",
  "snapshot_date": "2026-09-01",
  "source": "https://esports-data.5eplaycdn.com/v1/api/csgo/teams/<id>/overview",
  "counts": {
   "teams": 288,
   "with_hltv_rank": 119,
-  "five_starters": 96,
+  "five_starters": 98,
   "failed": 0
  },
  "teams": [
@@ -1711,9 +1711,9 @@
      "birthday": "1997-07-06",
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d787s1kconkpudhr3r1g.webp",
-     "role_source": "manual",
      "caller": true,
-     "caller_source": "manual"
+     "caller_source": "manual",
+     "role_source": "manual"
     },
     {
      "id": "csgo_pl_13497",
@@ -1831,8 +1831,8 @@
      "birthday": null,
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d77i8b4conkpudhr3ql0.png",
-     "role_source": "hs_rate",
-     "caller": false
+     "caller": false,
+     "role_source": "hs_rate"
     },
     {
      "id": "csgo_pl_11630",
@@ -1998,8 +1998,8 @@
      "birthday": null,
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d5k5c1cconkpudhr3h5g.png",
-     "role_source": "kpr?",
-     "caller": true
+     "caller": true,
+     "role_source": "kpr?"
     },
     {
      "id": "csgo_pl_19592",
@@ -2111,11 +2111,12 @@
    "abbr": "NIP",
    "region": "欧洲",
    "coach": "Xizt",
+   "logo": "https://oss.5eplay.com/cloudx/p/sport/csgo/team/merge_clsl1asconkqks63cvg0.png",
    "avg_age": 26,
    "hltv_rank": 26,
    "hltv_points": 72,
-   "vrs_rank": 28,
-   "vrs_points": 1374,
+   "vrs_rank": 29,
+   "vrs_points": 1373,
    "roster": [
     {
      "id": "csgo_pl_14148",
@@ -2172,22 +2173,23 @@
      "caller": false
     },
     {
-     "id": "csgo_pl_922",
-     "name": "Snappi",
+     "id": "csgo_pl_19899",
+     "name": "Krimbo",
      "role": "RIFLER",
      "roles_raw": [
-      "指挥"
+      "步枪手"
      ],
-     "starter": false,
-     "birthday": "1990-06-09",
+     "starter": true,
+     "birthday": "2002-09-26",
      "top20": 0,
-     "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d5k51j4conkpudhr3gq0.png"
+     "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/cqkoh3kconkotam7vung.png",
+     "caller": false
     }
    ],
    "role_conflicts": null,
    "role_gaps": null,
    "role_fallback": null,
-   "logo": "https://oss.5eplay.com/cloudx/p/sport/csgo/team/merge_clsl1asconkqks63cvg0.png"
+   "refreshed_at": "2026-09-02 15:07:06Z"
   },
   {
    "id": "csgo_tm_10245",
@@ -2337,8 +2339,8 @@
      "birthday": "2000-01-07",
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d0dfhosconkt3lege8l0.png",
-     "role_source": "kpr?",
-     "caller": true
+     "caller": true,
+     "role_source": "kpr?"
     },
     {
      "id": "csgo_pl_22535",
@@ -3123,8 +3125,8 @@
      "birthday": null,
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d7ulk8cconkpudhr4gp0.png",
-     "role_source": "kpr?",
-     "caller": true
+     "caller": true,
+     "role_source": "kpr?"
     },
     {
      "id": "csgo_pl_12004",
@@ -3519,8 +3521,8 @@
      "birthday": null,
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d788b54conkpudhr3rjg.webp",
-     "role_source": "kpr?",
-     "caller": true
+     "caller": true,
+     "role_source": "kpr?"
     },
     {
      "id": "csgo_pl_20879",
@@ -3925,8 +3927,8 @@
      "birthday": null,
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d3d2hcsconkqbk3bnrl0.png",
-     "role_source": "kpr?",
-     "caller": true
+     "caller": true,
+     "role_source": "kpr?"
     },
     {
      "id": "csgo_pl_22643",
@@ -3986,11 +3988,12 @@
    "abbr": "FlyQuest",
    "region": "亚洲",
    "coach": "AZR",
+   "logo": "https://oss.5eplay.com/cloudx/p/sport/csgo/team/co31epkconklgsjvh0cg.png",
    "avg_age": 26,
    "hltv_rank": 48,
    "hltv_points": 29,
-   "vrs_rank": 52,
-   "vrs_points": 1189,
+   "vrs_rank": 51,
+   "vrs_points": 1194,
    "roster": [
     {
      "id": "csgo_pl_4679",
@@ -4022,7 +4025,7 @@
     {
      "id": "csgo_pl_17384",
      "name": "Vexite",
-     "role": "AWPER",
+     "role": "RIFLER",
      "roles_raw": [
       "步枪手"
      ],
@@ -4030,7 +4033,6 @@
      "birthday": "2004-09-05",
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d80s2ncconkpudhr4j60.png",
-     "role_source": "hs_rate",
      "caller": false
     },
     {
@@ -4045,12 +4047,25 @@
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d80s23kconkpudhr4j30.png",
      "caller": false
+    },
+    {
+     "id": "csgo_pl_11139",
+     "name": "aliStair",
+     "role": "AWPER",
+     "roles_raw": [
+      "狙击手"
+     ],
+     "starter": true,
+     "birthday": "1998-04-07",
+     "top20": 0,
+     "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d80rqd4conkpudhr4ii0.png",
+     "caller": false
     }
    ],
    "role_conflicts": null,
    "role_gaps": null,
    "role_fallback": null,
-   "logo": "https://oss.5eplay.com/cloudx/p/sport/csgo/team/co31epkconklgsjvh0cg.png"
+   "refreshed_at": "2026-09-02 15:07:06Z"
   },
   {
    "id": "hltv_team_12426",
@@ -5722,8 +5737,8 @@
      "birthday": "2003-05-01",
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d80rr6sconkpudhr4ij0.png",
-     "role_source": "hs_rate",
-     "caller": false
+     "caller": false,
+     "role_source": "hs_rate"
     },
     {
      "id": "csgo_pl_20527",
@@ -7587,8 +7602,8 @@
      "birthday": "2004-11-29",
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d5smj2kconkpudhr3k50.png",
-     "role_source": "kpr?",
-     "caller": true
+     "caller": true,
+     "role_source": "kpr?"
     },
     {
      "id": "csgo_pl_22069",
@@ -13053,8 +13068,8 @@
      "birthday": null,
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d787md4conkpudhr3qsg.webp",
-     "role_source": "kpr?",
-     "caller": true
+     "caller": true,
+     "role_source": "kpr?"
     },
     {
      "id": "csgo_pl_21198",
@@ -13583,8 +13598,8 @@
      "birthday": "2003-11-21",
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d9280t4conkpudhr54ng.png",
-     "role_source": "kpr?",
-     "caller": true
+     "caller": true,
+     "role_source": "kpr?"
     }
    ],
    "role_conflicts": null,
@@ -13656,8 +13671,8 @@
      "birthday": "2004-08-19",
      "top20": 0,
      "portrait": "https://oss.5eplay.com/cloudx/p/sport/csgo/player/d7884ukconkpudhr3ra0.png",
-     "role_source": "kpr?",
-     "caller": true
+     "caller": true,
+     "role_source": "kpr?"
     }
    ],
    "role_conflicts": null,
@@ -15560,5 +15575,10 @@
    "role_fallback": null,
    "logo": "https://oss.5eplay.com/sport/csgo/team/null.png"
   }
+ ],
+ "partial_refresh_at": "2026-09-02 15:07:06Z",
+ "partial_refresh_ids": [
+  "csgo_tm_4411",
+  "hltv_team_12774"
  ]
 }

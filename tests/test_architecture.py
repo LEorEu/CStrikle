@@ -13,7 +13,7 @@
     playerdb                    共享选手库，不依赖任何内部包
        ↑            ↑
     server ↔ gtptools        猜选手（互相依赖，同一个 app 内，允许）
-    blinddraft ← bdtools     Blind Draft
+    blinddraft ← bdtools ← bdserver   Blind Draft
 
 两条硬约束：
   1. playerdb 不许依赖任何内部包——它是底座，谁都能用，它谁都不用。
@@ -45,7 +45,10 @@ ALLOWED = {
     "bdtools": {"playerdb", "blinddraft"},
     # 调参后台。它读 blinddraft 的生成器、写 blinddraft 的人工层,但反过来
     # 不行:玩法代码一旦 import bdserver,命令行跑一局就要拖起 FastAPI。
-    "bdserver": {"playerdb", "blinddraft"},
+    # bdtools 这一条是给 /play 开的:那张自包含页面由 bdtools/export_web.py
+    # 拼装,导出命令和 HTTP 路由必须共用同一份拼装,否则网页版和导出版会分家。
+    # 方向仍然安全——bdtools 不许 import bdserver,所以拖不起 FastAPI。
+    "bdserver": {"playerdb", "blinddraft", "bdtools"},
 }
 
 

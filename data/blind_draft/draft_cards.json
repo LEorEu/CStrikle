@@ -154,7 +154,7 @@
    "grade": 5,
    "country": "Russia",
    "team": "BC.Game",
-   "age": 28,
+   "age": 27,
    "majors": 13,
    "champions": 1,
    "titles": [
@@ -2918,7 +2918,7 @@
    "grade": 3,
    "country": "Sweden",
    "team": "",
-   "age": 25,
+   "age": 24,
    "majors": 4,
    "champions": 0,
    "titles": [],
@@ -6032,7 +6032,7 @@
    "grade": 3,
    "country": "Turkey",
    "team": "Aurora",
-   "age": 28,
+   "age": 27,
    "majors": 8,
    "champions": 0,
    "titles": [],
@@ -8173,7 +8173,7 @@
    "grade": 2,
    "country": "United States",
    "team": "",
-   "age": 28,
+   "age": 27,
    "majors": 3,
    "champions": 0,
    "titles": [],
@@ -11244,7 +11244,7 @@
    "overall": 69.1
   },
   {
-   "firepower": 84,
+   "firepower": 85,
    "leadership": 27,
    "experience": 68,
    "stability": 70,
@@ -11258,7 +11258,7 @@
    "majors": 7,
    "champions": 0,
    "titles": [],
-   "overall": 75.2
+   "overall": 75.7
   },
   {
    "firepower": 88,

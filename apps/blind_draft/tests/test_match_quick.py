@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import random
+import json
 import unittest
 
 from blinddraft import draft as P
 from blinddraft import major as M
 from blinddraft import match as X
+from bdserver import run as R
 
 
 class QuickRunTests(unittest.TestCase):
@@ -37,6 +39,18 @@ class QuickRunTests(unittest.TestCase):
         self.assertLess(rates[1], 0.95)
         self.assertGreater(rates[3], rates[1])
         self.assertLess(rates[3], 1.0)
+
+    def test_web_payload_is_structured_and_serializable(self):
+        cards = P.load_cards()
+        mates = P.mate_index(self.rosters)
+        roster, _left = M.bot_draft(50296, cards, self.rosters, mates)
+        data = R.build_run([c["page"] for c in roster], seed=50296)
+        self.assertTrue(data["qualified"])
+        self.assertGreaterEqual(len(data["legs"]), 3)
+        self.assertTrue(data["stages"])
+        self.assertIn(data["outcome"], ("eliminated", "playoffs"))
+        self.assertTrue(all(x["maps"] for x in data["legs"]))
+        json.dumps(data, ensure_ascii=False)       # FastAPI 必须能直接序列化
 
 
 if __name__ == "__main__":

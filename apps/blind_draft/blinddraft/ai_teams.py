@@ -32,6 +32,7 @@ from playerdb.paths import BLIND_DRAFT, DATA as DATA_DIR
 
 from . import cards as G          # 只读:借它的位置模板,不改它
 from . import draft as P
+from . import firepower as F
 from . import major as M
 
 RANKING = str(DATA_DIR / "hltv_top100.json")
@@ -275,7 +276,7 @@ def _performance_firepower(card, row, scale):
         out.update(rating=rating, maps=maps)
         return out
 
-    target = int(round(fn(rating)))
+    target = F.round_target(fn(rating))
     if maps >= 80:
         value, source, confidence = target, "current_performance", "strong"
         why = "%d 图 S 级样本，直接读取当前火力标尺" % maps
@@ -358,7 +359,7 @@ def make_current_player(row, team, age, stat, scale):
     pos = row.get("role") if row.get("role") in G.TEMPLATE else "RIFLER"
     base = G.TEMPLATE[pos][1]
     c = dict(zip(G.ATTRS, base))
-    c["firepower"] = max(c["firepower"], 50)
+    c["firepower"] = max(c["firepower"], CURRENT_FIRE_FLOOR)
     is_caller = bool(row.get("caller", pos == "IGL"))
     if is_caller and pos != "IGL":
         c["leadership"] = G.TEMPLATE["IGL"][1][1]
@@ -461,7 +462,6 @@ def build_pool_field(cfg=None):
     by_page = {c["page"]: c for c in card_rows}
     stats = load_stats()
     try:
-        from . import firepower as F
         scale = F.build_scale(cards=card_rows)
     except (ValueError, OSError):
         scale = None

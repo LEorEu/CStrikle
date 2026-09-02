@@ -34,6 +34,7 @@
 import argparse
 import json
 import sys
+from decimal import Decimal, ROUND_HALF_UP
 
 from playerdb.paths import BLIND_DRAFT, DATA
 
@@ -70,6 +71,17 @@ ACTIVE_GRADES = (1, 2, 3)
 #: 管的方差,不是 firepower 管的均值。
 FLOOR_ANCHOR = (0.70, 50)
 FLOOR = FLOOR_ANCHOR[1]
+
+
+def round_target(value) -> int:
+    """火力标尺的确定性整数取整：半值一律向上。
+
+    标尺结点来自 `sum(rs) / len(rs)`，数学上的 1.18 可能落成
+    1.1799999999999997；随后线性插值得到的 84.5 也可能在浮点两侧漂动。
+    内建 round 的 banker's rounding 会让同一结点在 84/85 间翻转。
+    用十进制字符串恢复人看到的数，并明确 ROUND_HALF_UP。
+    """
+    return int(Decimal(str(value)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
 def _num(v):
@@ -261,7 +273,7 @@ def preview(cards=None, overrides=None):
         rating = _num((row or {}).get("rating"))
         maps = int(_num((row or {}).get("map_count")) or 0)
         old = card["firepower"]
-        target = round(fn(rating)) if (rating is not None and lo <= rating <= hi) else None
+        target = round_target(fn(rating)) if (rating is not None and lo <= rating <= hi) else None
         manual = "firepower" in (overrides.get(card["page"]) or {})
 
         new, src = old, "template"

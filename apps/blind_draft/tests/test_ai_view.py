@@ -203,6 +203,16 @@ class ViewTests(unittest.TestCase):
                 for p in t["roster"] if not p["stat"] and (t["vrs"] or 9999) <= 10]
         self.assertEqual(miss, [], "前 10 队里有人查不到 S 级数据,多半是 id 断了:%s" % miss)
 
+    def test_recently_refreshed_rosters_are_complete(self):
+        """5E 页面已有第五人时，旧的四人快照不能继续把整队排除。"""
+        teams = {t["name"]: t for t in self.v["teams"]}
+        for name, fifth in (("Ninjas in Pyjamas", "Krimbo"),
+                            ("FlyQuest", "aliStair")):
+            self.assertEqual(len(teams[name]["roster"]), 5, name)
+            self.assertIn(fifth, {p["nickname"] for p in teams[name]["roster"]})
+        self.assertEqual(set(self.v["partial_refresh_ids"]),
+                         {"csgo_tm_4411", "hltv_team_12774"})
+
     def test_every_row_is_top_tier(self):
         """页面上出现的每一个数,都必须来自 Major/S+/S。
 

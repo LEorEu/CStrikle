@@ -33,15 +33,17 @@ import threading
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from playerdb.paths import BLIND_DRAFT, DATA, IMG
 from blinddraft import cards as C
+from bdtools import export_web as WEB
 
 from . import ai as AI
 from . import anchor as AN
+from . import run as RUN
 
 STATIC = Path(__file__).resolve().parents[1] / "static"
 IMAGES_PATH = DATA / "images.json"
@@ -188,6 +190,11 @@ class OverrideBody(BaseModel):
     reason: str = ""
 
 
+class RunBody(BaseModel):
+    pages: list[str]
+    seed: int = 1
+
+
 def _clean(body: OverrideBody) -> dict:
     ov = {}
     if body.grade is not None:
@@ -226,6 +233,12 @@ def ai_page():
     return FileResponse(STATIC / "ai.html")
 
 
+@app.get("/play", response_class=HTMLResponse)
+def play_page():
+    """可玩的选人页；卡数据嵌入页面，比赛由 `/api/run` 调 Python 引擎。"""
+    return HTMLResponse(WEB.render_html()[0])
+
+
 @app.get("/anchor")
 def anchor_page():
     return FileResponse(STATIC / "anchor.html")
@@ -253,6 +266,16 @@ def api_anchor_put(key: str, body: AnchorBody,
 def api_ai():
     """AI 对手赛场。只读——理由写在 `bdserver/ai.py` 的模块注释里。"""
     return AI.build_view()
+
+
+@app.post("/api/run")
+def api_run(body: RunBody):
+    try:
+        return RUN.build_run(body.pages, body.seed)
+    except KeyError as exc:
+        raise HTTPException(404, str(exc))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
 
 
 @app.get("/api/cards")

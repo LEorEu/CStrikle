@@ -1,6 +1,7 @@
 import collections
 import json
 import unittest
+from datetime import datetime
 from pathlib import Path
 
 from blinddraft.cards import (
@@ -17,6 +18,7 @@ from blinddraft.cards import (
     played_role_map,
     spec_markdown,
 )
+from blinddraft.firepower import round_target
 from playerdb.players import PlayerDB
 
 from playerdb.paths import ROOT
@@ -87,6 +89,20 @@ class CardGenerationTests(unittest.TestCase):
             "draft_cards.json 与实时生成结果不同；运行 "
             "`python -m blinddraft.cards --write` 后审查并提交生成物",
         )
+
+    def test_firepower_half_rounding_is_not_a_float_coin_flip(self):
+        """数学上的 x.5 不能因插值毛刺在两个整数间翻转。"""
+        self.assertEqual(round_target(84.5), 85)
+        self.assertEqual(round_target(84.50000000000003), 85)
+        self.assertEqual(round_target(84.49999999999997), 84)
+
+    def test_card_ages_are_frozen_to_player_database_snapshot(self):
+        db = PlayerDB()
+        asof = datetime.fromisoformat(db.generated_at).date()
+        players = {p.page: p for p in db.players}
+        for card in self.cards:
+            self.assertEqual(card["age"], players[card["page"]].age(asof),
+                             card["nickname"])
 
     def test_champion_squads_have_one_igl(self):
         """一支冠军阵容不可能有两个指挥。

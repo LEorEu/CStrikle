@@ -30,7 +30,8 @@ async function load() {
   const inField = DATA.teams.filter((t) => t.stage).length;
   $('#mRho').textContent = 'ρ ' + DATA.rho;
   $('#mCov').textContent = '5E 覆盖 ' + c.with_stats + '/' + c.total;
-  $('#mAsof').textContent = '快照 ' + DATA.snapshot_date;
+  $('#mAsof').textContent = '快照 ' + DATA.snapshot_date
+    + (DATA.partial_refresh_at ? ' · 定点刷新 ' + DATA.partial_refresh_at.slice(0, 10) : '');
 
   const q = DATA.pool || {};
   const quota = ['欧洲', '美洲', '亚洲'].map((k) => {
@@ -42,6 +43,7 @@ async function load() {
       其中 <b>${inField} 支</b>拿到 Major 名额（${esc(quota)}），
       其余 ${DATA.teams.length - inField} 支是留给 VRS 变动的余量。
       阵容与队内位置来自 <b>5eplay 快照（${esc(DATA.snapshot_date)}）</b>，
+      ${DATA.partial_refresh_at ? `另有 ${DATA.partial_refresh_ids.length} 支队在 <b>${esc(DATA.partial_refresh_at)}</b> 定点刷新。` : ''}
       实测窗口 <b>${esc((DATA.stats_window || '').replace('_', ' → '))}</b> · ${esc(DATA.stats_grade)}。
       默契上限 ${DATA.cap}。</div>
     <div class="warn"><b>${c.nocard} 人卡库里没有</b>——他们没有玩家卡，但有 AI 专属当前四维；

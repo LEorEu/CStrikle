@@ -109,6 +109,7 @@ def build_view(size=None) -> dict:
     他们的玩家卡一栏仍留白，不会因此进入玩家抽卡库。
     """
     cfg = M.load_config()
+    snap_raw = _load(SNAP_PATH)
     cap = float(cfg.get("cohesion_cap", 4.0))
     idx = P.load_rosters()
     field, asof = A.build_pool_field(cfg)
@@ -210,7 +211,9 @@ def build_view(size=None) -> dict:
         "coverage": {"with_stats": covered, "total": total, "nocard": nocard},
         "slots": {k: v for k, v in slots.items()},
         "pool": cfg.get("candidate_pool") or {},
-        "snapshot_date": _load(SNAP_PATH).get("snapshot_date", ""),
+        "snapshot_date": snap_raw.get("snapshot_date", ""),
+        "partial_refresh_at": snap_raw.get("partial_refresh_at", ""),
+        "partial_refresh_ids": snap_raw.get("partial_refresh_ids") or [],
         "age_curve": {"knee": A.AGE_KNEE, "rate": A.AGE_RATE, "exp": A.AGE_EXP},
         "stats_window": (_load(STATS_PATH).get("window") or {}).get("value", ""),
         "stats_grade": _load(STATS_PATH).get("grade_label", ""),

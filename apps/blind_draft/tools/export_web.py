@@ -24,7 +24,8 @@ TEMPLATE = Path(__file__).resolve().parents[1] / "templates" / "draft_web.html"
 DEFAULT_OUT = ROOT / ".cache" / "proto_draft_web.html"
 
 
-def build(out_path: Path) -> Path:
+def render_html() -> tuple[str, int, int]:
+    """生成自包含页面文本；不落盘，供 `/play` 和导出命令共用。"""
     cards = P.load_cards()
     rosters = P.load_rosters()
 
@@ -32,7 +33,8 @@ def build(out_path: Path) -> Path:
     for c in cards:
         attr = P.scout_attr(c)
         rows.append({
-            "n": c["nickname"], "p": c["position"][0], "g": c["grade"],
+            "id": c["page"], "n": c["nickname"],
+            "p": c["position"][0], "g": c["grade"],
             "c": c["country"], "t": c["team"], "a": c["age"], "m": c["majors"],
             "ch": c["champions"],
             "f": c["firepower"], "l": c["leadership"], "e": c["experience"],
@@ -66,10 +68,15 @@ def build(out_path: Path) -> Path:
     tpl = TEMPLATE.read_text(encoding="utf-8")
     if "/*__DATA__*/" not in tpl:
         raise SystemExit(f"{TEMPLATE} 里找不到 /*__DATA__*/ 占位符")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(tpl.replace("/*__DATA__*/", data), encoding="utf-8")
+    return tpl.replace("/*__DATA__*/", data), len(rows), len(pairs)
 
-    print(f"{len(rows)} 张卡 / {len(pairs)} 对队友 → {out_path} "
+
+def build(out_path: Path) -> Path:
+    html, card_count, pair_count = render_html()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(html, encoding="utf-8")
+
+    print(f"{card_count} 张卡 / {pair_count} 对队友 → {out_path} "
           f"({out_path.stat().st_size / 1024:.0f} KB)")
     return out_path
 

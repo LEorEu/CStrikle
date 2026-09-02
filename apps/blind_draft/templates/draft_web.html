@@ -160,6 +160,22 @@ td.name{font-weight:600}
 .hero b{font-size:44px; line-height:1; font-weight:600}
 .hero .rank{font-size:15px; color:var(--ink-2)}
 
+.run-summary{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap}
+.run-summary .record{font-size:38px; color:var(--accent)}
+.run-grid{display:grid; grid-template-columns:repeat(3,minmax(220px,1fr)); gap:10px}
+@media (max-width:900px){.run-grid{grid-template-columns:1fr}}
+.run-leg{background:var(--panel-2); border:1px solid var(--line); border-radius:4px;
+         padding:12px; display:flex; flex-direction:column; gap:8px}
+.run-leg.win{border-top:3px solid var(--good)}
+.run-leg.loss{border-top:3px solid var(--bad)}
+.run-leg h3{font-size:13px; margin:0; color:var(--ink-2)}
+.run-score{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+.run-score b{font-size:24px}.run-score .win{color:var(--good)}.run-score .loss{color:var(--bad)}
+.maps{display:flex; flex-direction:column; gap:5px; font-size:11.5px; color:var(--ink-2)}
+.mapline{padding-top:5px; border-top:1px dashed var(--line)}
+.life{color:var(--warn); font-weight:600}
+.run-error{color:var(--bad)}
+
 ul.notes{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;
          font-size:13px}
 ul.notes li{display:flex; justify-content:space-between; gap:10px; padding-bottom:6px;
@@ -244,6 +260,8 @@ function scoutRange(v, rng){
 }
 const POS = {R:"RIFLER", A:"AWPER", I:"IGL"};
 const GRADES = [5,4,3,2,1];
+const esc = s => String(s==null?"":s).replace(/[&<>\"]/g,
+  c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 const PAIR = new Map(), MATES = new Map();
 for (const [i,j,n,team,same] of D.pairs){
@@ -457,7 +475,7 @@ function newRun(seed){
   const pool = {};
   for (const g of GRADES) pool[g] = CARDS.filter(c=>c.g===g).slice();
   S = {seed, rng, pool, boards:[], picked:[], left:BUDGET, turn:0, passed:[],
-       done:false, board:null};
+       done:false, board:null, run:null};
   nextBoard(); render();
 }
 
@@ -720,7 +738,7 @@ function renderReveal(){
 
   saveLog(s, better+1, lineups.length, totals[0], avg, steal, traits);
 
-  return `<section class="panel">
+  return `${renderRun()}<section class="panel">
     <div class="panel-hd"><h2 class="disp">揭晓</h2>
       <p>他们是谁、真实档位是多少、标价错在哪</p></div>
     <div class="panel-bd">
@@ -791,6 +809,69 @@ function renderReveal(){
   <p class="hint">最优阵容：${lineups[0][1].map(c=>`$${c.price} ${c.n}(G${c.g})`).join(" · ")}</p>`;
 }
 
+/* ---------- M2 Major Run：前端只渲染，比赛公式全部在 /api/run ---------- */
+function renderRun(){
+  const run = S.run;
+  if (!run) return `<section class="panel">
+    <div class="panel-hd"><h2 class="disp">M2 Major Run</h2>
+      <p>让这五个人按 Projected Seed 进入真实三段 Swiss</p></div>
+    <div class="panel-bd"><div class="actions">
+      <button class="btn primary" id="runbtn">开始 Run</button>
+      <span class="hint">首轮对阵、后续同战绩配对、BO1/BO3 都使用正式规则；Rogue Buff 尚未接入。</span>
+    </div></div></section>`;
+  if (run.loading) return `<section class="panel"><div class="panel-bd">
+    <p class="hint">正在用 Python Match 引擎生成整条 Swiss 路径……</p></div></section>`;
+  if (run.error) return `<section class="panel"><div class="panel-bd">
+    <p class="run-error">${esc(run.error)}</p><button class="btn" id="runbtn">重试</button>
+    </div></section>`;
+  if (!run.qualified) return `<section class="panel"><div class="panel-hd">
+      <h2 class="disp">RUN END</h2><p>未取得 Major 席位</p></div>
+    <div class="panel-bd"><div class="run-summary"><b class="record num">#${run.projected_seed}</b>
+      <span>你的 Entry ${run.entry}，低于本届第 32 名。</span></div></div></section>`;
+
+  const legs = run.legs.map(leg=>{
+    const maps = leg.maps.map(m=>`<div class="mapline">
+      Map ${m.number} · 强度 <b class="num">${m.player_strength}</b> :
+      <b class="num">${m.opponent_strength}</b> · MVP ${esc(m.mvp.nickname)}
+      ${m.mvp.base_firepower}→${Math.round(m.mvp.effective_firepower)}
+      ${m.mvp.life_game?'<span class="life">LIFE GAME</span>':''}</div>`).join('');
+    return `<article class="run-leg ${leg.won?'win':'loss'}">
+      <h3>${esc(leg.label)}</h3>
+      <div><b>${esc(leg.opponent.name)}</b> · Entry ${leg.opponent.entry}
+        · 赛前胜率 ${(100*leg.pre_match_win_probability).toFixed(0)}%</div>
+      ${leg.pressure?`<small class="hint">压力罚分 你 ${leg.player_pressure_penalty}
+        / 对手 ${leg.opponent_pressure_penalty}</small>`:''}
+      <div class="run-score"><b class="${leg.won?'win':'loss'}">${leg.won?'WIN':'LOSS'}</b>
+        <b class="num">${leg.player_maps}:${leg.opponent_maps}</b></div>
+      <div class="maps">${maps}</div></article>`;
+  }).join('');
+  const stageLine=(run.stages||[]).map(s=>`Stage ${s.stage} ${s.wins}-${s.losses}
+    ${s.advanced?'晋级':'淘汰'}`).join(' · ');
+  const outcome=run.reached_playoffs?'进入 Playoffs':'Run 结束';
+  return `<section class="panel"><div class="panel-hd"><h2 class="disp">M2 Major Run</h2>
+      <p>Projected Seed #${run.projected_seed} · Stage ${run.stage} · Entry ${run.entry}</p></div>
+    <div class="panel-bd"><div class="run-summary"><b class="record num">${run.wins}-${run.losses}</b>
+      <span><b>${outcome}</b> · ${stageLine}</span></div>
+      <div class="run-grid">${legs}</div>
+      <div class="actions"><button class="btn" id="runbtn">用同一阵容与 seed 重跑</button>
+        <span class="hint">同一 seed 结果可复现；新开一局会换市场与比赛随机数。</span></div>
+    </div></section>`;
+}
+
+async function startQuickRun(){
+  S.run={loading:true}; render();
+  try{
+    const res=await fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({pages:S.picked.map(c=>c.id),seed:S.seed})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||`HTTP ${res.status}`);
+    S.run=data;
+  }catch(e){
+    S.run={error:`Run 无法启动：${e.message}。请通过 bdserver 的 /play 打开页面。`};
+  }
+  render();
+}
+
 /* ---------- 本地记录 ---------- */
 function saveLog(s, rank, of, best, avg, steal, traits){
   if (S.logged) return; S.logged = true;
@@ -817,6 +898,7 @@ function render(){
   } else {
     el("again").onclick = () => newRun((Math.random()*1e9)|0);
     el("replay").onclick = () => newRun(S.seed);
+    const runbtn=el("runbtn"); if(runbtn) runbtn.onclick=startQuickRun;
   }
 }
 el("newrun").onclick = () => newRun((Math.random()*1e9)|0);

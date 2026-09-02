@@ -115,6 +115,20 @@ class ApiSmokeTests(unittest.TestCase):
         for bucket in ("position", "grade"):
             self.assertTrue(d["stats"][bucket])
 
+    def test_play_page_and_run_endpoint(self):
+        client = TestClient(A.app)
+        page = client.get("/play")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("开始 Run", page.text)
+        cards = C.generate()[0]
+        # 用最强的五张确保能取得席位；阵容合法性在 Match 内通过软惩罚表达。
+        picked = sorted(cards, key=lambda c: -c["overall"])[:5]
+        run = client.post("/api/run", json={
+            "pages": [c["page"] for c in picked], "seed": 7})
+        self.assertEqual(run.status_code, 200)
+        self.assertGreaterEqual(len(run.json()["legs"]), 3)
+        self.assertTrue(run.json()["stages"])
+
 
 if __name__ == "__main__":
     unittest.main()
