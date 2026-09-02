@@ -1,0 +1,157 @@
+{
+ "_note": "火力打锚:人工给可信的现役选手定 1–99 这把尺子。**人工层,勿由脚本覆盖。** peak 说的是『他现在是否处在生涯巅峰』,只有 peak=true 的人,近 12 个月 rating 才能当作这个火力值对应的实测水平;firepower 一律是**巅峰时**的判断。键是卡库的 page(没有卡的人用 5e:<id>)。",
+ "count": 31,
+ "anchors": {
+  "Cmtry": {
+   "firepower": 70,
+   "note": "这个人有点菜，一线最菜的awper吧"
+  },
+  "Dem0n": {
+   "peak": true,
+   "firepower": 82,
+   "note": "这组人很有意义，虽然不一定就已经到达巅峰，但是参加了一次major的年轻有实力的选手，只是经验和稳定都不足"
+  },
+  "Donk": {
+   "peak": true,
+   "firepower": 96,
+   "note": "出道即巅峰，一直保持超高rating，打96是为了留一点余量，因为单局比赛中也可能出现2+的超高rating"
+  },
+  "Dumau": {
+   "peak": true,
+   "firepower": 82
+  },
+  "Dziugss": {
+   "peak": true,
+   "firepower": 81,
+   "note": "和dem0n差不多"
+  },
+  "FlameZ": {
+   "peak": true,
+   "firepower": 88,
+   "note": "王朝突破手，我认为数据低了点，因为资源太少"
+  },
+  "HUASOPEEK": {
+   "peak": true,
+   "firepower": 80,
+   "note": "还不赖的二哥"
+  },
+  "HeavyGod": {
+   "peak": true,
+   "firepower": 86,
+   "note": "今年应该也要成为top哥了，去年其实就是top21"
+  },
+  "KSCERATO": {
+   "peak": false,
+   "firepower": 87,
+   "note": "刚过巅峰但还是高位top"
+  },
+  "Karrigan": {
+   "peak": false,
+   "firepower": 55,
+   "note": "说实话确实不应该给指挥打分，但是他的数据基本上是每次S级大赛的倒数第一有力竞争者"
+  },
+  "Krabeni": {
+   "peak": true,
+   "firepower": 76,
+   "note": "今年最强钢枪指挥，还是可以给一个数值用来参考"
+  },
+  "Kyousuke": {
+   "peak": true,
+   "firepower": 88,
+   "note": "同样的出道即巅峰，今年应该能拿下一个top5-10,所以我觉得可以给高火力值"
+  },
+  "Latto": {
+   "peak": true,
+   "firepower": 84,
+   "note": "今年应该能拿top的选手"
+  },
+  "Luchov": {
+   "peak": true,
+   "firepower": 85,
+   "note": "经典几个赛事爆发life game的哥们"
+  },
+  "M0NESY": {
+   "peak": true,
+   "firepower": 92,
+   "note": "没啥说的"
+  },
+  "Mezii": {
+   "peak": false,
+   "firepower": 76,
+   "note": "辅助位，刚过巅峰"
+  },
+  "Molodoy": {
+   "peak": true,
+   "firepower": 87,
+   "note": "高位top哥，观感很强"
+  },
+  "N1ssim": {
+   "firepower": 68,
+   "note": "很菜的哥们"
+  },
+  "NiKo": {
+   "peak": false,
+   "firepower": 84,
+   "note": "虽然年纪大了，也不在巅峰，但是数值合理"
+  },
+  "PR": {
+   "peak": true,
+   "firepower": 79,
+   "note": "年轻潜力股，也许没到巅峰，近半年的比赛证明了自己在顶级赛事中的能力"
+  },
+  "Ropz": {
+   "peak": false,
+   "firepower": 86,
+   "note": "刚过，长期高位top，所以根据数据来看86比较合理"
+  },
+  "Sh1ro": {
+   "peak": true,
+   "firepower": 89,
+   "note": "巅峰末期了，但是数据上来看可能也就比以前低一点点，所以"
+  },
+  "Spinx": {
+   "peak": true,
+   "firepower": 85,
+   "note": "高位top哥，这里我要说下为什么大家rating差不多，但是我愿意给到更高的火力值，因为top哥基本都有mvp evp，所以这更加证明他们的能力"
+  },
+  "TN1R": {
+   "peak": true,
+   "firepower": 75,
+   "note": "稳定的选手，刚好进入Spirit一年"
+  },
+  "TeSeS": {
+   "peak": false,
+   "firepower": 77,
+   "note": "经典的辅助奉献位置，没有资源但是能打出还凑合的数据"
+  },
+  "Torzsi": {
+   "peak": true,
+   "firepower": 81,
+   "note": "状态起伏比较大的选手，但是毫无疑问现在是他的巅峰期"
+  },
+  "Try": {
+   "firepower": 81,
+   "note": "状态起伏很大但是特别厉害的选手"
+  },
+  "Xelex": {
+   "peak": true,
+   "firepower": 80,
+   "note": "年轻潜力股，近半年的比赛证明了自己在顶级赛事中的能力"
+  },
+  "YEKINDAR": {
+   "peak": false,
+   "firepower": 83,
+   "note": "刚过巅峰但还是高位top"
+  },
+  "Zont1x": {
+   "peak": true,
+   "firepower": 70,
+   "note": "他就是这么个水平，有点菜但是稳定"
+  },
+  "ZywOo": {
+   "peak": true,
+   "firepower": 94,
+   "note": "巅峰尾巴了，但是数据依旧夸张，draft的选手卡其实可以给到95甚至96"
+  }
+ }
+}
