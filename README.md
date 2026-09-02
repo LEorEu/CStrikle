@@ -34,19 +34,52 @@
   JSONL 记录到 `FEEDBACK_PATH`,默认 `data/feedback.jsonl`,同时写应用日志;
   只读容器部署时把 `FEEDBACK_PATH` 指到可写卷或 `/tmp`)
 
-## 运行
+## 本地起服务
+
+装一次：
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
 .\.venv\Scripts\pip install -e .          # 装包映射,只需一次
-.\.venv\Scripts\uvicorn server.main:app --host 127.0.0.1 --port 8620
-# 浏览器打开 http://127.0.0.1:8620
 ```
 
 `pip install -e .` 把 `playerdb` / `server` / `gtptools` 等包名映射到
 `apps/` 和 `packages/` 下的实际目录（见 [docs/架构.md](docs/架构.md)）。
-少这一步会 `ModuleNotFoundError: No module named 'server'`。
+少这一步会 `ModuleNotFoundError: No module named 'server'`——如果本地
+还留着改组前的空 `server/` 目录（里面只剩 `__pycache__`，不在版本库里），
+报的是更绕的 `No module named 'server.main'`：包名被那个空目录接管了。
+
+仓库里有**两个**服务，端口不同，互不依赖，起一个或两个都行：
+
+```powershell
+# 猜选手（已上线的那个）
+.\.venv\Scripts\uvicorn server.main:app --host 127.0.0.1 --port 8620
+#   http://127.0.0.1:8620          游戏
+#   http://127.0.0.1:8620/admin    管理页；没在 .env 设 ADMIN_TOKEN 时整个 404
+
+# Blind Draft 调参后台（本地工具，不上线、不进镜像）
+.\.venv\Scripts\uvicorn bdserver.main:app --host 127.0.0.1 --port 8621
+#   http://127.0.0.1:8621          卡牌页，647 张；`#<page>` 直接定位到某张卡
+#   http://127.0.0.1:8621/ai       AI 对手页，候选池 45 支；`#all` 一次展开
+```
+
+两个都带 `--reload` 也行，改前端静态文件则不用重启。命令行工具（盲选一局、
+跑比赛引擎、刷新选手库、抓 5eplay 数据）见 [docs/架构.md](docs/架构.md) 第五节。
+
+```powershell
+.\.venv\Scripts\python -m pytest          # 145 项
+```
+
+### `.env` 在仓库根
+
+只有猜选手读它（AI 对手、`ADMIN_TOKEN`、`FEEDBACK_PATH`）；Blind Draft 后台
+不需要任何配置就能起。**`.env` 必须放仓库根**，`server/config.py` 用
+`playerdb.paths.ROOT` 定位它——曾经这里是 `Path(__file__).parent.parent`，
+改组之后指到了 `apps/guess_the_player/`，而 `load_dotenv` 找不到文件只返回
+`False`、不报错，于是本地 AI 对手悄悄关掉、`/admin` 悄悄 404，看起来像
+「没配」而不是「没读到」。生产一直是对的（镜像把包平铺到 `/app`，那里恰好
+就是根），所以这个错只在本地发作。现在有测试盯着这类写法（`tests/test_architecture.py`）。
 
 ## AI 对手
 

@@ -132,6 +132,51 @@ class ImportSmokeTests(unittest.TestCase):
         self.assertEqual(broken, [], "这些模块 import 就崩:\n  " + "\n  ".join(broken))
 
 
+class RootPathTests(unittest.TestCase):
+    """仓库根下的文件,一律走 `playerdb.paths` 的锚点,不许自己数层数。
+
+    这条规矩是被同一个错咬了两次之后写下来的:
+
+      - `blinddraft/major.py` 的 CONFIG_PATH 在改组后还指着 data/manual/,
+        `load_config` 把 IOError 咽掉退回默认值,整个人工层静默失效;
+      - `server/config.py` 的 `load_dotenv(Path(__file__).parent.parent/".env")`
+        改组后指向 apps/guess_the_player/,`load_dotenv` 找不到文件只返回
+        False,于是本地 AI 对手悄悄关掉、`/admin` 悄悄 404。
+
+    两次的形状一模一样:**路径写法把「我在目录树的第几层」焊进了文件**,
+    模块一挪就集体指错,而且错得没有声音。第二次尤其阴——生产是对的
+    (镜像把包平铺到 /app,那里恰好就是根),只有本地发作。
+
+    所以这里不查「路径对不对」,查的是**有没有人又在数层数**。
+    """
+
+    #: 只住在仓库根的文件。模块自己旁边的 static/ templates/ 用 __file__ 定位
+    #: 是对的,不在这条规矩里。
+    ROOT_ONLY = {".env", "pyproject.toml", "requirements.txt", "compose.yaml",
+                 "Dockerfile", "requirements-maintenance.txt"}
+
+    def test_nobody_counts_parents_to_reach_the_repo_root(self):
+        bad = []
+        for pkg, rel in PACKAGES.items():
+            for path in sorted((ROOT / rel).rglob("*.py")):
+                tree = ast.parse(path.read_text(encoding="utf-8"))
+                for node in ast.walk(tree):
+                    # 形如 <某个 __file__ 链> / "<根文件名>"
+                    if not (isinstance(node, ast.BinOp)
+                            and isinstance(node.op, ast.Div)
+                            and isinstance(node.right, ast.Constant)
+                            and node.right.value in self.ROOT_ONLY):
+                        continue
+                    if "__file__" in ast.dump(node.left):
+                        bad.append("%s:%d 用 __file__ 数层数找 %s"
+                                   % (path.relative_to(ROOT), node.lineno,
+                                      node.right.value))
+        self.assertEqual(
+            bad, [],
+            "仓库根下的文件要用 playerdb.paths.ROOT 定位,别数 parent:\n  "
+            + "\n  ".join(bad))
+
+
 class PackageLayoutTests(unittest.TestCase):
     def test_pyproject_mapping_matches_this_file(self):
         """pyproject 的 package-dir 和上面那张表不许对不上。

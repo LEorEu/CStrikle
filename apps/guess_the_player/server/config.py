@@ -6,7 +6,13 @@ from playerdb import paths as playerdb_paths
 
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# `.env` 在仓库根,不在本文件上面两层——改组之后 `parent.parent` 指的是
+# `apps/guess_the_player/`,那里没有 .env,而 `load_dotenv` 找不到文件只会
+# 返回 False,不报错。表现是本地 AI 对手悄悄关掉、`/admin` 悄悄 404,
+# 像是「没配」而不是「没读到」。生产不受影响:镜像把包平铺到 /app,
+# 那里 parent.parent 恰好就是根,所以这个错只在本地发作。
+# 用 playerdb 的锚点,两边都对(镜像里 /app/data 存在,ROOT 即 /app)。
+load_dotenv(playerdb_paths.ROOT / ".env")
 
 AI_BASE_URL = os.getenv("AI_BASE_URL", "")
 AI_API_KEY = os.getenv("AI_API_KEY", "")
