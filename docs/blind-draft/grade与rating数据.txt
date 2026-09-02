@@ -1,0 +1,596 @@
+明白，而且我觉得你现在这个想法，比“AI 用 Rating，Draft 继续完全照旧”更进一步，也更合理。
+
+真正应该改的不是做一个简单的：
+
+> `Rating 1.20 = Firepower 88`
+
+而是借 5E 这批真实数据，把我们现在 **Grade → 模板 → 四维** 这条过于僵硬的生成逻辑拆开。
+
+现在最大的问题其实已经暴露出来了：
+
+> **Grade 本来只是“生涯证据等级”，却在生成器里过度决定了 Firepower。**
+
+于是同一个 Grade 内的人被压得太紧；而一个年轻人只因为“历史证据还没积累”，就可能被困在 G1～G3 的模板附近，即使他现在已经在 S 级比赛里打出了世界一线水平。
+
+这个确实值得重做。
+
+---
+
+## 我现在会把 Grade 和四维真正解耦
+
+以后应该是两个问题：
+
+**Grade 回答：**
+
+> 这个人的职业生涯，已经有多少证据证明他达到过什么层级？
+
+**Firepower 回答：**
+
+> 他最好的那个版本，实际能打到什么水平？
+
+这两个东西应该相关，但绝对不能再是：
+
+```text
+G3 Rifle → F70 左右
+G4 Rifle → F80 左右
+G5 Rifle → F89 左右
+```
+
+然后只能在附近抖几分。
+
+因为现实明显不是这样。
+
+完全可能出现：
+
+```text
+G3 年轻怪物     F86
+G4 稳定明星     F82
+G5 传奇老将     F90
+G5 IGL          F66
+```
+
+这没有任何矛盾。
+
+尤其对于 Rifle / AWP，同档内部差距完全应该可能达到 **10分甚至更多**，而不是现在 JL 90、kennyS 86 这种“看起来风格和实际统治力差不少，最终只差4点”。
+
+---
+
+# 5E 最适合做的，就是把 Firepower 从 Grade 手里解放出来
+
+我们现在已经确认5E能提供：
+
+> Rating / ADR / KPR / Impact / KAST / map_count……
+
+而且近期 S 级样本充分的人，现有 Firepower 和 Rating 相关性已经能到约 `r=0.64`。这意味着旧卡并不是完全乱来，但确实存在大量可以通过真实数据纠正的个人偏差。
+
+所以我会设计一层：
+
+# Performance Evidence
+
+它和 Grade Evidence 是两条不同通道。
+
+```text
+                Player
+                   │
+        ┌──────────┴──────────┐
+        │                     │
+ Career Evidence       Performance Evidence
+        │                     │
+ Top20 / Major         Rating / ADR / KPR
+ 成就 / 深轮次          S级赛事样本
+        │                     │
+        ↓                     ↓
+      Grade             Firepower / Stability
+```
+
+这才是我觉得最终应该走的方向。
+
+---
+
+## Draft 卡怎么用这套数据？
+
+关键不是拿“最近一年”直接覆盖 Career Peak。
+
+而是找：
+
+> **这个选手生涯里最强、且样本可信的 Performance Window。**
+
+对于现在年轻选手：
+
+> 最近12个月往往就是 Career Peak。
+
+所以这批数据可以直接大幅修正他们。
+
+比如一个年轻人：
+
+```text
+旧系统：
+G2
+F60
+
+5E：
+近12个月 S级
+80 maps
+Rating 1.19
+同环境 Percentile 92%
+```
+
+那就不应该因为：
+
+> “他还没Top20、Major履历少”
+
+把他锁在 F60。
+
+他的 Career Card 完全可以变成：
+
+```text
+Grade G2/G3
+Firepower 84
+```
+
+甚至这正是 Grade 与 Firepower 解耦最大的意义：
+
+> **历史证据还不多，但已经证明枪很硬。**
+
+这张卡反而会变得特别有意思。
+
+---
+
+# Grade 本身也可以吃到 Rating 的“证据”，但方式不同
+
+这里我觉得你的想法也成立：
+
+> 既然一个年轻人已经真实打出了很强的顶级赛事数据，这本身难道不算“证据”吗？
+
+当然算。
+
+所以以后 Grade 不应该只有：
+
+> HLTV Top20 + Major履历。
+
+可以增加：
+
+> **Statistical Peak Evidence**
+
+比如先不定具体门槛，概念上：
+
+```text
+S级比赛
+>= 50 maps
+Peak Percentile >= 80%
+→ 提供 G3 Evidence
+
+>= 70 maps
+Peak Percentile >= 92%
+→ 提供 G4 Evidence
+
+>= 80 maps
+Peak Percentile >= 98%
+→ 提供 G5 Evidence
+```
+
+注意这个不是最终参数。
+
+意思是：
+
+> **顶级赛事里持续打出世界前几个百分点，本身就是生涯证据。**
+
+这样一个19岁的超级新人不必等：
+
+> 年底 HLTV Top20 发布
+> 或者先打两个 Major
+
+游戏才承认他是顶级选手。
+
+---
+
+## 而且一旦这个证据成立，就不应该因为以后变菜而降回去
+
+这是最漂亮的地方。
+
+比如2026年某新人：
+
+> S级80图，Rating 1.25
+> 被证明达到 G4 Evidence。
+
+那他的 Career Grade：
+
+> **以后至少就是 G4。**
+
+2029年 Rating 1.02：
+
+> AI Current Profile 可以下降。
+
+但是 Draft Career Card：
+
+> 仍然记录他曾经达到过 G4。
+
+于是：
+
+```text
+Current Data
+可以建立 Career Evidence
+
+但 Current Slump
+不能抹掉 Career Evidence
+```
+
+非常符合我们原来 Grade 的哲学。
+
+---
+
+# 所以对老选手和年轻选手，5E数据作用不同
+
+这点一定要明确。
+
+### 年轻 / 当打选手
+
+近期数据可能就是：
+
+> **新的 Career Peak Evidence**
+
+所以可以：
+
+* 抬 Firepower；
+* 调 Stability；
+* 甚至提升 Grade。
+
+### 已经有明确巅峰的老将
+
+近期数据主要表示：
+
+> **Current AI Performance**
+
+不应该拿：
+
+> electroNic 2026 Rating 1.09
+
+去把他的 Draft Career Firepower 91 降掉。
+
+如果我们以后把5E 2016～2026逐年数据也抓出来，那才可以问：
+
+> electroNic 最好的年份到底应该 F91 还是F87？
+
+这是另一件事。
+
+---
+
+# 我甚至会把现在的 Draft 生成器改成“数据优先，模板兜底”
+
+目前大概是：
+
+```text
+Grade
+  ↓
+Role Template
+  ↓
+小幅修正
+  ↓
+F / L / E / S
+```
+
+以后可以变成：
+
+```text
+Grade + Role
+     │
+     ├──────── 有可靠 Performance Data
+     │                  ↓
+     │             Data-driven F/S
+     │
+     └──────── 无可靠数据
+                        ↓
+                   Template F/S
+
+Major History ───────→ Experience
+
+IGL Evidence ────────→ Leadership
+```
+
+也就是说：
+
+> **模板不再是答案，而是 Prior / fallback。**
+
+这一下整个系统就成熟很多。
+
+---
+
+# Firepower 的映射也千万不要直接拿 Rating 做线性换算
+
+比如：
+
+```text
+F = Rating × 75
+```
+
+这种肯定不行。
+
+我更推荐：
+
+## 用“同环境百分位”
+
+比如当前12个月所有 S级选手：
+
+```text
+Rating 1.00 → P40
+Rating 1.08 → P60
+Rating 1.15 → P80
+Rating 1.22 → P93
+Rating 1.30 → P99
+```
+
+然后：
+
+```text
+Performance Percentile
+       ↓
+Firepower Scale
+```
+
+示意：
+
+```text
+P20 → F50
+P40 → F60
+P60 → F70
+P80 → F80
+P90 → F86
+P95 → F91
+P99 → F96
+```
+
+只是示意，不是让我现在定这些数。
+
+这样最大的好处是：
+
+> 不怕 Rating 本身不同年代尺度略变。
+
+---
+
+# 如果以后做历史 Peak，也最好按“年份内百分位”
+
+5E居然能查2016～2026，这一点特别有价值。
+
+我们以后可以：
+
+```text
+s1mple 2018
+→ 与 2018 S级选手比较
+
+donk 2024
+→ 与 2024 S级选手比较
+```
+
+而不是直接问：
+
+> 2018的1.32和2024的1.32是否完全相同？
+
+这样跨年代至少公平很多。
+
+2013～2015没数据：
+
+> 老生成器继续兜底。
+
+完全不影响整个系统运行。
+
+---
+
+# AWP 和 Rifle 最好也不要完全共用 Rating 分布
+
+这里我会特别提醒一下。
+
+AWPer 的 Rating 分布天然可能和 Rifle 不同。
+
+如果直接全员一起排：
+
+> 大狙可能系统性占优势。
+
+所以最好至少考虑：
+
+```text
+RIFLER percentile
+AWPER percentile
+```
+
+分开做。
+
+IGL更特殊。
+
+IGL 的 Firepower 可以参考 Rating，但：
+
+> Grade / Leadership 绝不能从 Rating 推。
+
+---
+
+# Stability 目前还没 Firepower 这么简单
+
+Firepower：
+
+> Rating 已经是非常明确的主要证据。
+
+Stability：
+
+> KAST 目前相关只有约0.39，证据弱得多。
+
+所以我不会为了重做 Draft，一口气把四维都数据化。
+
+第一轮完全可以只做：
+
+> **Firepower 重构。**
+
+Experience：
+
+> 继续Major历史。
+
+Leadership：
+
+> 继续IGL历史/Role。
+
+Stability：
+
+> 先保留原逻辑，等我们找到真正的逐图波动数据。
+
+这样风险很低。
+
+---
+
+# 然后就来到你说的那个非常关键的好处：AI-only 新人
+
+对，这套模型一旦建立，AI里一个完全不在649卡库的人突然就很好处理了。
+
+例如：
+
+```text
+NewGuy
+
+近12个月 S级
+Rating 1.18
+ADR 82
+65 maps
+Current Role = Rifle
+Major = 0
+```
+
+可以直接生成一个：
+
+```text
+AI Current Profile
+
+F = 由当前 Performance Percentile 推
+L = Rifle 默认 / 当前角色
+E = 很低
+S = 暂时由可靠字段 + prior
+```
+
+完全不需要 Draft Card。
+
+---
+
+## 如果我们想给他显示一个 Grade 呢？
+
+也可以。
+
+但我会叫：
+
+> **Provisional Grade**
+
+比如：
+
+```text
+Current Performance Evidence → G3*
+```
+
+这个星号的意思：
+
+> 当前数据证明了他有这个级别的竞技表现，
+>
+> 但还没有完整 Career Evidence。
+
+如果未来他进入 Draft 卡库：
+
+> 再把统计证据、Major、Top20等一起计算正式 Career Grade。
+
+---
+
+# 我觉得最后甚至可以统一成一个 Player Evaluator
+
+输入：
+
+```text
+identity
+role
+major_history
+top20_history
+5e_stats
+sample_size
+target_date
+```
+
+然后有两种模式：
+
+### `mode = career`
+
+生成：
+
+> Draft Career Card
+
+看：
+
+> 生涯最强证据 / peak performance。
+
+### `mode = current`
+
+生成：
+
+> AI Current Profile
+
+看：
+
+> 最近12个月。
+
+这样不是维护两套乱七八糟的算法。
+
+而是：
+
+> **同一个评价器，不同时间语义。**
+
+大概：
+
+```text
+evaluate_player(player, mode="career")
+evaluate_player(player, mode="current")
+```
+
+输出都可以是：
+
+```text
+role
+firepower
+leadership
+experience
+stability
+grade/evidence
+```
+
+只是来源不同。
+
+---
+
+# 我现在认为最关键的设计变化其实只有一句
+
+> **Grade 不再是四维的模板编号。**
+>
+> **Grade 是 Evidence；四维是 Ability Profile。**
+
+一旦这条成立，很多之前的问题全消失：
+
+> G3为什么不能F88？
+> 可以。
+
+> G5为什么只能比G4高4点？
+> 不应该有限制。
+
+> 新人没Major是不是一定弱？
+> 不是，他只是Evidence少。
+
+> AI新人没Draft卡怎么办？
+> 直接用Current Evidence生成。
+
+> 巅峰老将现在菜怎么办？
+> Career Profile和Current Profile分开。
+
+这其实是比 Match Engine 更底层的一次数据模型升级。
+
+所以我赞成你现在先别急着做 `Rating → Firepower` 的具体公式。**先把 v7 卡牌的原则改成“Grade 与四维解耦，Performance Data 优先决定 Firepower，Grade只表示Career Evidence”。**
+
+然后拿5E当前覆盖的那批选手做一个实验版重新算火力，先看：
+
+> JL / kennyS
+> s1mple / Senzu
+> electroNic / EliGE
+> asap / luchov
+> ZywOo / donk / m0NESY
+
+这些典型人重新排完以后，是不是终于开始符合人的直觉。
+
+如果这一步出来很漂亮，我觉得 v7 卡库就值得正式做。
