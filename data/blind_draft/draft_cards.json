@@ -1,6 +1,6 @@
 {
- "card_version": "v6",
- "count": 648,
+ "card_version": "v7",
+ "count": 647,
  "cards": [
   {
    "firepower": 90,
@@ -154,7 +154,7 @@
    "grade": 5,
    "country": "Russia",
    "team": "BC.Game",
-   "age": 27,
+   "age": 28,
    "majors": 13,
    "champions": 1,
    "titles": [
@@ -446,7 +446,7 @@
    "grade": 4,
    "country": "Russia",
    "team": "PARIVISION",
-   "age": 27,
+   "age": 28,
    "majors": 10,
    "champions": 1,
    "titles": [
@@ -509,7 +509,7 @@
    "overall": 52.5
   },
   {
-   "firepower": 67,
+   "firepower": 70,
    "leadership": 24,
    "experience": 54,
    "stability": 65,
@@ -528,7 +528,7 @@
      "spirit"
     ]
    ],
-   "overall": 61.9
+   "overall": 63.5
   },
   {
    "firepower": 46,
@@ -568,7 +568,7 @@
    "firepower": 96,
    "leadership": 30,
    "experience": 82,
-   "stability": 79,
+   "stability": 87,
    "page": "Donk",
    "nickname": "donk",
    "position": "RIFLER",
@@ -584,8 +584,7 @@
      "spirit"
     ]
    ],
-   "reason": "公式按年度积分只能看到 2024/2025 两个赛季(#1、#2),算出 92 排全库第 5。但他现在就是公认火力第一的步枪手,证据不足是数据窗口太短,不是他不够强——正是 §21 说的算法明显违背玩家常识。",
-   "overall": 86.5
+   "overall": 88.1
   },
   {
    "firepower": 69,
@@ -610,7 +609,7 @@
    "overall": 62.5
   },
   {
-   "firepower": 59,
+   "firepower": 60,
    "leadership": 20,
    "experience": 41,
    "stability": 55,
@@ -624,7 +623,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.7
+   "overall": 53.2
   },
   {
    "firepower": 53,
@@ -636,7 +635,7 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Russia",
-   "team": "33",
+   "team": "",
    "age": 34,
    "majors": 1,
    "champions": 0,
@@ -717,7 +716,7 @@
    "overall": 63.8
   },
   {
-   "firepower": 50,
+   "firepower": 60,
    "leadership": 18,
    "experience": 23,
    "stability": 46,
@@ -731,7 +730,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.2
+   "overall": 47.7
   },
   {
    "firepower": 48,
@@ -807,7 +806,7 @@
    "overall": 42.5
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 19,
    "experience": 24,
    "stability": 50,
@@ -821,7 +820,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 46.6
+   "overall": 48.8
   },
   {
    "firepower": 42,
@@ -875,7 +874,7 @@
    "overall": 54.1
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 23,
    "experience": 22,
    "stability": 40,
@@ -889,10 +888,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.7
+   "overall": 46.5
   },
   {
-   "firepower": 49,
+   "firepower": 60,
    "leadership": 16,
    "experience": 23,
    "stability": 51,
@@ -906,7 +905,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.8
+   "overall": 47.7
   },
   {
    "firepower": 47,
@@ -945,7 +944,6 @@
      "falcons"
     ]
    ],
-   "reason": "最好名次 #2、四个赛季全部 2022 年以后,年代衰减一分没吃,公式仍只给 92。公认的当代顶级狙击手,火力应在 dev1ce/NiKo 之上、s1mple 之下。",
    "overall": 85.1
   },
   {
@@ -971,7 +969,7 @@
    "overall": 62.6
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 20,
    "experience": 23,
    "stability": 47,
@@ -980,15 +978,15 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Russia",
-   "team": "SPARTA",
+   "team": "",
    "age": 28,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.1
+   "overall": 48.0
   },
   {
-   "firepower": 59,
+   "firepower": 65,
    "leadership": 23,
    "experience": 40,
    "stability": 52,
@@ -998,11 +996,11 @@
    "grade": 2,
    "country": "Russia",
    "team": "GamerLegion",
-   "age": 21,
+   "age": 22,
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.0
+   "overall": 55.3
   },
   {
    "firepower": 53,
@@ -1022,7 +1020,7 @@
    "overall": 45.2
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 20,
    "experience": 22,
    "stability": 46,
@@ -1031,15 +1029,15 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Russia",
-   "team": "",
+   "team": "Nemiga",
    "age": 22,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.4
+   "overall": 47.6
   },
   {
-   "firepower": 70,
+   "firepower": 75,
    "leadership": 21,
    "experience": 52,
    "stability": 61,
@@ -1053,10 +1051,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 62.1
+   "overall": 64.9
   },
   {
-   "firepower": 56,
+   "firepower": 62,
    "leadership": 19,
    "experience": 24,
    "stability": 41,
@@ -1070,10 +1068,10 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.8
+   "overall": 48.1
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 22,
    "experience": 20,
    "stability": 50,
@@ -1087,10 +1085,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.4
+   "overall": 48.1
   },
   {
-   "firepower": 69,
+   "firepower": 88,
    "leadership": 23,
    "experience": 52,
    "stability": 57,
@@ -1109,7 +1107,7 @@
      "falcons"
     ]
    ],
-   "overall": 60.9
+   "overall": 71.4
   },
   {
    "firepower": 56,
@@ -1129,7 +1127,7 @@
    "overall": 44.6
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 17,
    "experience": 24,
    "stability": 44,
@@ -1143,10 +1141,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 47.5
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 20,
    "experience": 20,
    "stability": 45,
@@ -1160,10 +1158,10 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 42.6
+   "overall": 47.0
   },
   {
-   "firepower": 58,
+   "firepower": 60,
    "leadership": 17,
    "experience": 21,
    "stability": 41,
@@ -1172,15 +1170,15 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Russia",
-   "team": "",
+   "team": "CYBERSHOKE",
    "age": 19,
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 45.2
+   "overall": 46.3
   },
   {
-   "firepower": 55,
+   "firepower": 69,
    "leadership": 17,
    "experience": 21,
    "stability": 43,
@@ -1194,10 +1192,10 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.9
+   "overall": 51.6
   },
   {
-   "firepower": 93,
+   "firepower": 92,
    "leadership": 26,
    "experience": 90,
    "stability": 88,
@@ -1228,7 +1226,7 @@
      "astralis"
     ]
    ],
-   "overall": 87.5
+   "overall": 87.1
   },
   {
    "firepower": 90,
@@ -1836,7 +1834,7 @@
    "position": "IGL",
    "grade": 2,
    "country": "Denmark",
-   "team": "Ninjas in Pyjamas",
+   "team": "",
    "age": 36,
    "majors": 6,
    "champions": 0,
@@ -1895,7 +1893,7 @@
    "overall": 76.0
   },
   {
-   "firepower": 67,
+   "firepower": 72,
    "leadership": 21,
    "experience": 54,
    "stability": 68,
@@ -1914,7 +1912,7 @@
      "falcons"
     ]
    ],
-   "overall": 62.3
+   "overall": 65.1
   },
   {
    "firepower": 48,
@@ -1934,7 +1932,7 @@
    "overall": 53.4
   },
   {
-   "firepower": 68,
+   "firepower": 79,
    "leadership": 26,
    "experience": 53,
    "stability": 66,
@@ -1948,7 +1946,7 @@
    "majors": 6,
    "champions": 0,
    "titles": [],
-   "overall": 62.5
+   "overall": 68.5
   },
   {
    "firepower": 64,
@@ -2036,7 +2034,7 @@
    "overall": 44.0
   },
   {
-   "firepower": 62,
+   "firepower": 84,
    "leadership": 20,
    "experience": 36,
    "stability": 52,
@@ -2050,10 +2048,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.7
+   "overall": 64.8
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 19,
    "experience": 22,
    "stability": 49,
@@ -2067,7 +2065,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.3
+   "overall": 48.2
   },
   {
    "firepower": 43,
@@ -2104,7 +2102,7 @@
    "overall": 43.4
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 21,
    "experience": 22,
    "stability": 46,
@@ -2118,10 +2116,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.4
+   "overall": 47.6
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 19,
    "experience": 23,
    "stability": 44,
@@ -2130,15 +2128,15 @@
    "position": "AWPER",
    "grade": 1,
    "country": "Denmark",
-   "team": "Echo",
-   "age": 21,
+   "team": "BBL Esports",
+   "age": 22,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.0
+   "overall": 45.8
   },
   {
-   "firepower": 63,
+   "firepower": 73,
    "leadership": 24,
    "experience": 39,
    "stability": 49,
@@ -2148,11 +2146,11 @@
    "grade": 2,
    "country": "Denmark",
    "team": "GamerLegion",
-   "age": 20,
+   "age": 21,
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 53.5
+   "overall": 59.0
   },
   {
    "firepower": 49,
@@ -2182,7 +2180,7 @@
    "grade": 1,
    "country": "Denmark",
    "team": "HEROIC",
-   "age": 19,
+   "age": 20,
    "majors": 2,
    "champions": 0,
    "titles": [],
@@ -2198,7 +2196,7 @@
    "position": "RIFLER",
    "grade": 2,
    "country": "Denmark",
-   "team": "Eternal Fire",
+   "team": "",
    "age": 24,
    "majors": 3,
    "champions": 0,
@@ -2350,7 +2348,7 @@
    "grade": 1,
    "country": "Sweden",
    "team": "",
-   "age": 30,
+   "age": 31,
    "majors": 1,
    "champions": 0,
    "titles": [],
@@ -2374,7 +2372,7 @@
    "overall": 54.2
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 18,
    "experience": 24,
    "stability": 50,
@@ -2388,7 +2386,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.5
+   "overall": 47.7
   },
   {
    "firepower": 81,
@@ -2552,7 +2550,7 @@
    "overall": 46.2
   },
   {
-   "firepower": 62,
+   "firepower": 80,
    "leadership": 20,
    "experience": 41,
    "stability": 59,
@@ -2566,7 +2564,7 @@
    "majors": 9,
    "champions": 0,
    "titles": [],
-   "overall": 55.1
+   "overall": 65.0
   },
   {
    "firepower": 47,
@@ -2835,7 +2833,7 @@
    "grade": 1,
    "country": "Sweden",
    "team": "",
-   "age": 30,
+   "age": 31,
    "majors": 1,
    "champions": 0,
    "titles": [],
@@ -2920,7 +2918,7 @@
    "grade": 3,
    "country": "Sweden",
    "team": "",
-   "age": 24,
+   "age": 25,
    "majors": 4,
    "champions": 0,
    "titles": [],
@@ -2961,7 +2959,7 @@
    "overall": 55.5
   },
   {
-   "firepower": 57,
+   "firepower": 81,
    "leadership": 19,
    "experience": 41,
    "stability": 58,
@@ -2975,7 +2973,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.2
+   "overall": 63.0
   },
   {
    "firepower": 60,
@@ -2995,7 +2993,7 @@
    "overall": 52.0
   },
   {
-   "firepower": 51,
+   "firepower": 60,
    "leadership": 22,
    "experience": 20,
    "stability": 50,
@@ -3005,14 +3003,14 @@
    "grade": 1,
    "country": "Sweden",
    "team": "OG",
-   "age": 24,
+   "age": 25,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.2
+   "overall": 48.1
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 21,
    "experience": 23,
    "stability": 42,
@@ -3021,15 +3019,15 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Sweden",
-   "team": "",
+   "team": "Luminosity",
    "age": 21,
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.9
+   "overall": 47.0
   },
   {
-   "firepower": 57,
+   "firepower": 63,
    "leadership": 21,
    "experience": 23,
    "stability": 44,
@@ -3043,10 +3041,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.8
+   "overall": 49.1
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 17,
    "experience": 20,
    "stability": 40,
@@ -3060,7 +3058,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.7
+   "overall": 45.9
   },
   {
    "firepower": 53,
@@ -3276,7 +3274,7 @@
    "grade": 1,
    "country": "France",
    "team": "",
-   "age": 40,
+   "age": 41,
    "majors": 2,
    "champions": 0,
    "titles": [],
@@ -3336,7 +3334,7 @@
    "grade": 2,
    "country": "France",
    "team": "",
-   "age": 35,
+   "age": 36,
    "majors": 3,
    "champions": 0,
    "titles": [],
@@ -3462,7 +3460,7 @@
    "overall": 44.6
   },
   {
-   "firepower": 62,
+   "firepower": 68,
    "leadership": 20,
    "experience": 42,
    "stability": 55,
@@ -3476,7 +3474,7 @@
    "majors": 9,
    "champions": 0,
    "titles": [],
-   "overall": 54.5
+   "overall": 57.8
   },
   {
    "firepower": 66,
@@ -3496,7 +3494,7 @@
    "overall": 60.4
   },
   {
-   "firepower": 58,
+   "firepower": 72,
    "leadership": 22,
    "experience": 41,
    "stability": 55,
@@ -3510,7 +3508,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 52.2
+   "overall": 59.9
   },
   {
    "firepower": 67,
@@ -3523,7 +3521,7 @@
    "grade": 3,
    "country": "France",
    "team": "Hermine Esports Club",
-   "age": 32,
+   "age": 33,
    "majors": 3,
    "champions": 0,
    "titles": [],
@@ -3577,7 +3575,7 @@
    "overall": 87.8
   },
   {
-   "firepower": 51,
+   "firepower": 60,
    "leadership": 20,
    "experience": 19,
    "stability": 47,
@@ -3591,10 +3589,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.2
+   "overall": 47.2
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 19,
    "experience": 24,
    "stability": 51,
@@ -3608,10 +3606,10 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 45.1
+   "overall": 49.0
   },
   {
-   "firepower": 50,
+   "firepower": 60,
    "leadership": 20,
    "experience": 22,
    "stability": 46,
@@ -3625,7 +3623,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.1
+   "overall": 47.6
   },
   {
    "firepower": 62,
@@ -3645,7 +3643,7 @@
    "overall": 54.2
   },
   {
-   "firepower": 63,
+   "firepower": 68,
    "leadership": 20,
    "experience": 35,
    "stability": 53,
@@ -3659,7 +3657,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 53.3
+   "overall": 56.0
   },
   {
    "firepower": 48,
@@ -3679,7 +3677,7 @@
    "overall": 53.0
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 15,
    "experience": 22,
    "stability": 54,
@@ -3693,7 +3691,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.7
+   "overall": 48.3
   },
   {
    "firepower": 51,
@@ -3803,7 +3801,7 @@
    "overall": 62.5
   },
   {
-   "firepower": 83,
+   "firepower": 84,
    "leadership": 27,
    "experience": 72,
    "stability": 75,
@@ -3826,10 +3824,10 @@
      "natus vincere"
     ]
    ],
-   "overall": 76.4
+   "overall": 77.0
   },
   {
-   "firepower": 62,
+   "firepower": 81,
    "leadership": 23,
    "experience": 39,
    "stability": 52,
@@ -3843,7 +3841,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 53.4
+   "overall": 63.9
   },
   {
    "firepower": 50,
@@ -3987,7 +3985,7 @@
    "overall": 53.0
   },
   {
-   "firepower": 76,
+   "firepower": 84,
    "leadership": 23,
    "experience": 54,
    "stability": 66,
@@ -4006,10 +4004,10 @@
      "natus vincere"
     ]
    ],
-   "overall": 66.0
+   "overall": 69.5
   },
   {
-   "firepower": 71,
+   "firepower": 72,
    "leadership": 25,
    "experience": 56,
    "stability": 61,
@@ -4028,7 +4026,7 @@
      "spirit"
     ]
    ],
-   "overall": 63.7
+   "overall": 64.2
   },
   {
    "firepower": 62,
@@ -4048,7 +4046,7 @@
    "overall": 53.4
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 15,
    "experience": 21,
    "stability": 49,
@@ -4062,7 +4060,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.0
+   "overall": 46.6
   },
   {
    "firepower": 55,
@@ -4116,7 +4114,7 @@
    "overall": 42.7
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 18,
    "experience": 24,
    "stability": 41,
@@ -4130,10 +4128,10 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.7
+   "overall": 46.9
   },
   {
-   "firepower": 57,
+   "firepower": 60,
    "leadership": 17,
    "experience": 23,
    "stability": 44,
@@ -4147,7 +4145,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.3
+   "overall": 45.7
   },
   {
    "firepower": 51,
@@ -4167,7 +4165,7 @@
    "overall": 41.0
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 18,
    "experience": 25,
    "stability": 43,
@@ -4181,10 +4179,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 47.5
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 18,
    "experience": 25,
    "stability": 46,
@@ -4194,11 +4192,11 @@
    "grade": 1,
    "country": "Ukraine",
    "team": "Eternal Fire",
-   "age": 24,
+   "age": 25,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.2
+   "overall": 48.1
   },
   {
    "firepower": 48,
@@ -4218,7 +4216,7 @@
    "overall": 52.5
   },
   {
-   "firepower": 64,
+   "firepower": 69,
    "leadership": 24,
    "experience": 41,
    "stability": 49,
@@ -4232,10 +4230,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 54.4
+   "overall": 57.2
   },
   {
-   "firepower": 59,
+   "firepower": 70,
    "leadership": 23,
    "experience": 39,
    "stability": 54,
@@ -4249,10 +4247,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.2
+   "overall": 58.2
   },
   {
-   "firepower": 56,
+   "firepower": 68,
    "leadership": 16,
    "experience": 20,
    "stability": 45,
@@ -4266,10 +4264,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.5
+   "overall": 48.9
   },
   {
-   "firepower": 51,
+   "firepower": 70,
    "leadership": 19,
    "experience": 20,
    "stability": 46,
@@ -4283,10 +4281,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 41.7
+   "overall": 50.2
   },
   {
-   "firepower": 51,
+   "firepower": 82,
    "leadership": 21,
    "experience": 23,
    "stability": 46,
@@ -4300,7 +4298,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.9
+   "overall": 60.0
   },
   {
    "firepower": 68,
@@ -4422,7 +4420,7 @@
    "position": "IGL",
    "grade": 2,
    "country": "Poland",
-   "team": "KOLESIE",
+   "team": "",
    "age": 32,
    "majors": 3,
    "champions": 0,
@@ -4644,14 +4642,14 @@
    "grade": 3,
    "country": "Poland",
    "team": "",
-   "age": 23,
+   "age": 24,
    "majors": 7,
    "champions": 0,
    "titles": [],
    "overall": 66.5
   },
   {
-   "firepower": 56,
+   "firepower": 62,
    "leadership": 19,
    "experience": 23,
    "stability": 46,
@@ -4665,7 +4663,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.5
+   "overall": 47.2
   },
   {
    "firepower": 63,
@@ -4695,14 +4693,14 @@
    "grade": 1,
    "country": "Poland",
    "team": "",
-   "age": 25,
+   "age": 26,
    "majors": 2,
    "champions": 0,
    "titles": [],
    "overall": 43.9
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 17,
    "experience": 25,
    "stability": 48,
@@ -4716,10 +4714,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.1
+   "overall": 48.5
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 19,
    "experience": 25,
    "stability": 50,
@@ -4733,7 +4731,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 46.2
+   "overall": 49.0
   },
   {
    "firepower": 49,
@@ -4770,24 +4768,24 @@
    "overall": 41.8
   },
   {
-   "firepower": 64,
-   "leadership": 21,
-   "experience": 41,
-   "stability": 56,
+   "firepower": 69,
+   "leadership": 23,
+   "experience": 55,
+   "stability": 66,
    "page": "Ultimate",
    "nickname": "ultimate",
    "position": "AWPER",
-   "grade": 2,
+   "grade": 3,
    "country": "Poland",
-   "team": "",
+   "team": "Betclic Apogee Esports",
    "age": 22,
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 54.9
+   "overall": 63.0
   },
   {
-   "firepower": 58,
+   "firepower": 64,
    "leadership": 20,
    "experience": 22,
    "stability": 45,
@@ -4801,7 +4799,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 46.3
+   "overall": 49.6
   },
   {
    "firepower": 74,
@@ -4821,7 +4819,7 @@
    "overall": 64.2
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 19,
    "experience": 20,
    "stability": 50,
@@ -4835,7 +4833,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.7
+   "overall": 48.0
   },
   {
    "firepower": 56,
@@ -4855,7 +4853,7 @@
    "overall": 50.8
   },
   {
-   "firepower": 59,
+   "firepower": 60,
    "leadership": 23,
    "experience": 42,
    "stability": 54,
@@ -4869,7 +4867,7 @@
    "majors": 10,
    "champions": 0,
    "titles": [],
-   "overall": 52.8
+   "overall": 53.3
   },
   {
    "firepower": 59,
@@ -4933,7 +4931,7 @@
    "grade": 2,
    "country": "Germany",
    "team": "",
-   "age": 31,
+   "age": 32,
    "majors": 9,
    "champions": 0,
    "titles": [],
@@ -5018,7 +5016,7 @@
    "grade": 1,
    "country": "Germany",
    "team": "",
-   "age": 30,
+   "age": 31,
    "majors": 1,
    "champions": 0,
    "titles": [],
@@ -5144,7 +5142,7 @@
    "overall": 65.2
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 20,
    "experience": 22,
    "stability": 46,
@@ -5158,7 +5156,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.8
+   "overall": 47.6
   },
   {
    "firepower": 62,
@@ -5195,7 +5193,7 @@
    "overall": 52.9
   },
   {
-   "firepower": 62,
+   "firepower": 68,
    "leadership": 22,
    "experience": 36,
    "stability": 59,
@@ -5209,7 +5207,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 53.9
+   "overall": 56.6
   },
   {
    "firepower": 66,
@@ -5324,7 +5322,7 @@
    "grade": 3,
    "country": "Finland",
    "team": "",
-   "age": 31,
+   "age": 32,
    "majors": 3,
    "champions": 0,
    "titles": [],
@@ -5414,7 +5412,7 @@
    "grade": 3,
    "country": "Finland",
    "team": "",
-   "age": 31,
+   "age": 32,
    "majors": 2,
    "champions": 0,
    "titles": [],
@@ -5455,7 +5453,7 @@
    "overall": 44.9
   },
   {
-   "firepower": 70,
+   "firepower": 78,
    "leadership": 27,
    "experience": 55,
    "stability": 59,
@@ -5469,7 +5467,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 62.7
+   "overall": 67.1
   },
   {
    "firepower": 73,
@@ -5615,7 +5613,7 @@
    "position": "RIFLER",
    "grade": 3,
    "country": "Kazakhstan",
-   "team": "",
+   "team": "Color",
    "age": 27,
    "majors": 7,
    "champions": 1,
@@ -5672,7 +5670,7 @@
    "grade": 1,
    "country": "Kazakhstan",
    "team": "FORZE Reload",
-   "age": 26,
+   "age": 27,
    "majors": 1,
    "champions": 0,
    "titles": [],
@@ -5696,7 +5694,7 @@
    "overall": 53.8
   },
   {
-   "firepower": 75,
+   "firepower": 86,
    "leadership": 22,
    "experience": 53,
    "stability": 62,
@@ -5710,10 +5708,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 64.0
+   "overall": 69.0
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 21,
    "experience": 23,
    "stability": 46,
@@ -5727,7 +5725,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.9
+   "overall": 46.4
   },
   {
    "firepower": 52,
@@ -5808,7 +5806,7 @@
    "grade": 5,
    "country": "Norway",
    "team": "100 Thieves",
-   "age": 31,
+   "age": 32,
    "majors": 19,
    "champions": 1,
    "titles": [
@@ -5990,7 +5988,7 @@
    "overall": 44.2
   },
   {
-   "firepower": 81,
+   "firepower": 83,
    "leadership": 27,
    "experience": 68,
    "stability": 75,
@@ -6004,7 +6002,7 @@
    "majors": 8,
    "champions": 0,
    "titles": [],
-   "overall": 74.5
+   "overall": 75.6
   },
   {
    "firepower": 50,
@@ -6024,7 +6022,7 @@
    "overall": 42.4
   },
   {
-   "firepower": 70,
+   "firepower": 78,
    "leadership": 22,
    "experience": 56,
    "stability": 72,
@@ -6034,11 +6032,11 @@
    "grade": 3,
    "country": "Turkey",
    "team": "Aurora",
-   "age": 27,
+   "age": 28,
    "majors": 8,
    "champions": 0,
    "titles": [],
-   "overall": 65.4
+   "overall": 69.0
   },
   {
    "firepower": 54,
@@ -6058,7 +6056,7 @@
    "overall": 45.6
   },
   {
-   "firepower": 60,
+   "firepower": 78,
    "leadership": 23,
    "experience": 37,
    "stability": 56,
@@ -6072,10 +6070,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.8
+   "overall": 62.7
   },
   {
-   "firepower": 73,
+   "firepower": 82,
    "leadership": 22,
    "experience": 53,
    "stability": 60,
@@ -6089,10 +6087,10 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 63.9
+   "overall": 68.8
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 18,
    "experience": 24,
    "stability": 50,
@@ -6106,10 +6104,10 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 46.0
+   "overall": 48.7
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 20,
    "experience": 20,
    "stability": 44,
@@ -6118,12 +6116,12 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Turkey",
-   "team": "",
+   "team": "Eternal Fire",
    "age": 22,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.0
+   "overall": 46.8
   },
   {
    "firepower": 51,
@@ -6143,7 +6141,7 @@
    "overall": 53.5
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 17,
    "experience": 23,
    "stability": 49,
@@ -6153,11 +6151,11 @@
    "grade": 1,
    "country": "United Kingdom",
    "team": "",
-   "age": 26,
+   "age": 27,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 47.2
   },
   {
    "firepower": 41,
@@ -6177,7 +6175,7 @@
    "overall": 41.1
   },
   {
-   "firepower": 68,
+   "firepower": 79,
    "leadership": 23,
    "experience": 57,
    "stability": 65,
@@ -6200,7 +6198,7 @@
      "vitality"
     ]
    ],
-   "overall": 63.0
+   "overall": 69.0
   },
   {
    "firepower": 52,
@@ -6237,7 +6235,7 @@
    "overall": 44.6
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 21,
    "experience": 21,
    "stability": 43,
@@ -6251,7 +6249,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.7
+   "overall": 46.9
   },
   {
    "firepower": 49,
@@ -6331,7 +6329,7 @@
    "position": "IGL",
    "grade": 2,
    "country": "Kosovo",
-   "team": "",
+   "team": "JiJieHao",
    "age": 31,
    "majors": 3,
    "champions": 0,
@@ -6339,7 +6337,7 @@
    "overall": 53.4
   },
   {
-   "firepower": 57,
+   "firepower": 83,
    "leadership": 19,
    "experience": 22,
    "stability": 43,
@@ -6353,7 +6351,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 45.3
+   "overall": 59.6
   },
   {
    "firepower": 51,
@@ -6433,7 +6431,7 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Lithuania",
-   "team": "Luminosity",
+   "team": "",
    "age": 23,
    "majors": 2,
    "champions": 0,
@@ -6463,7 +6461,7 @@
    "overall": 84.0
   },
   {
-   "firepower": 54,
+   "firepower": 75,
    "leadership": 22,
    "experience": 25,
    "stability": 50,
@@ -6473,14 +6471,14 @@
    "grade": 1,
    "country": "United States",
    "team": "",
-   "age": 40,
+   "age": 41,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.8
+   "overall": 57.4
   },
   {
-   "firepower": 53,
+   "firepower": 81,
    "leadership": 23,
    "experience": 21,
    "stability": 41,
@@ -6494,7 +6492,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.7
+   "overall": 58.1
   },
   {
    "firepower": 91,
@@ -6531,7 +6529,7 @@
    "overall": 53.8
   },
   {
-   "firepower": 51,
+   "firepower": 60,
    "leadership": 19,
    "experience": 20,
    "stability": 46,
@@ -6545,7 +6543,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.2
+   "overall": 47.2
   },
   {
    "firepower": 84,
@@ -6565,7 +6563,7 @@
    "overall": 76.2
   },
   {
-   "firepower": 60,
+   "firepower": 81,
    "leadership": 24,
    "experience": 39,
    "stability": 56,
@@ -6579,7 +6577,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 53.2
+   "overall": 64.8
   },
   {
    "firepower": 56,
@@ -6616,7 +6614,7 @@
    "overall": 74.8
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 17,
    "experience": 21,
    "stability": 45,
@@ -6630,10 +6628,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.2
+   "overall": 47.1
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 16,
    "experience": 22,
    "stability": 45,
@@ -6643,11 +6641,11 @@
    "grade": 1,
    "country": "Hungary",
    "team": "INFINITE",
-   "age": 21,
+   "age": 22,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.1
+   "overall": 45.7
   },
   {
    "firepower": 52,
@@ -6769,7 +6767,7 @@
    "overall": 42.4
   },
   {
-   "firepower": 80,
+   "firepower": 82,
    "leadership": 27,
    "experience": 70,
    "stability": 75,
@@ -6788,7 +6786,7 @@
      "natus vincere"
     ]
    ],
-   "overall": 74.3
+   "overall": 75.5
   },
   {
    "firepower": 67,
@@ -6808,7 +6806,7 @@
    "overall": 60.9
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 23,
    "experience": 20,
    "stability": 50,
@@ -6822,10 +6820,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.9
+   "overall": 48.1
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 17,
    "experience": 26,
    "stability": 49,
@@ -6835,14 +6833,14 @@
    "grade": 1,
    "country": "Romania",
    "team": "Eternal Fire",
-   "age": 23,
+   "age": 24,
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.2
+   "overall": 47.8
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 19,
    "experience": 21,
    "stability": 50,
@@ -6856,7 +6854,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.5
+   "overall": 47.1
   },
   {
    "firepower": 51,
@@ -6902,7 +6900,7 @@
    "position": "IGL",
    "grade": 1,
    "country": "Spain",
-   "team": "Gentle Mates",
+   "team": "Iberian Soul",
    "age": 30,
    "majors": 1,
    "champions": 0,
@@ -6910,7 +6908,7 @@
    "overall": 42.8
   },
   {
-   "firepower": 50,
+   "firepower": 60,
    "leadership": 19,
    "experience": 26,
    "stability": 50,
@@ -6919,12 +6917,12 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Spain",
-   "team": "Gentle Mates",
+   "team": "Iberian Soul",
    "age": 25,
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.7
+   "overall": 49.2
   },
   {
    "firepower": 50,
@@ -6944,7 +6942,7 @@
    "overall": 43.1
   },
   {
-   "firepower": 50,
+   "firepower": 60,
    "leadership": 19,
    "experience": 26,
    "stability": 46,
@@ -6953,12 +6951,12 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Spain",
-   "team": "Gentle Mates",
+   "team": "Iberian Soul",
    "age": 30,
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 42.9
+   "overall": 48.4
   },
   {
    "firepower": 73,
@@ -6995,7 +6993,7 @@
    "overall": 42.5
   },
   {
-   "firepower": 62,
+   "firepower": 78,
    "leadership": 23,
    "experience": 39,
    "stability": 57,
@@ -7009,10 +7007,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 54.4
+   "overall": 63.3
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 20,
    "experience": 25,
    "stability": 47,
@@ -7026,7 +7024,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.5
+   "overall": 47.1
   },
   {
    "firepower": 93,
@@ -7077,7 +7075,7 @@
    "position": "AWPER",
    "grade": 3,
    "country": "Bulgaria",
-   "team": "",
+   "team": "Without a Roof",
    "age": 26,
    "majors": 4,
    "champions": 0,
@@ -7085,7 +7083,7 @@
    "overall": 64.7
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 22,
    "experience": 22,
    "stability": 48,
@@ -7099,7 +7097,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.8
+   "overall": 48.1
   },
   {
    "firepower": 91,
@@ -7290,7 +7288,7 @@
    "overall": 43.9
   },
   {
-   "firepower": 58,
+   "firepower": 73,
    "leadership": 22,
    "experience": 22,
    "stability": 46,
@@ -7304,7 +7302,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 46.6
+   "overall": 54.9
   },
   {
    "firepower": 44,
@@ -7324,7 +7322,7 @@
    "overall": 41.7
   },
   {
-   "firepower": 51,
+   "firepower": 60,
    "leadership": 18,
    "experience": 25,
    "stability": 46,
@@ -7338,7 +7336,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.2
+   "overall": 48.1
   },
   {
    "firepower": 59,
@@ -7375,7 +7373,7 @@
    "overall": 51.9
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 21,
    "experience": 22,
    "stability": 46,
@@ -7384,15 +7382,15 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "North Macedonia",
-   "team": "",
+   "team": "JiJieHao",
    "age": 25,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.3
+   "overall": 47.6
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 17,
    "experience": 20,
    "stability": 47,
@@ -7406,7 +7404,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.5
+   "overall": 47.2
   },
   {
    "firepower": 51,
@@ -7426,7 +7424,7 @@
    "overall": 54.3
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 23,
    "experience": 25,
    "stability": 50,
@@ -7435,15 +7433,15 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Portugal",
-   "team": "",
+   "team": "Rebels",
    "age": 24,
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.9
+   "overall": 49.1
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 23,
    "experience": 23,
    "stability": 48,
@@ -7457,7 +7455,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 45.6
+   "overall": 48.4
   },
   {
    "firepower": 48,
@@ -7494,7 +7492,7 @@
    "overall": 44.9
   },
   {
-   "firepower": 50,
+   "firepower": 60,
    "leadership": 19,
    "experience": 22,
    "stability": 50,
@@ -7508,7 +7506,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 42.9
+   "overall": 47.4
   },
   {
    "firepower": 53,
@@ -7664,7 +7662,7 @@
    "overall": 53.0
   },
   {
-   "firepower": 48,
+   "firepower": 60,
    "leadership": 16,
    "experience": 23,
    "stability": 49,
@@ -7678,7 +7676,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 41.7
+   "overall": 47.1
   },
   {
    "firepower": 42,
@@ -7725,7 +7723,7 @@
    "grade": 1,
    "country": "United States",
    "team": "",
-   "age": 38,
+   "age": 39,
    "majors": 2,
    "champions": 0,
    "titles": [],
@@ -7798,7 +7796,7 @@
    "grade": 3,
    "country": "United States",
    "team": "NRG",
-   "age": 30,
+   "age": 31,
    "majors": 14,
    "champions": 0,
    "titles": [],
@@ -7848,7 +7846,7 @@
    "position": "IGL",
    "grade": 3,
    "country": "United States",
-   "team": "",
+   "team": "Without a Roof",
    "age": 28,
    "majors": 7,
    "champions": 1,
@@ -7870,7 +7868,7 @@
    "position": "RIFLER",
    "grade": 3,
    "country": "United States",
-   "team": "",
+   "team": "Without a Roof",
    "age": 29,
    "majors": 5,
    "champions": 1,
@@ -8041,7 +8039,7 @@
    "overall": 52.9
   },
   {
-   "firepower": 60,
+   "firepower": 66,
    "leadership": 20,
    "experience": 39,
    "stability": 55,
@@ -8055,7 +8053,7 @@
    "majors": 8,
    "champions": 0,
    "titles": [],
-   "overall": 52.8
+   "overall": 56.1
   },
   {
    "firepower": 57,
@@ -8175,7 +8173,7 @@
    "grade": 2,
    "country": "United States",
    "team": "",
-   "age": 27,
+   "age": 28,
    "majors": 3,
    "champions": 0,
    "titles": [],
@@ -8208,7 +8206,7 @@
    "position": "RIFLER",
    "grade": 4,
    "country": "United States",
-   "team": "",
+   "team": "Without a Roof",
    "age": 28,
    "majors": 4,
    "champions": 0,
@@ -8233,7 +8231,7 @@
    "overall": 62.0
   },
   {
-   "firepower": 51,
+   "firepower": 60,
    "leadership": 18,
    "experience": 22,
    "stability": 49,
@@ -8247,7 +8245,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.2
+   "overall": 48.1
   },
   {
    "firepower": 52,
@@ -8267,7 +8265,7 @@
    "overall": 43.2
   },
   {
-   "firepower": 59,
+   "firepower": 60,
    "leadership": 19,
    "experience": 40,
    "stability": 50,
@@ -8281,10 +8279,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 51.4
+   "overall": 52.0
   },
   {
-   "firepower": 65,
+   "firepower": 71,
    "leadership": 24,
    "experience": 38,
    "stability": 52,
@@ -8298,10 +8296,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 55.0
+   "overall": 58.3
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 19,
    "experience": 20,
    "stability": 41,
@@ -8315,10 +8313,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.4
+   "overall": 46.2
   },
   {
-   "firepower": 63,
+   "firepower": 69,
    "leadership": 23,
    "experience": 36,
    "stability": 54,
@@ -8332,10 +8330,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 53.8
+   "overall": 57.1
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 21,
    "experience": 22,
    "stability": 41,
@@ -8349,7 +8347,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.5
+   "overall": 46.6
   },
   {
    "firepower": 69,
@@ -8652,7 +8650,7 @@
    "overall": 54.3
   },
   {
-   "firepower": 83,
+   "firepower": 89,
    "leadership": 27,
    "experience": 69,
    "stability": 75,
@@ -8666,7 +8664,7 @@
    "majors": 11,
    "champions": 0,
    "titles": [],
-   "overall": 75.8
+   "overall": 79.1
   },
   {
    "firepower": 53,
@@ -8720,7 +8718,7 @@
    "overall": 54.6
   },
   {
-   "firepower": 58,
+   "firepower": 60,
    "leadership": 23,
    "experience": 38,
    "stability": 56,
@@ -8734,10 +8732,10 @@
    "majors": 6,
    "champions": 0,
    "titles": [],
-   "overall": 51.9
+   "overall": 53.0
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 18,
    "experience": 23,
    "stability": 51,
@@ -8751,7 +8749,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 46.5
+   "overall": 48.7
   },
   {
    "firepower": 49,
@@ -8805,7 +8803,7 @@
    "overall": 54.8
   },
   {
-   "firepower": 49,
+   "firepower": 60,
    "leadership": 19,
    "experience": 21,
    "stability": 46,
@@ -8819,7 +8817,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 41.3
+   "overall": 47.4
   },
   {
    "firepower": 60,
@@ -8831,7 +8829,7 @@
    "position": "RIFLER",
    "grade": 2,
    "country": "Brazil",
-   "team": "",
+   "team": "ODDIK",
    "age": 30,
    "majors": 4,
    "champions": 0,
@@ -8924,7 +8922,7 @@
    "overall": 53.7
   },
   {
-   "firepower": 58,
+   "firepower": 68,
    "leadership": 21,
    "experience": 39,
    "stability": 55,
@@ -8938,7 +8936,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 51.8
+   "overall": 57.2
   },
   {
    "firepower": 76,
@@ -8975,7 +8973,7 @@
    "overall": 41.9
   },
   {
-   "firepower": 65,
+   "firepower": 82,
    "leadership": 23,
    "experience": 42,
    "stability": 49,
@@ -8989,10 +8987,10 @@
    "majors": 6,
    "champions": 0,
    "titles": [],
-   "overall": 55.1
+   "overall": 64.5
   },
   {
-   "firepower": 60,
+   "firepower": 84,
    "leadership": 25,
    "experience": 41,
    "stability": 54,
@@ -9006,7 +9004,7 @@
    "majors": 6,
    "champions": 0,
    "titles": [],
-   "overall": 53.2
+   "overall": 66.5
   },
   {
    "firepower": 52,
@@ -9043,7 +9041,7 @@
    "overall": 53.6
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 18,
    "experience": 21,
    "stability": 47,
@@ -9057,7 +9055,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.2
+   "overall": 47.5
   },
   {
    "firepower": 56,
@@ -9094,7 +9092,7 @@
    "overall": 55.0
   },
   {
-   "firepower": 50,
+   "firepower": 60,
    "leadership": 17,
    "experience": 23,
    "stability": 47,
@@ -9108,7 +9106,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.4
+   "overall": 47.9
   },
   {
    "firepower": 41,
@@ -9128,7 +9126,7 @@
    "overall": 41.2
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 17,
    "experience": 21,
    "stability": 40,
@@ -9142,10 +9140,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.3
+   "overall": 46.1
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 22,
    "experience": 24,
    "stability": 49,
@@ -9159,7 +9157,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 46.0
+   "overall": 48.7
   },
   {
    "firepower": 48,
@@ -9172,7 +9170,7 @@
    "grade": 2,
    "country": "Brazil",
    "team": "Fluxo W7M",
-   "age": 29,
+   "age": 30,
    "majors": 4,
    "champions": 0,
    "titles": [],
@@ -9196,7 +9194,7 @@
    "overall": 43.1
   },
   {
-   "firepower": 51,
+   "firepower": 60,
    "leadership": 22,
    "experience": 21,
    "stability": 49,
@@ -9210,7 +9208,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.2
+   "overall": 48.1
   },
   {
    "firepower": 47,
@@ -9230,7 +9228,7 @@
    "overall": 42.9
   },
   {
-   "firepower": 60,
+   "firepower": 66,
    "leadership": 21,
    "experience": 39,
    "stability": 52,
@@ -9244,27 +9242,27 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 52.2
+   "overall": 55.6
   },
   {
-   "firepower": 59,
+   "firepower": 57,
    "leadership": 23,
    "experience": 36,
-   "stability": 49,
+   "stability": 54,
    "page": "Brnz4n",
    "nickname": "brnz4n",
    "position": "RIFLER",
    "grade": 2,
    "country": "Brazil",
-   "team": "MIBR",
-   "age": 22,
+   "team": "",
+   "age": 23,
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 50.6
+   "overall": 50.5
   },
   {
-   "firepower": 74,
+   "firepower": 80,
    "leadership": 22,
    "experience": 56,
    "stability": 63,
@@ -9278,7 +9276,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 64.5
+   "overall": 67.2
   },
   {
    "firepower": 53,
@@ -9315,7 +9313,7 @@
    "overall": 45.2
   },
   {
-   "firepower": 57,
+   "firepower": 60,
    "leadership": 17,
    "experience": 23,
    "stability": 40,
@@ -9329,7 +9327,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.8
+   "overall": 46.5
   },
   {
    "firepower": 53,
@@ -9349,7 +9347,7 @@
    "overall": 42.9
   },
   {
-   "firepower": 55,
+   "firepower": 61,
    "leadership": 18,
    "experience": 22,
    "stability": 51,
@@ -9363,7 +9361,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 45.8
+   "overall": 49.1
   },
   {
    "firepower": 61,
@@ -9410,14 +9408,14 @@
    "grade": 1,
    "country": "Brazil",
    "team": "",
-   "age": 24,
+   "age": 25,
    "majors": 2,
    "champions": 0,
    "titles": [],
    "overall": 46.0
   },
   {
-   "firepower": 62,
+   "firepower": 70,
    "leadership": 19,
    "experience": 40,
    "stability": 52,
@@ -9431,10 +9429,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.5
+   "overall": 56.1
   },
   {
-   "firepower": 51,
+   "firepower": 60,
    "leadership": 17,
    "experience": 21,
    "stability": 46,
@@ -9444,11 +9442,11 @@
    "grade": 1,
    "country": "Brazil",
    "team": "MIBR",
-   "age": 21,
+   "age": 22,
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 42.3
+   "overall": 47.3
   },
   {
    "firepower": 63,
@@ -9494,7 +9492,7 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Canada",
-   "team": "",
+   "team": "Without a Roof",
    "age": 24,
    "majors": 2,
    "champions": 0,
@@ -9517,23 +9515,6 @@
    "champions": 0,
    "titles": [],
    "overall": 54.7
-  },
-  {
-   "firepower": 43,
-   "leadership": 54,
-   "experience": 26,
-   "stability": 50,
-   "page": "Steel (Joshua Nissan)",
-   "nickname": "steel",
-   "position": "IGL",
-   "grade": 1,
-   "country": "Canada",
-   "team": "",
-   "age": 36,
-   "majors": 1,
-   "champions": 0,
-   "titles": [],
-   "overall": 41.2
   },
   {
    "firepower": 63,
@@ -9655,7 +9636,7 @@
    "overall": 53.4
   },
   {
-   "firepower": 83,
+   "firepower": 84,
    "leadership": 27,
    "experience": 71,
    "stability": 75,
@@ -9674,10 +9655,10 @@
      "faze"
     ]
    ],
-   "overall": 76.2
+   "overall": 76.8
   },
   {
-   "firepower": 60,
+   "firepower": 66,
    "leadership": 24,
    "experience": 40,
    "stability": 53,
@@ -9691,7 +9672,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.8
+   "overall": 56.1
   },
   {
    "firepower": 49,
@@ -9728,7 +9709,7 @@
    "overall": 45.5
   },
   {
-   "firepower": 51,
+   "firepower": 60,
    "leadership": 22,
    "experience": 24,
    "stability": 47,
@@ -9742,10 +9723,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.4
+   "overall": 48.3
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 19,
    "experience": 21,
    "stability": 49,
@@ -9759,10 +9740,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.1
+   "overall": 48.0
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 18,
    "experience": 20,
    "stability": 52,
@@ -9776,10 +9757,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.4
+   "overall": 47.5
   },
   {
-   "firepower": 62,
+   "firepower": 68,
    "leadership": 23,
    "experience": 40,
    "stability": 56,
@@ -9793,10 +9774,10 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 53.8
+   "overall": 56.5
   },
   {
-   "firepower": 49,
+   "firepower": 60,
    "leadership": 16,
    "experience": 22,
    "stability": 53,
@@ -9810,7 +9791,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.1
+   "overall": 48.1
   },
   {
    "firepower": 63,
@@ -9830,7 +9811,7 @@
    "overall": 55.4
   },
   {
-   "firepower": 55,
+   "firepower": 61,
    "leadership": 21,
    "experience": 23,
    "stability": 46,
@@ -9844,10 +9825,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.1
+   "overall": 48.4
   },
   {
-   "firepower": 57,
+   "firepower": 79,
    "leadership": 22,
    "experience": 42,
    "stability": 55,
@@ -9861,7 +9842,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 51.9
+   "overall": 64.0
   },
   {
    "firepower": 47,
@@ -9881,7 +9862,7 @@
    "overall": 50.6
   },
   {
-   "firepower": 70,
+   "firepower": 75,
    "leadership": 23,
    "experience": 50,
    "stability": 62,
@@ -9895,7 +9876,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 62.0
+   "overall": 64.8
   },
   {
    "firepower": 52,
@@ -10027,7 +10008,7 @@
    "grade": 2,
    "country": "Australia",
    "team": "THUNDER dOWNUNDER",
-   "age": 28,
+   "age": 29,
    "majors": 8,
    "champions": 0,
    "titles": [],
@@ -10043,7 +10024,7 @@
    "position": "AWPER",
    "grade": 2,
    "country": "Australia",
-   "team": "THUNDER dOWNUNDER",
+   "team": "",
    "age": 28,
    "majors": 6,
    "champions": 0,
@@ -10163,7 +10144,7 @@
    "grade": 2,
    "country": "Australia",
    "team": "THUNDER dOWNUNDER",
-   "age": 31,
+   "age": 32,
    "majors": 7,
    "champions": 0,
    "titles": [],
@@ -10221,7 +10202,7 @@
    "overall": 54.8
   },
   {
-   "firepower": 55,
+   "firepower": 60,
    "leadership": 18,
    "experience": 25,
    "stability": 46,
@@ -10235,10 +10216,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.4
+   "overall": 48.1
   },
   {
-   "firepower": 48,
+   "firepower": 60,
    "leadership": 18,
    "experience": 25,
    "stability": 51,
@@ -10252,7 +10233,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.5
+   "overall": 49.1
   },
   {
    "firepower": 58,
@@ -10408,7 +10389,7 @@
    "overall": 44.1
   },
   {
-   "firepower": 62,
+   "firepower": 68,
    "leadership": 19,
    "experience": 36,
    "stability": 59,
@@ -10422,7 +10403,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 54.1
+   "overall": 57.4
   },
   {
    "firepower": 51,
@@ -10442,7 +10423,7 @@
    "overall": 51.6
   },
   {
-   "firepower": 59,
+   "firepower": 65,
    "leadership": 19,
    "experience": 36,
    "stability": 53,
@@ -10456,7 +10437,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 51.2
+   "overall": 54.5
   },
   {
    "firepower": 56,
@@ -10469,7 +10450,7 @@
    "grade": 1,
    "country": "China",
    "team": "TYLOO",
-   "age": 20,
+   "age": 21,
    "majors": 1,
    "champions": 0,
    "titles": [],
@@ -10537,7 +10518,7 @@
    "grade": 2,
    "country": "China",
    "team": "Lynn Vision",
-   "age": 21,
+   "age": 22,
    "majors": 4,
    "champions": 0,
    "titles": [],
@@ -10595,7 +10576,7 @@
    "overall": 52.7
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 22,
    "experience": 37,
    "stability": 59,
@@ -10609,7 +10590,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 51.4
+   "overall": 53.2
   },
   {
    "firepower": 62,
@@ -10629,7 +10610,7 @@
    "overall": 53.6
   },
   {
-   "firepower": 52,
+   "firepower": 60,
    "leadership": 20,
    "experience": 25,
    "stability": 45,
@@ -10643,7 +10624,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 48.0
   },
   {
    "firepower": 54,
@@ -10680,7 +10661,7 @@
    "overall": 46.0
   },
   {
-   "firepower": 51,
+   "firepower": 60,
    "leadership": 22,
    "experience": 22,
    "stability": 50,
@@ -10694,7 +10675,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 48.5
   },
   {
    "firepower": 53,
@@ -10714,7 +10695,7 @@
    "overall": 64.7
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 19,
    "experience": 22,
    "stability": 46,
@@ -10728,7 +10709,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.3
+   "overall": 47.6
   },
   {
    "firepower": 44,
@@ -10782,7 +10763,7 @@
    "overall": 65.6
   },
   {
-   "firepower": 50,
+   "firepower": 60,
    "leadership": 16,
    "experience": 25,
    "stability": 49,
@@ -10796,10 +10777,10 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.0
+   "overall": 47.5
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 22,
    "experience": 25,
    "stability": 45,
@@ -10813,10 +10794,10 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.8
+   "overall": 48.1
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 22,
    "experience": 21,
    "stability": 49,
@@ -10830,10 +10811,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.9
+   "overall": 48.1
   },
   {
-   "firepower": 72,
+   "firepower": 82,
    "leadership": 19,
    "experience": 55,
    "stability": 68,
@@ -10847,10 +10828,10 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 64.8
+   "overall": 69.2
   },
   {
-   "firepower": 75,
+   "firepower": 81,
    "leadership": 25,
    "experience": 50,
    "stability": 60,
@@ -10864,10 +10845,10 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 64.5
+   "overall": 67.8
   },
   {
-   "firepower": 70,
+   "firepower": 76,
    "leadership": 23,
    "experience": 55,
    "stability": 61,
@@ -10881,10 +10862,10 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 62.9
+   "overall": 66.2
   },
   {
-   "firepower": 53,
+   "firepower": 60,
    "leadership": 18,
    "experience": 25,
    "stability": 41,
@@ -10898,10 +10879,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.2
+   "overall": 47.1
   },
   {
-   "firepower": 48,
+   "firepower": 60,
    "leadership": 21,
    "experience": 25,
    "stability": 51,
@@ -10915,7 +10896,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 42.7
+   "overall": 49.2
   },
   {
    "firepower": 43,
@@ -10935,7 +10916,7 @@
    "overall": 42.2
   },
   {
-   "firepower": 56,
+   "firepower": 60,
    "leadership": 18,
    "experience": 23,
    "stability": 41,
@@ -10949,10 +10930,10 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.5
+   "overall": 46.7
   },
   {
-   "firepower": 54,
+   "firepower": 60,
    "leadership": 19,
    "experience": 24,
    "stability": 48,
@@ -10966,7 +10947,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.1
+   "overall": 48.4
   },
   {
    "firepower": 51,
@@ -11105,7 +11086,7 @@
    "overall": 53.9
   },
   {
-   "firepower": 62,
+   "firepower": 68,
    "leadership": 21,
    "experience": 37,
    "stability": 57,
@@ -11119,7 +11100,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 53.9
+   "overall": 57.2
   },
   {
    "firepower": 54,
@@ -11229,7 +11210,7 @@
    "overall": 84.4
   },
   {
-   "firepower": 67,
+   "firepower": 79,
    "leadership": 22,
    "experience": 52,
    "stability": 68,
@@ -11243,10 +11224,10 @@
    "majors": 6,
    "champions": 0,
    "titles": [],
-   "overall": 62.0
+   "overall": 68.6
   },
   {
-   "firepower": 81,
+   "firepower": 85,
    "leadership": 27,
    "experience": 68,
    "stability": 70,
@@ -11260,10 +11241,10 @@
    "majors": 7,
    "champions": 0,
    "titles": [],
-   "overall": 73.5
+   "overall": 75.7
   },
   {
-   "firepower": 84,
+   "firepower": 88,
    "leadership": 27,
    "experience": 71,
    "stability": 75,
@@ -11286,10 +11267,10 @@
      "vitality"
     ]
    ],
-   "overall": 76.8
+   "overall": 79.0
   },
   {
-   "firepower": 60,
+   "firepower": 89,
    "leadership": 22,
    "experience": 38,
    "stability": 58,
@@ -11303,7 +11284,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 53.3
+   "overall": 69.2
   },
   {
    "firepower": 53,
@@ -11316,7 +11297,7 @@
    "grade": 2,
    "country": "Indonesia",
    "team": "Alter Ego",
-   "age": 30,
+   "age": 31,
    "majors": 3,
    "champions": 0,
    "titles": [],
@@ -11366,7 +11347,7 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "Jordan",
-   "team": "Alter Ego",
+   "team": "",
    "age": 22,
    "majors": 1,
    "champions": 0,
@@ -11451,7 +11432,7 @@
    "position": "RIFLER",
    "grade": 3,
    "country": "Uzbekistan",
-   "team": "RUSTEC",
+   "team": "",
    "age": 27,
    "majors": 1,
    "champions": 0,
@@ -11520,7 +11501,7 @@
    "grade": 1,
    "country": "Taiwan",
    "team": "Rare Atom",
-   "age": 32,
+   "age": 33,
    "majors": 1,
    "champions": 0,
    "titles": [],
@@ -11536,8 +11517,8 @@
    "position": "RIFLER",
    "grade": 1,
    "country": "South Africa",
-   "team": "Passion UA",
-   "age": 33,
+   "team": "",
+   "age": 34,
    "majors": 0,
    "champions": 0,
    "titles": [],

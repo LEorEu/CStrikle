@@ -28,7 +28,17 @@ from pathlib import Path
 from playerdb.paths import BLIND_DRAFT, DATA, ROOT
 from playerdb.players import PlayerDB, overrides_path
 
-CARD_VERSION = "v6"
+CARD_VERSION = "v7"
+
+#: 抖动种子的版本,**故意和 CARD_VERSION 分开**。
+#:
+#: 原来 `_rng` 的种子是 page + CARD_VERSION,于是每次改算法、bump 一次版本,
+#: 全库 500 多张卡的随机分量就整体重掷一次。v6→v7 实测:火力层只动了 154 个
+#: 现役选手,而 diff 里有 547 张卡在变、191 张在**下降**——多出来的全是重掷,
+#: 和这次改动毫无关系,却把真正的 diff 淹没了,也悄悄改掉了没人看过的卡。
+#:
+#: 「算法变了」和「想要另一组随机数」是两件事。这个常量只在后者发生时才动。
+JITTER_VERSION = "v6"
 OUT_PATH = BLIND_DRAFT / "draft_cards.json"
 # 人工平衡层。和 player_overrides.json 并列放在可写卷里,线上后台改完不用重新部署。
 OVERRIDE_PATH = BLIND_DRAFT / "draft_overrides.json"
@@ -272,7 +282,7 @@ def draft_position(p, played_roles: dict | None = None):
 
 # ------------------------------------------------------------------- 生成
 def _rng(page):
-    seed = hashlib.blake2b(f"{page}|{CARD_VERSION}".encode("utf-8"),
+    seed = hashlib.blake2b(f"{page}|{JITTER_VERSION}".encode("utf-8"),
                            digest_size=8).hexdigest()
     return random.Random(int(seed, 16))
 
@@ -411,8 +421,13 @@ def load_overrides() -> dict:
             if OVERRIDE_PATH.exists() else {})
 
 
-def generate(trace=False):
+def generate(trace=False, apply_perf=True):
     """-> (卡牌, 待定位置的人, 人工确认排除的人)
+
+    `apply_perf=False` 跳过 v7 的火力层,拿到的是**套层之前**的模板值。
+    只有一个用途:给 `firepower.preview()` 当基线。不传这个的话预览会拿
+    "已经改过的卡"和自己比,diff 恒为空——一个看起来像"没什么要改的"
+    的静默错误。
 
     「待定」和「确认排除」必须分开:前者是还没人看过、看完可能进池的,后者是
     人工判定过就不该进池的(纯教练、彩蛋角色)。混在一起的话每次体检都要重新
@@ -436,7 +451,50 @@ def generate(trace=False):
         champs = champion_count(p)
         cards.append(build_card(p, career_grade(p, ranks, champs, pos, ref_year),
                                 pos, ranks, champs, overrides, ref_year, trace))
+    if apply_perf:
+        apply_firepower(cards, overrides, trace)
     return cards, pending, confirmed
+
+
+def apply_firepower(cards, overrides, trace=False) -> int:
+    """v7 的火力层:用人工锚点定的标尺重评**现役**枪手,原地改 cards。
+
+    为什么在这里、而不是在 build_card 里:这一层要的输入是"他现在在哪支队、
+    近 12 个月打成什么样",那是**当前世界**的量,而 build_card 只认生涯侧的
+    证据(Top20 / Major / 冠军)。塞进 build_card 会让那个函数同时依赖两个
+    世界,而两个世界分开正是整套设计的地基(见 docs/blind-draft/数据快照.md)。
+
+    人工层仍然最后生效:`firepower` 被手动覆盖过的人整个跳过——
+    §21 Algorithm First, Override Last,这一层也是"算法"的一部分。
+
+    锚点还没打或不够时静默跳过。一个刚 clone 下来的仓库应该照常出 v6 那套数,
+    而不是崩在生成上。
+    """
+    from . import firepower as F
+    try:
+        moves = F.apply(cards, overrides)
+    except (ValueError, OSError):
+        return 0                      # 没有锚点文件 / 锚点太少,保持模板值
+    by_page = {c["page"]: c for c in cards}
+    hit = 0
+    for page, m in moves.items():
+        card = by_page.get(page)
+        if not card or "firepower" in (overrides.get(page) or {}):
+            continue
+        old = card["firepower"]
+        card["firepower"] = m["new_firepower"]
+        card["overall"] = round(sum(card[k] * w for k, w in
+                                    zip(ATTRS, WEIGHT[card["position"]])), 1)
+        hit += 1
+        if trace and "_trace" in card:
+            st = card["_trace"]["attrs"]["firepower"]
+            st["performance"] = {"from": old, "to": m["new_firepower"],
+                                 "source": m["evidence_source"],
+                                 "strength": m["evidence_strength"],
+                                 "why": m["why"], "maps": m["sample_count"],
+                                 "rating": m["rating"], "floored": m["floored"]}
+            st["final"] = card["firepower"]
+    return hit
 
 
 # ------------------------------------------------------------------- 规格
@@ -451,6 +509,9 @@ def spec_markdown() -> str:
     今晚一路修的就是这类静默漂移。所以文档里那一块由本函数生成,
     `tests/test_draft_cards.py` 会断言两边一字不差。
     """
+    from . import firepower as _F      # 顶层 import 会和火力层循环
+    ACTIVE_LO, ACTIVE_HI = min(_F.ACTIVE_GRADES), max(_F.ACTIVE_GRADES)
+
     def tbl(d, keys):
         rows = []
         for k in keys:
@@ -466,10 +527,26 @@ def spec_markdown() -> str:
         "3. 模板    TEMPLATE[位置][档位] 给出四维底板",
         "4. 修正    corrections() 的增量(见下)",
         "5. 抖动    档位 ∈ EVIDENCE_GRADES 时为 0;否则火力 ±4、其余 ±3",
-        "           种子 = blake2b(page + CARD_VERSION),同一版本下永远同一张卡",
+        f"           种子 = blake2b(page + JITTER_VERSION={JITTER_VERSION});",
+        "           **和 CARD_VERSION 分开**,改算法不重掷全库随机数",
         "6. 取整    round() 后夹在 [1, 99]",
         "7. 覆盖    draft_overrides.json;其中 grade/position 在第 3 步之前生效,",
         "           四维为直接替换。overall 最后按覆盖后的值重算",
+        "8. 火力层  v7 新增,只动 firepower,只动**现役**选手(见下)",
+        "```", "",
+        "### v7 火力层(apply_firepower)", "", "```",
+        "标尺      firepower_anchors.json 的人工锚点连成的单调曲线",
+        "          (分箱中位数 + PAVA),**不是从 rating 拟合出来的**",
+        "有效区间  锚点的 rating 跨度之内;区间外一律判无证据、回退模板",
+        f"强证据    >= {_F.STRONG_MAPS} 图 且在区间内 → 直接用标尺值",
+        f"弱证据    {_F.SUPPORTING_MAPS}–{_F.STRONG_MAPS - 1} 图 → 只向上校正,"
+        f"上限 {_F.SUPPORTING_CAP} 点",
+        "无证据    保持模板值(下限仍生效)",
+        f"下限      非指挥的现役选手不低于 {_F.GUNNER_FLOOR}(参照 karrigan 的人工锚 55)",
+        "指挥      整个不进这一层(实测 rating 对指挥火力无信号)",
+        "人工层    firepower 被手动覆盖过的人整个跳过",
+        "历史峰值  有 Top20 履历的人只升不降",
+        f"处理范围  现役 G{ACTIVE_LO}–G{ACTIVE_HI};G4/G5 只允许强证据往上刷新",
         "```", "",
         "### 通用档位(自上而下互斥,取第一个满足的)", "", "```",
         "G5  HLTV Top20 进过前五",

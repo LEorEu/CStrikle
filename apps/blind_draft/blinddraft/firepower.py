@@ -37,7 +37,9 @@ import sys
 
 from playerdb.paths import BLIND_DRAFT, DATA
 
-from . import cards as C
+# **不在顶层 import cards。** cards.generate() 现在要反过来调这里的 apply(),
+# 顶层互相 import 会直接死循环。需要卡牌的函数一律由调用方传进来,
+# 只有命令行入口那条路才懒加载一次。
 
 ANCHOR_PATH = BLIND_DRAFT / "firepower_anchors.json"
 STATS_PATH = BLIND_DRAFT / "5e_player_stats.json"
@@ -70,6 +72,21 @@ ACTIVE_GRADES = (1, 2, 3)
 GUNNER_FLOOR = 60
 
 
+def ability_grade(fire, role, template):
+    """这个火力值**看起来像**哪一档。
+
+    用 TEMPLATE 的火力底板当分界:RIFLER 是 52/60/70/80/89。
+    它回答的不是"他应该是几档"——档位是生涯证据,不归这一层管——
+    而是"如果只看枪法,他落在哪一档的位置上"。两者差得越远,
+    越值得人工看一眼:要么是真的被低估了该升档,要么是数据/身份出了问题。
+    """
+    best = 1
+    for g in (1, 2, 3, 4, 5):
+        if fire >= template[role][g][0]:
+            best = g
+    return best
+
+
 def _num(v):
     if v in (None, ""):
         return None
@@ -80,14 +97,24 @@ def _num(v):
 
 
 # ------------------------------------------------------------------ 标尺
-def load_anchor_points():
+def _cards():
+    """懒加载,只给命令行那条路用。库内调用一律把卡牌传进来。
+
+    **apply_perf=False**:要的是套火力层之前的模板值。拿套过层的卡当基线,
+    diff 会恒为空,而那看起来像"没什么要改的"。
+    """
+    from . import cards as C
+    return C.generate(apply_perf=False)[0]
+
+
+def load_anchor_points(cards=None):
     """-> [(rating, firepower, nickname, maps)],只收枪手、只收填了火力的。"""
     if not ANCHOR_PATH.exists():
         return []
     anchors = json.loads(ANCHOR_PATH.read_text(encoding="utf-8")).get("anchors", {})
     stats = json.loads(STATS_PATH.read_text(encoding="utf-8"))["players"]
     by_page = {r["card_page"]: r for r in stats.values() if r.get("card_page")}
-    cards = {c["page"]: c for c in C.generate()[0]}
+    cards = {c["page"]: c for c in (cards if cards is not None else _cards())}
     out = []
     for page, a in anchors.items():
         card, row = cards.get(page), by_page.get(page)
@@ -104,7 +131,7 @@ def load_anchor_points():
     return out
 
 
-def build_scale(points=None):
+def build_scale(points=None, cards=None):
     """把锚点连成一条**单调**曲线。
 
     做法:先按 rating 分箱取中位数,再用 PAVA 把箱值压成单调,最后线性内插。
@@ -116,7 +143,7 @@ def build_scale(points=None):
 
     -> (fn, lo, hi):fn(rating) 只在 [lo, hi] 内有意义,调用方必须自己挡住边界。
     """
-    pts = points if points is not None else load_anchor_points()
+    pts = points if points is not None else load_anchor_points(cards)
     if len(pts) < 6:
         raise ValueError("锚点太少(%d 个),标尺立不住" % len(pts))
 
@@ -192,18 +219,39 @@ def evidence_of(row, lo, hi):
 
 
 # ------------------------------------------------------------------ 重算
-def preview():
+def apply(cards, overrides=None):
+    """-> {page: {"firepower", "source", "floored", ...}},给 cards.generate() 用。
+
+    **只返回改动,不写卡。** 由生成器决定怎么落地(它还要重算 overall、
+    还要让人工层最后生效)。这样这份逻辑只有一处实现,后台展示的推导和
+    引擎读的数不可能漂。
+
+    锚点不足时抛 ValueError 由调用方吞掉——一个还没打锚的仓库应该照常
+    生成 v6 卡,而不是崩在启动上。
+    """
+    return {r["page"]: r for r in preview(cards, overrides or {})["rows"]
+            if r["new_firepower"] != r["old_firepower"]}
+
+
+def preview(cards=None, overrides=None):
     """-> {"rows": [...], "scale": {...}, "counts": {...}}。只读,不写文件。"""
-    fn, lo, hi = build_scale()
+    if cards is None:
+        from . import cards as _C
+        cards = _C.generate(apply_perf=False)[0]
+        overrides = _C.load_overrides()
+    if overrides is None:
+        from . import cards as _C
+        overrides = _C.load_overrides()
+    fn, lo, hi = build_scale(cards=cards)
     stats = json.loads(STATS_PATH.read_text(encoding="utf-8"))["players"]
     snap = json.loads(SNAP_PATH.read_text(encoding="utf-8"))
     top20 = {r["page"] for rows in
              json.loads(TOP20_PATH.read_text(encoding="utf-8"))["years"].values()
              for r in rows}
-    cards, _, _ = C.generate()
     by_page = {c["page"]: c for c in cards}
     by_nick = {c["nickname"].casefold(): c for c in cards}
-    overrides = C.load_overrides()
+    from . import cards as _CM
+    template = _CM.TEMPLATE
 
     active = {}
     for t in snap["teams"]:
@@ -262,17 +310,20 @@ def preview():
             "sample_count": maps, "rating": rating,
             "scale_target": target, "manual_override": manual,
             "floored": floored, "top20": card["page"] in top20,
+            "ability_grade": ability_grade(int(new), card["position"], template),
+            "grade_gap": ability_grade(int(new), card["position"], template) - card["grade"],
         })
     rows.sort(key=lambda r: (-abs(r["delta"]), r["player"]))
     counts = {"players": len(rows), "moved": sum(1 for r in rows if r["delta"]),
-              "floored": sum(1 for r in rows if r["floored"])}
+              "floored": sum(1 for r in rows if r["floored"]),
+              "grade_mismatch": sum(1 for r in rows if r["grade_gap"] >= 2)}
     for k in ("strong", "supporting", "none"):
         counts[k] = sum(1 for r in rows if r["evidence_strength"] == k)
     return {"rows": rows, "counts": counts,
             "scale": {"knots": [[round(x, 3), round(y, 1)] for x, y in fn.knots],
                       "valid_from": lo, "valid_to": hi,
                       "gunner_floor": GUNNER_FLOOR,
-                      "anchors": len(load_anchor_points())}}
+                      "anchors": len(load_anchor_points(cards))}}
 
 
 def flags(rows):
@@ -285,19 +336,25 @@ def flags(rows):
                 ("G1/G2 却 F80+", r["grade"] <= 2 and r["new_firepower"] >= 80),
                 ("G3 却 F88+", r["grade"] == 3 and r["new_firepower"] >= 88),
                 ("有 Top20 却被下修", r["top20"] and r["delta"] < 0),
-                ("无可靠证据却变了", r["evidence_strength"] == "none" and r["delta"])):
+                # 托底是**有文档的机制**,不是异常。混进这一行会让 75 个正常的
+                # 托底把真正该看的东西淹掉。
+                ("无可靠证据却变了", r["evidence_strength"] == "none"
+                 and r["delta"] and not r["floored"]),
+                ("被下限托上来", r["floored"])):
             if hit:
                 out.append((tag, r))
     return out
 
 
 def write_preview(data) -> str:
+    from . import cards as C
     payload = {
-        "_note": ("Firepower v7 预览 —— **不是生成物,不进 draft_cards.json**。"
+        "_note": ("Firepower v7 预览 —— 现在已经接进 cards.generate(),"
+                  "这份文件是**审核用的账**,不是数据源。"
                   "按《四维重构工作指南 v0.1》Phase 1,只重算现役 G1/G2/G3 的火力,"
                   "供人工审核。标尺来自 firepower_anchors.json 的人工锚点,"
                   "只在 valid_from..valid_to 之间有效;区间外一律判 none、回退模板。"),
-        "card_version_from": C.CARD_VERSION,
+        "card_version": C.CARD_VERSION,
         "scale": data["scale"], "counts": data["counts"], "rows": data["rows"],
     }
     OUT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + "\n",
@@ -330,6 +387,17 @@ def main():
         print("%-13s G%-3d %-7s %5d %5d %+6d  %s (%d 图)"
               % (r["player"], r["grade"], r["role"], r["old_firepower"],
                  r["new_firepower"], r["delta"], r["evidence_source"], r["sample_count"]))
+    gm = sorted((r for r in data["rows"] if r["grade_gap"] >= 2),
+                key=lambda r: (-r["grade_gap"], -r["new_firepower"]))
+    print()
+    print("能力明显高于档位的 %d 人 —— **档位归生涯证据管,这一层不动它**,"
+          "列出来给人工判断要不要升档:" % len(gm))
+    print("%-13s %-4s %-7s %6s %-10s %s" % ("选手", "档", "位置", "新火力", "看起来像", "依据"))
+    for r in gm:
+        print("%-13s G%-3d %-7s %6d  G%-9d %s (%d 图)"
+              % (r["player"], r["grade"], r["role"], r["new_firepower"],
+                 r["ability_grade"], r["evidence_source"], r["sample_count"]))
+
     fl = flags(data["rows"])
     print()
     print("需要人工过目的 %d 条(Phase 2,不自动修):" % len(fl))
