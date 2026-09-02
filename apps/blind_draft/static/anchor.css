@@ -1,0 +1,135 @@
+/* 打锚台。自带调色板(和 cards.css 同一套值),因为这一页不引 cards.css——
+ * 它的布局是「一列长表 + 一块常驻侧栏」,和卡牌页的三栏没有共用的骨架。
+ *
+ * 这一页只有一个任务:让人**快速做判断**。所以每一行的信息按判断顺序排:
+ *   他是谁 → 现在打得怎么样(证据) → 卡上现在是多少 → 你给多少。
+ * 证据在左、结论在右,填完一行往下走,不用来回看。
+ */
+:root {
+  --bg: #12141a;  --panel: #191c24;  --line: #272b36;
+  --fg: #dfe3ec;  --dim: #8b93a6;    --acc: #f0a83c;
+  --ok: #57b96a;  --warn: #e06a4a;   --peak: #4c9be8;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 14.5px/1.6 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+}
+.n, td, th, input { font-variant-numeric: tabular-nums; }
+
+header {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--panel);
+  position: sticky; top: 0; z-index: 10;
+}
+.brand { display: flex; align-items: center; gap: 16px; }
+.brand b { font-size: 15px; }
+nav { display: flex; gap: 4px; }
+nav a {
+  padding: 5px 13px; border-radius: 6px; color: var(--dim);
+  text-decoration: none; font-size: 13.5px; border: 1px solid transparent;
+}
+nav a:hover { color: var(--fg); background: #1e222b; }
+nav a.on { color: var(--acc); border-color: var(--line); background: #22262f; }
+.metrics { display: flex; gap: 16px; color: var(--dim); font-size: 13px; flex: 1; }
+.metrics b { color: var(--fg); }
+.ctl { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--dim); }
+select, button, input {
+  padding: 5px 9px; background: #1e222b; color: var(--fg);
+  border: 1px solid var(--line); border-radius: 5px; font: inherit;
+}
+button { cursor: pointer; }
+button:hover { border-color: var(--acc); }
+:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
+
+#banner {
+  padding: 9px 18px; border-bottom: 1px solid var(--line);
+  font-size: 13px; color: var(--dim); line-height: 1.85;
+}
+#banner b { color: var(--fg); }
+
+main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; align-items: start; }
+#side {
+  position: sticky; top: 53px; padding: 14px 18px; border-left: 1px solid var(--line);
+  background: var(--panel); height: calc(100vh - 53px); overflow: auto;
+}
+#side h2 { margin: 0 0 6px; font-size: 14px; }
+#side .hint { margin: 0 0 12px; font-size: 12.5px; color: var(--dim); line-height: 1.7; }
+canvas { display: block; width: 100%; height: auto; background: #14171e;
+         border: 1px solid var(--line); border-radius: 6px; }
+
+/* ------------------------------------------------------------------ 队 */
+.team { border-bottom: 1px solid var(--line); }
+.team > h3 {
+  margin: 0; padding: 9px 18px; font-size: 13.5px; font-weight: 600;
+  background: #171b23; display: flex; gap: 12px; align-items: baseline;
+}
+.team > h3 small { color: var(--dim); font-weight: 400; font-size: 12.5px; }
+
+/* 每支队一张表,列宽必须定死——否则各表按各自内容算宽,「火力」那一列会在
+ * 队与队之间左右跳。这一页是往下连着填 40 行,列一跳就得重新找位置。 */
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+col.c-nick  { width: 148px; }
+col.c-role  { width: 74px; }
+col.c-age   { width: 42px; }
+col.c-num   { width: 62px; }
+col.c-grade { width: 46px; }
+col.c-fire  { width: 82px; }
+col.c-peak  { width: 74px; }
+col.c-hint  { width: 56px; }
+col.c-in    { width: 82px; }
+col.c-band  { width: 168px; }
+col.c-note  { width: auto; }
+td, th { overflow: hidden; text-overflow: ellipsis; }
+th {
+  padding: 6px 8px; text-align: right; font-weight: 500; color: var(--dim);
+  font-size: 12px; border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+th.l, td.l { text-align: left; }
+td { padding: 5px 8px; text-align: right; border-bottom: 1px solid #1c202a; }
+tr:hover td { background: #171b22; }
+tr.done td { background: #15201a; }
+tr.done:hover td { background: #182719; }
+
+.nick { font-weight: 600; }
+.seat { display: inline-block; min-width: 17px; color: var(--dim); font-size: 12px; }
+.role { color: var(--dim); font-size: 12.5px; }
+.grp { border-left: 1px solid var(--line); }
+.ev { color: var(--fg); }
+.ev.weak { color: var(--dim); }        /* 图数不足,证据软 */
+.card-fire { color: var(--dim); }
+
+/* 打锚的两个输入。宽度定死,免得填完数字后整列跟着抖 */
+.peak-btn {
+  min-width: 54px; padding: 3px 8px; font-size: 12.5px;
+  background: transparent; color: var(--dim);
+}
+.peak-btn[data-v="yes"] { color: var(--peak); border-color: var(--peak); background: #16222e; }
+.peak-btn[data-v="no"]  { color: var(--warn); border-color: #3a251f; background: #241a17; }
+input.fire { width: 62px; text-align: right; }
+input.fire.set { color: var(--acc); border-color: var(--acc); }
+input.note { width: 100%; min-width: 120px; }
+.band { color: var(--dim); font-size: 11.5px; white-space: nowrap; }
+.hintv { color: var(--dim); font-size: 12px; }
+.hintv b { color: var(--fg); cursor: pointer; text-decoration: underline dotted; }
+
+#ladder { margin-top: 14px; font-size: 12.5px; }
+#ladder .row { display: flex; gap: 8px; align-items: baseline; padding: 2px 0; }
+#ladder .row .fp { width: 54px; text-align: right; color: var(--acc); }
+#ladder .row .lb { flex: 1; color: var(--dim); }
+#ladder .row .ct { color: var(--fg); }
+#ladder .row.empty .ct { color: var(--dim); }
+
+#toast {
+  position: fixed; right: 18px; bottom: 18px; padding: 8px 14px;
+  background: #22262f; border: 1px solid var(--line); border-radius: 6px;
+  font-size: 13px; opacity: 0; transition: opacity .18s; pointer-events: none;
+}
+#toast.on { opacity: 1; }
+#toast.bad { border-color: var(--warn); color: var(--warn); }
+
+@media (max-width: 1100px) {
+  main { grid-template-columns: 1fr; }
+  #side { position: static; height: auto; border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

@@ -44,13 +44,16 @@ AI 对手用**当前阵容 + 当前位置 + 年龄衰减**（`field_source: curr
 | `bdtools.export_web` | 把卡和常量注进网页模板 | `.cache/proto_draft_web.html` |
 | `bdserver.main` | **调参后台**：卡牌页（改人工层、看推导、发布） | 写 `draft_overrides.json` |
 | `bdserver.ai` | 后台的 AI 对手页装配：卡面 / 现况 / 5E 实测三列并排 | 只读 |
+| `bdserver.anchor` | **火力打锚台**：人工给可信的现役选手定 1–99 这把尺子 | 写 `firepower_anchors.json` |
 | `playerdb.build_db` | 重建选手库（共享层，`--refresh-existing` 只刷新当前队/角色） | `data/players.json` |
 
 人工层都在 `data/blind_draft/` 下：`major_field.json`（赛场来源、固定几支、
 权重、阵容、磨合度上限）、`5e_aliases.json`（卡库昵称 → 5eplay 名字/id）、
-`team_roles.json`、`draft_overrides.json`。
+`team_roles.json`、`draft_overrides.json`、`firepower_anchors.json`（火力锚点）。
 
-测试在 `apps/blind_draft/tests/`：`test_cards.py` 8 项，盯着卡库和
+测试在 `apps/blind_draft/tests/`：`test_anchor.py` 12 项，盯着打锚台的口径
+（peak 与 firepower 不许混、键必须真实存在、指挥不给建议值）；
+`test_cards.py` 8 项，盯着卡库和
 「卡牌与落地记录.md」里的 SPEC 块不许漂移；`test_tuning_console.py` 10 项，
 盯着后台展示的推导和卡上的数不许对不上；`test_ai_view.py` 14 项，盯着
 AI 页三列的口径。

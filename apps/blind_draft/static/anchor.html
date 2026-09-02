@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>火力打锚 · Blind Draft</title>
+<link rel="stylesheet" href="/static/anchor.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <b>火力打锚</b>
+    <nav><a href="/">卡牌</a><a href="/ai">AI 对手</a><a href="/anchor" class="on">打锚</a></nav>
+  </div>
+  <div class="metrics">
+    <span id="mDone">—</span>
+    <span id="mFit">—</span>
+    <span id="mSnap">—</span>
+  </div>
+  <div class="ctl">
+    <label>队伍数
+      <select id="teams">
+        <option value="10">VRS 前 10</option>
+        <option value="15" selected>VRS 前 15</option>
+        <option value="20">VRS 前 20</option>
+        <option value="25">VRS 前 25</option>
+      </select>
+    </label>
+    <button id="reload">重新载入</button>
+  </div>
+</header>
+
+<div id="banner"></div>
+
+<main>
+  <section id="list"></section>
+  <aside id="side">
+    <h2>已打的锚</h2>
+    <p class="hint">横轴 rating，纵轴你给的火力。<b>只有勾了「巅峰」的人进这张图</b>——
+      别人的火力是履历判断，和当前 rating 不构成对应关系。</p>
+    <canvas id="plot" width="360" height="300"></canvas>
+    <div id="ladder"></div>
+  </aside>
+</main>
+
+<div id="toast"></div>
+<script src="/static/anchor.js"></script>
+</body>
+</html>

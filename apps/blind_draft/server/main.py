@@ -41,6 +41,7 @@ from playerdb.paths import BLIND_DRAFT, DATA, IMG
 from blinddraft import cards as C
 
 from . import ai as AI
+from . import anchor as AN
 
 STATIC = Path(__file__).resolve().parents[1] / "static"
 IMAGES_PATH = DATA / "images.json"
@@ -167,6 +168,15 @@ def require_admin(token: str = "") -> None:
         raise HTTPException(status_code=403, detail="口令不对")
 
 
+class AnchorBody(BaseModel):
+    #: 他**现在**是不是处在生涯巅峰。只有 True 的人才进曲线拟合。
+    peak: bool | None = None
+    #: 他**巅峰时**的火力。和 peak 分开填——见 bdserver/anchor.py。
+    firepower: int | None = None
+    note: str = ""
+    teams: int = AN.DEFAULT_TEAMS
+
+
 class OverrideBody(BaseModel):
     grade: int | None = None
     position: str | None = None
@@ -214,6 +224,29 @@ def index():
 @app.get("/ai")
 def ai_page():
     return FileResponse(STATIC / "ai.html")
+
+
+@app.get("/anchor")
+def anchor_page():
+    return FileResponse(STATIC / "anchor.html")
+
+
+@app.get("/api/anchor")
+def api_anchor(teams: int = AN.DEFAULT_TEAMS):
+    """打锚台。**这一页写人工层**——和只读的 AI 页不同,理由见 bdserver/anchor.py。"""
+    return AN.build_view(teams)
+
+
+@app.put("/api/anchor/{key:path}")
+def api_anchor_put(key: str, body: AnchorBody,
+                   x_admin_token: str = Header(default="", alias="X-Admin-Token")):
+    require_admin(x_admin_token)
+    try:
+        saved = AN.put(key, body.peak, body.firepower, body.note, body.teams)
+    except KeyError:
+        raise HTTPException(404, f"候选集里没有 {key}——键拼错了?")
+    return {"ok": True, "key": key, "anchor": saved,
+            "counts": AN.build_view(body.teams)["counts"]}
 
 
 @app.get("/api/ai")
