@@ -89,10 +89,11 @@ class MatchTeam(object):
         self.is_player = entry.is_player
 
         roster = self.roster
-        igls = [c for c in roster if c["position"] == "IGL"]
+        igls = [c for c in roster if c.get("caller", c["position"] == "IGL")]
         if igls:
             top = max(igls, key=lambda c: c["leadership"])
-            others = [c["leadership"] if c["position"] != "IGL" else 25
+            others = [c["leadership"]
+                      if not c.get("caller", c["position"] == "IGL") else 25
                       for c in roster if c is not top]
             self.lead = top["leadership"] * .70 + st.mean(others) * .30
             # §20:多个 IGL 不叠加,只认最强的那个;ROLE CONFLICT 的罚分
@@ -389,6 +390,12 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--stats", action="store_true")
     ap.add_argument("--lab", action="store_true")
+    ap.add_argument("--quick-run", action="store_true",
+                    help="三关体验切片：BO1 / BO3 / 2-2 高压生死局")
+    ap.add_argument("--duel", nargs=2, type=float, metavar=("HIGH", "LOW"),
+                    help="只量两个 Entry 基准分的 BO1/BO3 胜率，例如 --duel 80 50")
+    ap.add_argument("--duel-runs", type=int, default=20000,
+                    help="--duel 的模拟次数（每种赛制，默认 20000）")
     ap.add_argument("--runs", type=int, default=200)
     ap.add_argument("--roster", default=None,
                     help="逗号分隔的五个人,绕过抽卡直接上场(认昵称也认 page)。"
@@ -410,6 +417,9 @@ def main():
         return
     if args.lab:
         lab(args)
+        return
+    if args.duel:
+        duel_entries(args.duel[0], args.duel[1], args.duel_runs)
         return
 
     rosters = P.load_rosters()
@@ -464,6 +474,10 @@ def main():
         print("   %s 掉到第 33 位,失去席位。" % shove.dropped.name)
 
     rng = random.Random(args.sim if args.sim is not None else args.seed)
+    if args.quick_run:
+        legs = quick_run(me, field, rng, args.cap)
+        show_quick_run(me, legs)
+        return
     stages, logs = run_major(field, rng, args.cap)
 
     for stage, me_t, advanced in player_path(stages):
@@ -529,6 +543,99 @@ def _fixed_field(args, rosters):
     if args.event:
         return M.real_field(args.event, rosters, args.cap)[0]
     return M.make_field(random.Random(20260828), M.load_config(), rosters, args.cap)
+
+
+# ------------------------------------------------------------------ M2 极简 Run
+
+QUICK_PHASES = (
+    ("第一关 · OPENING BO1", 1, PRESSURE_BO1),
+    ("第二关 · SERIES BO3", 3, PRESSURE_BO3),
+    ("第三关 · 2-2 高压生死局", 3, PRESSURE_DECIDER),
+)
+
+
+def quick_run(player, field, rng, cohesion_cap=M.COHESION_CAP):
+    """用三个实力最接近的真实对手跑一条短闭环，返回可供 CLI/UI 共用的结果。
+
+    这不是另造一套比赛规则：三关都调用 `play_match()`，只把完整 Major 中最能
+    体现四维的三个场景固定拿出来。对手按 Entry 接近程度选择，避免第一版体验
+    被 80 打 50 这种本来就该一边倒的对局淹没。
+    """
+    opponents = sorted((e for e in field if e is not player and not e.is_player),
+                       key=lambda e: (abs(e.entry - player.entry), e.name))
+    if len(opponents) < len(QUICK_PHASES):
+        raise ValueError("极简 Run 至少需要 %d 个 AI 对手" % len(QUICK_PHASES))
+    out = []
+    for i, ((label, bo, pressure), opponent) in enumerate(
+            zip(QUICK_PHASES, opponents), 1):
+        me = MatchTeam(player, i, cohesion_cap)
+        them = MatchTeam(opponent, i + 8, cohesion_cap)
+        result = play_match(me, them, rng, bo, pressure)
+        out.append({"label": label, "bo": bo, "pressure": pressure,
+                    "opponent": opponent, "result": result,
+                    "player_choke": me.choke(pressure),
+                    "opponent_choke": them.choke(pressure)})
+    return out
+
+
+def show_quick_run(player, legs):
+    wins = 0
+    print()
+    print("=" * 70)
+    print("M2 极简 Run — 三关只回答：你选的五个人如何改变比赛")
+    print("=" * 70)
+    for leg in legs:
+        r = leg["result"]
+        won = r.winner.entry is player
+        wins += won
+        print()
+        print(leg["label"])
+        print("  对手 %-20s  Entry %.1f : %.1f  赛前胜率 %.1f%%"
+              % (leg["opponent"].name, player.entry, leg["opponent"].entry,
+                 100 * r.pre))
+        if leg["pressure"]:
+            print("  压力罚分  你 %.2f / 对手 %.2f（经验与 caller 领导力负责减免）"
+                  % (leg["player_choke"], leg["opponent_choke"]))
+        print("  %s  %d:%d" % ("WIN" if won else "LOSS", r.a_maps, r.b_maps))
+        for i, m in enumerate(r.maps, 1):
+            c, eff, delta = m.mvp
+            tag = " · LIFE GAME" if delta >= 12 else ""
+            print("    Map %d  强度 %5.1f:%-5.1f  MVP %-14s %d→%d%s"
+                  % (i, m.sa, m.sb, c["nickname"], c["firepower"], round(eff), tag))
+    print()
+    print("RUN RESULT  %d-%d" % (wins, len(legs) - wins))
+
+
+def _probe_team(name, target):
+    """控制变量队：形状相同，只平移非火力底板使 baseline 精确落在 target。"""
+    team = _lab_team(name, 75, 70, 60, 70)
+    team.floor += float(target) - team.baseline()
+    return team
+
+
+def duel_entry_rates(high, low, runs=20000, seed=20260902):
+    """-> 两个 Entry 基准分在同形状队伍下的 BO1/BO3 实测胜率。"""
+    if runs <= 0:
+        raise ValueError("runs 必须大于 0")
+    a, b = _probe_team("HIGH", high), _probe_team("LOW", low)
+    out = {}
+    for bo in (1, 3):
+        rng = random.Random(seed + bo)
+        won = sum(play_match(a, b, rng, bo, PRESSURE_BO1).winner is a
+                  for _ in range(runs))
+        out[bo] = won / runs
+    return out
+
+
+def duel_entries(high, low, runs=20000):
+    rates = duel_entry_rates(high, low, runs)
+    print("Entry %.1f vs %.1f（同样的四维形状，只差基准强度）" % (high, low))
+    print("  不 Roll 的单图 Logistic：%.1f%%" % (100 * win_prob(high, low)))
+    print("  Form Roll 后 BO1：      %.1f%%  （弱队爆冷 %.1f%%）"
+          % (100 * rates[1], 100 * (1 - rates[1])))
+    print("  Form Roll 后 BO3：      %.1f%%  （弱队爆冷 %.1f%%）"
+          % (100 * rates[3], 100 * (1 - rates[3])))
+    print("  样本：每种赛制 %d 场" % runs)
 
 
 def selftest(args):

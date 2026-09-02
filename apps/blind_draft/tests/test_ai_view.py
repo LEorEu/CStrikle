@@ -6,14 +6,15 @@
 
   - 现况和卡面不一样的地方,必须有一条改动说明兜着。没有说明的差值意味着
     有一条没人记得的规则在改数,而这一页正是拿来找那种规则的。
-  - 卡库里没有的人不许被填成有:那一整块留白是**结论本身**——当前世界装得下
-    生涯世界没有的人,而四维的映射还没做。以前这里补的是 G1 占位卡,
-    等于把 The MongolZ 的三个真人换成三个虚构的人。
+  - 卡库里没有的人仍然没有玩家卡,但可以有 AI 专属的透明低置信先验；这不等于
+    用匿名 G1 占位替换真人。
   - 名额、余量、entry 算不算得动,这几件事必须分得开。
 """
 import unittest
 
+from blinddraft import ai_teams as A
 from blinddraft import cards as C
+from blinddraft import draft as P
 from blinddraft import major as M
 from bdserver import ai
 
@@ -56,6 +57,28 @@ class ViewTests(unittest.TestCase):
         self.assertEqual(len(picked), seats)
         self.assertGreater(len(teams), seats, "候选池没有余量,VRS 一动就得重抓")
 
+    def test_match_field_uses_the_same_snapshot_projection(self):
+        """AI 页面与真正比赛不许再各走一套名册/四维。"""
+        import random
+
+        cfg = M.load_config()
+        field = M.build_current_field(random.Random(1), cfg)
+        shown = {t["name"]: t for t in self.v["teams"] if t["stage"]}
+        self.assertEqual(len(field), 32)
+        self.assertFalse(any(c.get("_filler") for e in field for c in e.roster),
+                         "current 正赛不应再出现匿名占位人")
+        self.assertEqual({e.name for e in field}, set(shown))
+        for e in field:
+            page = shown[e.name]
+            actual = {c["nickname"]: c for c in e.roster}
+            expected = {p["nickname"]: p for p in page["roster"]}
+            self.assertEqual(set(actual), set(expected), e.name)
+            for nick, c in actual.items():
+                for key in C.ATTRS:
+                    self.assertEqual(c[key], expected[nick]["cur"][key],
+                                     "%s/%s 的 %s 两条路径不一致" %
+                                     (e.name, nick, key))
+
     def test_roster_comes_from_the_snapshot(self):
         """首发人数以队伍快照为准。不满五人就是不满,不补人。"""
         for t in self.v["teams"]:
@@ -63,12 +86,29 @@ class ViewTests(unittest.TestCase):
             self.assertTrue(t["region"], t["name"])
             self.assertTrue(t["seat"], t["name"])
 
-    def test_our_order_is_dense_among_scored_teams(self):
-        """entry 只在五人全有卡的队上算得动,那些队之间的顺位要连续。
+    def test_incomplete_team_does_not_take_a_slot(self):
+        """不满五人仍可在候选池排查，但正赛名额必须顺延给下一支完整队。"""
+        for t in self.v["teams"]:
+            if len(t["roster"]) != 5:
+                self.assertIsNone(t["stage"], t["name"])
 
-        算不动的队 our 必须是 None——**不能给一个残缺的名次**,
-        那会让它和别人排在一起,看起来像可比的。
-        """
+    def test_dual_role_caller_is_separate_from_weapon_role(self):
+        """Maka 是指挥狙；Graviti 已不是指挥。不能把二者压成一个 position。"""
+        team = next(t for t in self.v["teams"] if t["name"] == "3DMAX")
+        players = {p["nickname"]: p for p in team["roster"]}
+        self.assertEqual(players["Maka"]["position"], "AWPER")
+        self.assertTrue(players["Maka"]["caller"])
+        self.assertEqual(players["Graviti"]["position"], "RIFLER")
+        self.assertFalse(players["Graviti"]["caller"])
+
+        raw = next(t for t in A.build_pool_field(M.load_config())[0]
+                   if t["name"] == "3DMAX")
+        score = P.score(raw["roster"], P.load_rosters())
+        self.assertFalse(score["no_awp"], "指挥狙仍然应该满足主狙要求")
+        self.assertGreater(score["lead"], 45, "Maka 的 caller 领导力没有进入队伍分")
+
+    def test_our_order_is_dense_among_scored_teams(self):
+        """五人完整的队都能算 entry；快照缺人才留空，顺位必须连续。"""
         got = sorted(t["our"] for t in self.v["teams"] if t["our"] is not None)
         self.assertEqual(got, list(range(1, self.v["scored"] + 1)))
         for t in self.v["teams"]:
@@ -76,7 +116,7 @@ class ViewTests(unittest.TestCase):
                 self.assertIsNone(t["entry"])
                 self.assertIsNone(t["delta"])
             else:
-                self.assertEqual(t["real"], 5)
+                self.assertEqual(len(t["roster"]), 5)
 
     def test_delta_is_within_the_scored_subset(self):
         """顺位分歧要在同一批队里算。
@@ -103,6 +143,17 @@ class ViewTests(unittest.TestCase):
                         "%s 的 %s 变了(%s)却没有任何说明——有一条没人记得的"
                         "规则在改数" % (t["name"], p["nickname"], changed))
 
+    def test_every_current_dimension_has_provenance(self):
+        """Match 用到的每一维都必须能回答“这个数从哪来”。"""
+        for t in self.v["teams"]:
+            for p in t["roster"]:
+                sources = p["cur"]["sources"]
+                self.assertEqual(set(sources), set(C.ATTRS),
+                                 "%s/%s 的四维来源不完整" %
+                                 (t["name"], p["nickname"]))
+                self.assertGreaterEqual(p["cur"]["firepower"], 50,
+                                        "%s 仍在当前首发却跌破职业地板" % p["nickname"])
+
     def test_position_changes_are_declared(self):
         """位置改判要换整套模板,所以它必须写进改动说明。"""
         for t in self.v["teams"]:
@@ -111,20 +162,18 @@ class ViewTests(unittest.TestCase):
                     self.assertTrue(any("位置" in s for s in p["notes"]),
                                     "%s 的位置改判没写进说明" % p["nickname"])
 
-    def test_nocard_players_are_blank_not_invented(self):
-        """卡库里没有的人:卡面和现况两块都必须是空的。
-
-        以前这里补 G1 占位卡,那等于宣称"我们知道他有多强,他很弱"。
-        实际情况是"我们对他的生涯一无所知,但知道他现在打得怎么样"——
-        所以左边留白、右边有数,才是这一页要表达的东西。
-        """
+    def test_nocard_players_get_ai_prior_not_player_card(self):
+        """卡库外真人可参加 AI 比赛，但不能因此获得玩家卡或 Career Grade。"""
         nc = [p for t in self.v["teams"] for p in t["roster"] if p["nocard"]]
         self.assertTrue(nc, "一个卡库外的人都没有?候选池怕是没接上快照")
         for p in nc:
             self.assertIsNone(p["card"])
-            self.assertIsNone(p["cur"])
+            self.assertIsNotNone(p["cur"])
             self.assertIsNone(p["grade"])
             self.assertIsNone(p["page"])
+            for key in C.ATTRS:
+                self.assertIn(key, p["cur"])
+            self.assertTrue(p["cur"]["sources"])
 
     def test_nocard_players_still_have_evidence(self):
         """他们进来的**理由**就是右边那一列。大部分全空的话这一页白扩。

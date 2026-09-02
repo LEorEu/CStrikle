@@ -60,7 +60,7 @@ python -m venv .venv
 
 # Blind Draft 调参后台（本地工具，不上线、不进镜像）
 .\.venv\Scripts\uvicorn bdserver.main:app --host 127.0.0.1 --port 8621
-#   http://127.0.0.1:8621          卡牌页，647 张；`#<page>` 直接定位到某张卡
+#   http://127.0.0.1:8621          卡牌页，648 张；`#<page>` 直接定位到某张卡
 #   http://127.0.0.1:8621/ai       AI 对手页，候选池 45 支；`#all` 一次展开
 ```
 

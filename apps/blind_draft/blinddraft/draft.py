@@ -291,7 +291,8 @@ def chemistry(roster, rosters):
                          f"{where}  +{bonus:.1f}")
 
     for country, n in collections.Counter(c["country"] for c in roster).items():
-        if n >= 2:
+        # 卡库外真人暂时没有国籍时是空字符串；未知不能被当成“同国籍”。
+        if country and n >= 2:
             total += 1.5 * (n - 1)
             notes.append(f"同国籍 {country} x{n}  +{1.5 * (n - 1):.1f}")
 
@@ -305,7 +306,8 @@ def chemistry(roster, rosters):
             total -= 2.0
             notes.append(f"跨代拼凑  年龄差 {spread} 岁  -2.0")
 
-    n_igl = sum(1 for c in roster if c["position"] == "IGL")
+    n_igl = sum(1 for c in roster
+                if c.get("caller", c["position"] == "IGL"))
     if n_igl >= 2:
         total -= 3.0 * (n_igl - 1)
         notes.append(f"{n_igl} 个指挥抢话  -{3.0 * (n_igl - 1):.1f}")
@@ -321,11 +323,12 @@ def score(roster, rosters, money=0):
     f = sorted((get(c, "firepower") for c in roster), reverse=True)
     fire = f[0] * .35 + f[1] * .25 + st.mean(f[2:]) * .40
 
-    igls = [c for c in roster if c["position"] == "IGL"]
+    igls = [c for c in roster if c.get("caller", c["position"] == "IGL")]
     if igls:
         top = max(igls, key=lambda c: c["leadership"])
         # 只有最强的那个 IGL 算指挥;其余四人按步枪的领导力算,多塞指挥不是加成
-        others = [get(c, "leadership") if c["position"] != "IGL" else 25
+        others = [get(c, "leadership")
+                  if not c.get("caller", c["position"] == "IGL") else 25
                   for c in roster if c is not top]
         lead = get(top, "leadership") * .70 + st.mean(others) * .30
     else:

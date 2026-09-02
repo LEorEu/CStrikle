@@ -580,5 +580,9 @@
   "Chopper": {
     "played_role": "IGL",
     "reason": "人工复核:确认生涯代表位置为指挥。"
+  },
+  "Steel (Joshua Nissan)": {
+    "played_role": "IGL",
+    "reason": "生涯代表位置为 IGL；当前上游只保留 Without a Roof 教练职务，不能据此把选手时期从 Draft 卡池移除。"
   }
 }

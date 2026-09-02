@@ -1,25 +1,24 @@
 # -*- coding: utf-8 -*-
-"""Blind Draft — AI 对手用「当前状态」，不是「生涯巅峰」
+"""Blind Draft — AI 对手用「当前状态」，不是「生涯巅峰」。
 
 这是和抽卡那边**故意分叉**的一层，分叉点只有一个：
 
     玩家抽到的卡  = 这个人生涯最好的样子（played_role + 巅峰四维）
-    赛场上的 AI  = 这支队现在的样子（roles + 当前阵容 + 年龄衰减）
+    赛场上的 AI  = 这支队现在的样子（快照首发 + 当前角色 + 当前竞技证据）
 
 为什么必须分叉：卡库把 magixx 判成步枪手，理由写在
 `player_overrides.json` 里——「该届夺冠时队内指挥另有其人，他的生涯代表位置
 是步枪手，后期才接手指挥」。这对抽卡完全正确；但 2026 年的 Spirit 里
 magixx 就是在喊战术的那个人。同一张卡被两个系统用，而两个系统要的时间点不同。
 
-三条口径，数据都是现成的：
+当前权威路径 `build_pool_field()` 的三条口径：
 
-  阵容   卡上的 `team` 字段（当前所属队），剔掉教练/领队/解说和已退役的人
-  位置   players.json 的 `roles`（当前角色）。它是有序的，第一个是主位置
-  排名   data/hltv_top100.json 是**当前 HLTV 世界队伍排名**,不是选手榜。
-         设计稿 §2 一直写着「当前 VRS 种子无法还原」——其实它一直在库里。
+  阵容/位置  team_snapshot.json 的真实首发与队内位置
+  当前火力   5e_player_stats.json 的近 12 个月 S 级证据，经人工锚定标尺映射
+  其余维度   玩家卡的生涯先验；卡库外真人使用有来源、低置信的角色先验
 
-唯一凭空定的是年龄衰减曲线：库里没有任何「这个人现在打得怎么样」的个人数据
-（top20 是历年个人奖，top100 是队伍排名），所以只能设计，不能查。
+旧 `build_ai_field()` 仍保留作历史兼容（卡上 team + roles + 年龄衰减 + 占位人），
+但 AI 页面、Major 和 Match 都不再调用它。
 
 不改卡库、不改 `blinddraft/cards.py`、不写 `data/`（只读）。
 """
@@ -29,7 +28,7 @@ import json
 import os
 import sys
 
-from playerdb.paths import DATA as DATA_DIR
+from playerdb.paths import BLIND_DRAFT, DATA as DATA_DIR
 
 from . import cards as G          # 只读:借它的位置模板,不改它
 from . import draft as P
@@ -38,6 +37,7 @@ from . import major as M
 RANKING = str(DATA_DIR / "hltv_top100.json")
 PLAYERS = str(DATA_DIR / "players.json")
 SNAPSHOT = DATA_DIR / "blind_draft" / "team_snapshot.json"
+STATS = BLIND_DRAFT / "5e_player_stats.json"
 
 FIELD_SIZE = 32
 
@@ -120,12 +120,32 @@ def retemplate(card, new_pos):
 FILLER_GRADE = 1
 MAX_FILLER = 1          # 一支队最多补几个；补 2 个以上的队请在配置里手写
 
+# Supporting 样本向先验收缩的强度。这个数来自 firepower.py 对逐图噪声的估计；
+# 这里不是重新拟合一把尺子，只把同一份当前证据投影到 AI 当前卡。
+SHRINK_MAPS = 31.0
+# 当前赛场的职业首发火力下限。和 firepower.py 的世界定义一致；年龄回退不能
+# 把 karrigan/FalleN 这类仍在一线首发的 IGL 算到 20–40。
+CURRENT_FIRE_FLOOR = 50
+
 
 # ------------------------------------------------------------------ 读数据
 
 def load_players():
     return {p["page"]: p for p in
             json.load(open(PLAYERS, encoding="utf-8"))["players"]}
+
+
+def load_stats():
+    if not STATS.exists():
+        return {}
+    return json.loads(STATS.read_text(encoding="utf-8")).get("players", {})
+
+
+def _num(v):
+    try:
+        return float(str(v).replace("%", "").replace("+", "").replace(",", ""))
+    except (TypeError, ValueError):
+        return None
 
 
 def load_ranking():
@@ -230,11 +250,55 @@ def to_current(card, players):
     return c
 
 
-def settle(card):
-    """全队仲裁完之后，把位置落到卡上，领导力跟着换。"""
+def _performance_firepower(card, row, scale):
+    """把当前竞技证据投影到一张 AI 卡；无可靠证据时保留传入的先验。
+
+    Strong 直接读标尺；Supporting 按图数向先验收缩。IGL 不走这条线——rating
+    对指挥的相关性没有随样本增长，测到的是资源分配而不是他的生涯枪法水平。
+    """
+    prior = card["firepower"]
+    out = {"value": prior, "source": "career_age_fallback", "confidence": "low"}
+    if card["position"] == "IGL":
+        out.update(source="igl_career_prior",
+                   why="IGL 的当前 rating 不用于推火力")
+        return out
+    if not row or not scale:
+        out["why"] = "没有可用的当前 S 级证据"
+        return out
+
+    fn, lo, hi = scale
+    rating = _num(row.get("rating"))
+    maps = int(_num(row.get("map_count")) or 0)
+    if rating is None or not (lo <= rating <= hi) or maps < 30:
+        out["why"] = ("当前证据不在标尺内或不足 30 图"
+                      if rating is not None else "当前数据没有 rating")
+        out.update(rating=rating, maps=maps)
+        return out
+
+    target = int(round(fn(rating)))
+    if maps >= 80:
+        value, source, confidence = target, "current_performance", "strong"
+        why = "%d 图 S 级样本，直接读取当前火力标尺" % maps
+    else:
+        weight = maps / (maps + SHRINK_MAPS)
+        value = int(round(prior + (target - prior) * weight))
+        source, confidence = "current_performance_shrunk", "supporting"
+        why = "%d 图 S 级样本，按 %.0f%% 权重向生涯先验收缩" % (maps, 100 * weight)
+    out.update(value=max(1, min(99, value)), source=source, confidence=confidence,
+               why=why, rating=rating, maps=maps, target=target)
+    return out
+
+
+def settle(card, stat=None, scale=None, caller=None):
+    """全队仲裁完后落当前位置，再逐维生成 AI 当前卡。
+
+    没传 stat/scale 时保留旧行为，供历史命令和人工阵容使用；队伍快照路径会传入
+    当前证据，并把四维来源留在 `_sources`，让页面和 Match 共用同一笔账。
+    """
     c = dict(card)
     notes = []
     pos = c.pop("_pos")
+    career_lead = card["leadership"]
     if pos != card["position"]:
         c = retemplate(c, pos)
         c["position"] = pos
@@ -243,15 +307,80 @@ def settle(card):
                         card["leadership"], c["leadership"],
                         card["stability"], c["stability"]))
 
+    is_caller = (pos == "IGL") if caller is None else bool(caller)
+    if is_caller and pos != "IGL":
+        # 指挥狙/指挥枪男保留武器位置，同时用 caller 身份提供领导力。生涯卡本来
+        # 就是 IGL 时保留那份履历；否则至少给当前档的 IGL 模板，不凭空造荣誉。
+        grade = int(c.get("grade") or 1)
+        want = (career_lead if card["position"] == "IGL"
+                else max(c["leadership"], G.TEMPLATE["IGL"][grade][1]))
+        if want != c["leadership"]:
+            notes.append("兼任 caller，领导 %d→%d" % (c["leadership"], want))
+            c["leadership"] = want
+    c["caller"] = is_caller
+
     loss = age_loss(card.get("age"))
     if loss > 0.05:
         was = c["firepower"]
-        c["firepower"] = max(int(round(was - loss)), 1)
+        c["firepower"] = max(int(round(was - loss)), CURRENT_FIRE_FLOOR)
         notes.append("%d 岁，火力 %d→%d" % (card["age"], was, c["firepower"]))
+
+    # 当前位置重套 IGL G1 模板也可能把火力放到 45；职业首发地板在所有回退之后、
+    # 当前证据之前统一生效。
+    if c["firepower"] < CURRENT_FIRE_FLOOR:
+        was = c["firepower"]
+        c["firepower"] = CURRENT_FIRE_FLOOR
+        notes.append("当前职业首发地板 %d→%d" % (was, CURRENT_FIRE_FLOOR))
+
+    perf = _performance_firepower(c, stat, scale)
+    if perf["value"] != c["firepower"]:
+        was = c["firepower"]
+        c["firepower"] = perf["value"]
+        notes.append("当前火力 %d→%d：%s" % (was, c["firepower"], perf["why"]))
 
     c["_notes"] = notes
     c["_filler"] = False
-    c["overall"] = P.overall(c)
+    c["_sources"] = {
+        "firepower": perf,
+        "leadership": {"source": ("career_evidence_current_caller" if is_caller
+                                    else "career_evidence_current_role"),
+                       "confidence": "medium"},
+        "experience": {"source": "career_evidence", "confidence": "high"},
+        "stability": {"source": "career_prior", "confidence": "low",
+                      "why": "现有聚合 KAST 不能代表逐图方差"},
+    }
+    c["overall"] = round(P.overall(c), 1)
+    return c
+
+
+def make_current_player(row, team, age, stat, scale):
+    """给卡库外的真人生成 AI 专属低置信先验，不让他进入玩家卡库。"""
+    pos = row.get("role") if row.get("role") in G.TEMPLATE else "RIFLER"
+    base = G.TEMPLATE[pos][1]
+    c = dict(zip(G.ATTRS, base))
+    c["firepower"] = max(c["firepower"], 50)
+    is_caller = bool(row.get("caller", pos == "IGL"))
+    if is_caller and pos != "IGL":
+        c["leadership"] = G.TEMPLATE["IGL"][1][1]
+    c.update({
+        "page": None, "nickname": row["name"], "position": pos,
+        "grade": None, "country": "", "team": team, "age": age,
+        "majors": 0, "champions": 0, "titles": [],
+        "_notes": ["卡库外真人：其生涯没有进入玩家卡库，AI 四维使用透明先验"],
+        "caller": is_caller, "_filler": False, "_nocard": True,
+    })
+    perf = _performance_firepower(c, stat, scale)
+    c["firepower"] = perf["value"]
+    if perf["source"].startswith("current_performance"):
+        c["_notes"].append("当前火力 %d：%s" % (c["firepower"], perf["why"]))
+    c["_sources"] = {
+        "firepower": perf,
+        "leadership": {"source": ("caller_template_g1" if is_caller
+                                    else "role_template_g1"), "confidence": "low"},
+        "experience": {"source": "unknown_career_g1", "confidence": "low"},
+        "stability": {"source": "role_template_g1", "confidence": "low"},
+    }
+    c["overall"] = round(P.overall(c), 1)
     return c
 
 
@@ -307,17 +436,17 @@ def _age_at(birthday, asof):
 
 
 def build_pool_field(cfg=None):
-    """**当前世界的候选池**：各大区 VRS 前 N 支，阵容和队内位置直接查队伍快照。
+    """**当前世界的候选池**：快照阵容 + 逐维 AI 当前卡。
 
     和 `build_ai_field` 的区别不是参数，是**证据来源**：
 
         build_ai_field   HLTV top100 排名 + 卡上的 `team` 字段 + 猜位置 + G1 占位
-        build_pool_field 队伍快照的当前首发 + 队伍页写着的队内位置 + 不补人
+        build_pool_field 队伍快照的当前首发 + 队内位置 + 当前竞技证据
 
     不补占位人是关键。卡库只收打过 Major 的人，而当前世界本来就装得下卡库
-    没有的人——The MongolZ 现在首发里有三个从没打过 Major。原来拿 G1 占位去顶
-    那三个位置，等于把一支真队换成了三个虚构的人。这里让他们**以本人身份进来**，
-    只是四维那一侧暂时空着（映射还没做，见 §52.6）。
+    没有的人——The MongolZ 现在首发里有三个从没打过 Major。这里让他们以本人
+    身份进来：有 S 级当前证据就生成当前火力，其余维度使用明确标低置信度的 G1
+    位置先验。这些值只服务 AI 赛场，不会把人写进玩家卡库。
 
     名额（`regional_slots`）决定谁入选 32 席，候选池（`candidate_pool`）
     比它大 13 支——余量是留给 VRS 变动的，不是多打几场。
@@ -327,7 +456,15 @@ def build_pool_field(cfg=None):
     slots = cfg.get("regional_slots") or {}
     raw = json.loads(SNAPSHOT.read_text(encoding="utf-8")) if SNAPSHOT.exists() else {}
     asof = raw.get("snapshot_date", "")
-    cards = {c["nickname"].casefold(): c for c in P.load_cards()}
+    card_rows = P.load_cards()
+    by_nick = {c["nickname"].casefold(): c for c in card_rows}
+    by_page = {c["page"]: c for c in card_rows}
+    stats = load_stats()
+    try:
+        from . import firepower as F
+        scale = F.build_scale(cards=card_rows)
+    except (ValueError, OSError):
+        scale = None
 
     ranked = {}
     for t in raw.get("teams", []):
@@ -348,17 +485,31 @@ def build_pool_field(cfg=None):
             after = len(ranked.get(reg, []))
             picked.append((t, reg, after + 1))
 
+    # 区域名额只在五名真实首发完整的队之间顺延。不满五人的队仍保留在候选池
+    # 页面里供排查，但不能靠虚构占位人拿走正赛席位；该区下一支完整队递补。
+    eligible_seat = {}
+    eligible_count = collections.Counter()
+    for t, reg, _seat in picked:
+        starters = [r for r in t.get("roster", []) if r.get("starter")]
+        if len(starters) == 5:
+            eligible_count[reg] += 1
+            eligible_seat[t["id"]] = eligible_count[reg]
+
     field = []
     for t, reg, seat in sorted(picked, key=lambda x: x[0].get("vrs_rank") or 9999):
         s = slots.get(reg) or {}
         n3, n2, n1 = s.get("stage3", 0), s.get("stage2", 0), s.get("stage1", 0)
-        stage = (3 if seat <= n3 else 2 if seat <= n3 + n2
-                 else 1 if seat <= n3 + n2 + n1 else None)
+        qseat = eligible_seat.get(t["id"])
+        stage = (3 if qseat and qseat <= n3
+                 else 2 if qseat and qseat <= n3 + n2
+                 else 1 if qseat and qseat <= n3 + n2 + n1 else None)
         roster, real = [], 0
         for r in t.get("roster", []):
             if not r.get("starter"):
                 continue
-            base = cards.get(r["name"].casefold())
+            stat = stats.get(r.get("id") or "")
+            base = (by_page.get((stat or {}).get("card_page"))
+                    or by_nick.get(r["name"].casefold()))
             age = _age_at(r.get("birthday"), asof)
             if base:
                 real += 1
@@ -366,20 +517,18 @@ def build_pool_field(cfg=None):
                 c["_pos"] = r["role"]
                 if age:
                     c["age"] = age
-                c = settle(c)
+                c = settle(c, stat, scale, r.get("caller", r["role"] == "IGL"))
+                c["_nocard"] = False
             else:
-                # 卡库里没有他。**不造占位卡**——空着比编一个数诚实。
-                c = {"page": None, "nickname": r["name"], "position": r["role"],
-                     "grade": None, "age": age, "country": "",
-                     "_notes": ["卡库里没有这个人：生涯世界只收打过 Major 的人"],
-                     "_filler": False, "_nocard": True}
+                c = make_current_player(r, t["name"], age, stat, scale)
             c["_5e_id"] = r.get("id")
             c["_role_src"] = r.get("role_source")
             roster.append(c)
         field.append({
             "name": t["name"], "id": t["id"], "region": reg, "seat": seat,
-            "stage": stage, "vrs": t.get("vrs_rank"), "rank": t.get("hltv_rank"),
-            "roster": roster, "real": real, "source": "队伍快照",
+            "qualified_seat": qseat, "stage": stage,
+            "vrs": t.get("vrs_rank"), "rank": t.get("hltv_rank"),
+            "roster": roster, "real": real, "carded": real, "source": "队伍快照",
             "adjust": float(((cfg.get("teams") or {}).get(t["name"]) or {}).get("adjust") or 0.0),
             "gaps": t.get("role_gaps"), "conflicts": t.get("role_conflicts"),
         })
@@ -449,7 +598,15 @@ def _hand_rosters(cfg, cards):
 
 
 def entry_of(team, rosters_idx, cohesion_cap):
+    """当前真实队固定吃满磨合度；玩家临时队仍由历史关系计算。
+
+    卡库外新人没有 Major 队友历史，若仍按玩家队的 chemistry() 算，会因为“我们
+    不知道”而把一支每天训练的真实队判成没有磨合。当前队的差异不靠这项排名，
+    它只表达玩家草台班子相对真队的税。
+    """
     r = M.entry_rating(team["roster"], rosters_idx, cohesion_cap)
+    r = dict(r, chem_raw=max(r["chem_raw"], cohesion_cap),
+             cohesion=cohesion_cap, entry=r["base"] + cohesion_cap)
     adj = team.get("adjust") or 0.0
     return dict(r, entry=r["entry"] + adj, adjust=adj) if adj else r
 
@@ -466,7 +623,8 @@ def main():
     cfg = M.load_config()
     cap = args.cap if args.cap is not None else float(cfg.get("cohesion_cap", 4.0))
     idx = P.load_rosters()
-    field, skipped, asof = build_ai_field(args.size, cfg=cfg)
+    pool, asof = build_pool_field(cfg)
+    field = [t for t in pool if t.get("stage")][:args.size]
 
     if args.changes:
         for t in field:
@@ -476,7 +634,7 @@ def main():
                                               " · ".join(c["_notes"])))
         return
 
-    print("AI 赛场 — 按 HLTV 世界排名（%s），当前阵容 + 当前位置 + 年龄衰减" % asof)
+    print("AI 赛场 — 区域 VRS 名额（%s），快照首发 + AI 当前四维" % asof)
     print("=" * 78)
     rated = []
     for t in field:
@@ -484,18 +642,14 @@ def main():
         rated.append((r["entry"], t, r))
     rated.sort(key=lambda x: -x[0])
     for i, (e, t, r) in enumerate(rated, 1):
-        flag = "" if t["real"] == 5 else "  [补 %d 人]" % (5 - t["real"])
+        flag = "" if t["real"] == 5 else "  [AI先验 %d 人]" % (5 - t["real"])
         if t.get("adjust"):
             flag += "  [人工 %+.0f]" % t["adjust"]
-        print("%2d  %-20s HLTV #%-3d  评分 %5.1f  默契 %4.1f%s"
-              % (i, t["name"], t["rank"], e, r["chem_raw"], flag))
+        print("%2d  %-20s VRS #%-3s  评分 %5.1f  磨合 %4.1f%s"
+              % (i, t["name"], t.get("vrs") or "-", e, r["cohesion"], flag))
         print("      " + "  ".join(
             "%s(%s%s)" % (c["nickname"], c["position"][:3],
                           "*" if c["_notes"] else "") for c in t["roster"]))
-    print()
-    print("跳过（现役队员不足，需要在 major_field.json 里手写阵容）:")
-    for rank, name, n in skipped[:12]:
-        print("   HLTV #%-3d %-22s 只有 %d 人" % (rank, name, n))
 
 
 if __name__ == "__main__":

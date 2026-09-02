@@ -4,18 +4,17 @@
 **这一页不提供编辑。** 卡牌页那边人工层是主角(算法算错了要有出口),这边
 恰恰相反:AI 的"当前实力"以前只能靠一条手拖的年龄曲线,`blinddraft/ai_teams.py`
 自己写着「库里没有任何『这个人现在打得怎么样』的个人数据,所以只能设计,
-不能查」——而现在 `5e_player_stats.json` 里有 354 个人的近 12 个月实测数据。
+不能查」——而现在 `5e_player_stats.json` 已有候选池近 12 个月的实测数据。
 在有证据的地方开一个手调数值的口子,等于把刚拿到的证据又换回骰子。
 
 所以这一页的职责是**把三列摆在一起**,给之后那套映射算法当工作台:
 
     卡面(生涯巅峰)   ← blinddraft/cards.py,玩家抽到的那张
-    现况(AI 用的)    ← 卡面 经 retemplate(位置改判) + age_loss(年龄衰减)
+    现况(AI 用的)    ← 当前角色 + 5E 当前火力 + 逐维生涯先验
     5E 实测          ← rating / adr / kast / kd / kpr / dpr / hs,近 12 个月
 
-第三列将来要取代第二列里"年龄衰减"那一段,但只取代得了**火力和稳定**:
-5E 那套是竞技数据,对领导和经验几乎零信息量,那两维得继续走生涯侧的证据
-(Major 次数、冠军、igl_score)。所以对应关系是逐维的,不是整卡替换。
+5E 当前证据现在只接管 Firepower；Leadership / Experience 继续走生涯证据，
+Stability 在取得逐图方差前保留低置信先验。对应关系是逐维的，不是整卡替换。
 
 队一级还摆了一个对照:我们算出来的 entry 顺位 vs HLTV 世界排名。
 `blinddraft/major.py` 的注释里量过这两者的秩相关只有 0.53——那个数就是
@@ -106,8 +105,8 @@ def build_view(size=None) -> dict:
     The MongolZ 现在首发里三个人没打过 Major,补三张占位卡等于把这支队换成
     三个虚构的人。现在他们以本人身份进来,只是四维那一侧空着。
 
-    代价是 entry 只算得出一部分:队里五个人都有卡才算得动(45 支里 25 支)。
-    没算的不填数,页面留白——那正是接下来那套映射要补上的位置。
+    卡库外真人现在也有 AI 专属的透明先验，所以每支五人完整的队都能计算 entry；
+    他们的玩家卡一栏仍留白，不会因此进入玩家抽卡库。
     """
     cfg = M.load_config()
     cap = float(cfg.get("cohesion_cap", 4.0))
@@ -120,11 +119,10 @@ def build_view(size=None) -> dict:
     career = {c["page"]: c for c in P.load_cards()}
     snap = snapshot_index()
 
-    # entry 只在五人全有卡的队上算得动。算得出的那些之间再排名次,
-    # 算不出的 our=None——不要拿一个残缺的 entry 去和别人比顺位。
+    # 每个人现在都有 AI 当前四维；只有快照本身不满五人的队不能计算 entry。
     scored = []
     for t in field:
-        if t["real"] == 5:
+        if len(t["roster"]) == 5:
             r = A.entry_of(t, idx, cap)
             scored.append((r["entry"], t["name"], r))
     scored.sort(key=lambda x: -x[0])
@@ -155,14 +153,13 @@ def build_view(size=None) -> dict:
             roster.append({
                 "page": c.get("page"), "nickname": c["nickname"],
                 "position": c["position"], "grade": c.get("grade"),
+                "caller": bool(c.get("caller", c["position"] == "IGL")),
                 "age": c.get("age"), "country": c.get("country", ""),
                 "nocard": bool(c.get("_nocard")),
                 "role_src": c.get("_role_src"),
                 "notes": c.get("_notes") or [],
-                # 卡库里没有的人四维整块留空。留白比编一个数诚实,
-                # 也让"这里还缺一套映射"在页面上看得见。
-                "cur": (None if c.get("_nocard") else
-                        {k: c[k] for k in C.ATTRS} | {"overall": c["overall"]}),
+                "cur": {k: c[k] for k in C.ATTRS} | {"overall": c["overall"],
+                                                           "sources": c.get("_sources") or {}},
                 "card": ({k: base[k] for k in C.ATTRS} | {"overall": base["overall"],
                           "position": base["position"], "grade": base["grade"]}
                          if base else None),
@@ -180,12 +177,17 @@ def build_view(size=None) -> dict:
         pos = our.get(t["name"])
         r = rate.get(t["name"])
         ho = hltv_order.get(t["name"])
+        evidence = {k: sum(1 for c in t["roster"]
+                           if (c.get("_sources", {}).get("firepower", {})
+                               .get("confidence")) == k)
+                    for k in ("strong", "supporting", "low")}
         teams.append({
             "name": t["name"], "hltv": t["rank"], "vrs": t["vrs"],
             "region": t["region"], "seat": t["seat"], "stage": t["stage"],
             "our": pos, "hltv_order": ho,
             "delta": (ho - pos) if (ho and pos) else None,
             "entry": round(r["entry"], 1) if r else None,
+            "evidence": evidence,
             "chem": round(r["chem_raw"], 1) if r else None,
             "cohesion": round(r["cohesion"], 1) if r else None,
             "adjust": t.get("adjust") or 0.0,

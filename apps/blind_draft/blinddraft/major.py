@@ -22,6 +22,7 @@ import os
 import random
 import statistics as st
 import sys
+from pathlib import Path
 
 from playerdb.paths import BLIND_DRAFT, DATA as DATA_DIR
 
@@ -158,7 +159,7 @@ def load_config(path=None):
     """读 data/blind_draft/major_field.json,缺什么用 DEFAULT_CONFIG 补。"""
     cfg = dict(DEFAULT_CONFIG)
     try:
-        raw = json.load(open(path or CONFIG_PATH, encoding="utf-8"))
+        raw = json.loads(Path(path or CONFIG_PATH).read_text(encoding="utf-8"))
     except (IOError, OSError):
         return cfg
     cfg.update({k: v for k, v in raw.items() if not k.startswith("_")})
@@ -268,44 +269,41 @@ def build_field(rng, cfg=None, rosters=None, cohesion_cap=COHESION_CAP, pool=Non
 
 
 def build_current_field(rng, cfg=None, rosters=None, cohesion_cap=COHESION_CAP):
-    """§46:AI 赛场用**当前状态**——当前阵容、当前位置、年龄衰减。
+    """AI 赛场：区域 VRS 名额 + 快照首发 + 逐维 AI 当前卡。
 
     和 build_field 的分工:
       build_field          队和阵容都来自 pool 里那几届 Major 的参赛名单
-      build_current_field  队来自 HLTV 当前世界排名,阵容来自卡上的 team 字段
+      build_current_field  队和阵容来自 team_snapshot,四维来自 AI current projection
 
-    候选池是 HLTV top100 里**现在还能凑齐五个人**的队(允许 max_filler 个新秀
-    占位)。HLTV 排名只用来「谁还在打职业」这一件事,顺位仍然按我们自己的
-    Entry Rating 排——这是 §46.10 定下来的:排名只做参考,不当种子。
+    `build_pool_field` 已按 regional_slots 标出本届 32 个席位；candidate_pool 多出
+    的 13 支只是 VRS 变动余量，不是每局重新抽签。进入正赛后仍按我们的 Entry
+    Rating 排全局种子，让玩家按同一把尺子插入。
     """
     from . import ai_teams as A           # 延迟导入:A 反过来要用本模块
     cfg = cfg or load_config()
     rosters = rosters if rosters is not None else load_rosters_cached()
 
-    teams, _skipped, asof = A.build_ai_field(
-        200, max_filler=int(cfg.get("max_filler", A.MAX_FILLER)), cfg=cfg)
-    made = {}
-    for t in teams:
-        e = Entry(t["name"], t["roster"],
-                  entry_rating(t["roster"], rosters, cohesion_cap))
-        # teams.<队>.adjust:直接在「分」上加减。见下面 adjust 的注释。
-        adj = float(t.get("adjust") or 0.0)
-        if adj:
-            e.adjust = adj
-            e.rating = dict(e.rating, entry=e.rating["entry"] + adj, adjust=adj)
+    teams, asof = A.build_pool_field(cfg)
+    qualified = [t for t in teams if t.get("stage")]
+    broken = [(t["name"], len(t["roster"])) for t in qualified
+              if len(t["roster"]) != 5]
+    if broken:
+        raise ValueError("正赛席位的快照首发不满五人：%s" % broken)
+    if len(qualified) != FIELD_SIZE:
+        raise ValueError("regional_slots 应产生 %d 席，实际 %d" %
+                         (FIELD_SIZE, len(qualified)))
+
+    field = []
+    for t in qualified:
+        rating = A.entry_of(t, rosters, cohesion_cap)
+        e = Entry(t["name"], t["roster"], rating)
+        if t.get("adjust"):
+            e.adjust = float(t["adjust"])
         e.event = "当前阵容 @ %s" % (asof or "?")
         e.hltv = t["rank"]
-        made[t["name"]] = e
-
-    over = cfg.get("teams", {})
-    names = [n for n in made if over.get(n, {}).get("weight", 1.0) > 0]
-    names.sort(key=lambda n: -made[n].entry)
-    ranked = [(n, i, (cfg["weight_decay"] ** (i - 1)
-                      if over.get(n, {}).get("weight") is None
-                      else float(over[n]["weight"])))
-              for i, n in enumerate(names, 1)]
-
-    field = [made[n] for n in roll_seats(ranked, cfg, rng)]
+        e.vrs = t.get("vrs")
+        e.regional_stage = t["stage"]
+        field.append(e)
     field.sort(key=lambda e: -e.entry)
     return field
 
@@ -324,9 +322,9 @@ def field_label(cfg, field):
         return ("%d 支队 · 池子 %s · 前 %d 固定 · 阵容 %s"
                 % (len(field), " + ".join(cfg["pool"]), cfg["locked_top"],
                    cfg["roster_mode"]))
-    fill = sum(1 for e in field for c in e.roster if c.get("_filler"))
-    return ("%d 支队 · 当前阵容 + 当前位置 + 年龄衰减 · 前 %d 固定 · 新秀占位 %d 人"
-            % (len(field), cfg["locked_top"], fill))
+    inferred = sum(1 for e in field for c in e.roster if c.get("_nocard"))
+    return ("%d 支队 · 区域 VRS 名额 + 快照首发 + AI 当前四维 · "
+            "卡库外真人先验 %d 人" % (len(field), inferred))
 
 
 _HAND_CACHE = {}

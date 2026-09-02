@@ -1,4 +1,9 @@
 {
-  "_note": "当前世界的位置人工层。格式 {\"队名\": {\"IGL\": \"昵称\", \"AWPER\": \"昵称\"}}。只在队伍页 tag 和 Liquipedia 都判不出来时才需要写；写了就压过竞技数据兜底。队名用 team_snapshot.json 里的 name 或 abbr。",
-  "_example": {"Ninjas in Pyjamas": {"IGL": "sjuush"}}
+  "_note": "当前世界的位置人工层。格式 {\"队名\": {\"IGL\": \"昵称\", \"AWPER\": \"昵称\"}}，写了就压过队伍页和竞技数据。IGL 与 AWPER 可以是同一人：role 仍记 AWPER，caller 单独为 true。队名用 team_snapshot.json 里的 name 或 abbr。",
+  "_example": {"Ninjas in Pyjamas": {"IGL": "sjuush"}},
+  "3DMAX": {
+    "IGL": "Maka",
+    "AWPER": "Maka",
+    "_reason": "Maka 当前兼任指挥与主狙；Graviti 已不再担任指挥。"
+  }
 }

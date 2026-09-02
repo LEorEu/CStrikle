@@ -2,15 +2,12 @@
  *
  * 一行一个人，三组数并排：
  *   卡面   生涯巅峰，玩家抽到的那张（blinddraft/cards.py）
- *   现况   AI 实际用的 = 卡面 经 位置改判 + 年龄衰减（blinddraft/ai_teams.py）
+ *   现况   AI 实际用的逐维当前卡；每格带来源和置信度（blinddraft/ai_teams.py）
  *   5E     近 12 个月的实测竞技数据（bdtools/fetch_5e_stats.py）
  *
  * 队伍是**候选池 45 支**：各大区 VRS 前 N，阵容和队内位置直接查队伍快照。
- * 里面有 53 个卡库没有的人——当前世界本来就装得下他们。他们左边两组留白，
- * 不补占位卡：编一个数出来，会让「还缺一套映射」这件事从页面上消失。
- *
- * 第三组将来要取代第二组里“年龄衰减”那一段。摆在一起是为了让那套映射有得可看：
- * 现在“现况”里的每一分下降都来自一条手拖的曲线，右边那几列才是证据。
+ * 卡库外真人的“卡面”留白，但“现况”可由当前证据 + 透明低置信先验生成；
+ * 这不会把他们写进玩家卡库，也不再用匿名 G1 占位替换真人。
  */
 'use strict';
 
@@ -47,12 +44,12 @@ async function load() {
       阵容与队内位置来自 <b>5eplay 快照（${esc(DATA.snapshot_date)}）</b>，
       实测窗口 <b>${esc((DATA.stats_window || '').replace('_', ' → '))}</b> · ${esc(DATA.stats_grade)}。
       默契上限 ${DATA.cap}。</div>
-    <div class="warn"><b>${c.nocard} 人卡库里没有</b>——当前世界装得下生涯世界没有的人，
-      他们左边两组留白而不是补占位卡。代价是 entry 只有 <b>${DATA.scored} / ${DATA.teams.length}</b>
-      支队算得动（五人全有卡才算得出），其余留白；ρ 也只在这 ${DATA.scored} 支之间算。</div>
-    <div>年龄衰减 <b>loss = ${DATA.age_curve.rate} × (岁 − ${DATA.age_curve.knee})<sup>${DATA.age_curve.exp}</sup></b>
-      ——这条曲线是拖出来的，不是查出来的；右边的 5E 三列就是用来取代它的证据。
-      算得动的那些队，entry 顺位与 HLTV 排名秩相关 <b>ρ = ${DATA.rho}</b>。</div>`;
+    <div class="warn"><b>${c.nocard} 人卡库里没有</b>——他们没有玩家卡，但有 AI 专属当前四维；
+      当前证据不足的维度会明确标成低置信先验。五人完整的 <b>${DATA.scored} / ${DATA.teams.length}</b>
+      支队均可计算预测种子分。</div>
+    <div>当前 Firepower：80 图以上直接读标尺，30–79 图向生涯先验收缩；IGL 与无可靠证据者
+      才使用年龄/生涯回退。预测顺位与 HLTV 排名秩相关 <b>ρ = ${DATA.rho}</b>，
+      它是 Match 的赛前基准，不是官方实力排名。</div>`;
   if (location.hash === '#all') {
     $('#expandAll').checked = true;
     DATA.teams.forEach((t) => open.add(t.name));
@@ -85,6 +82,7 @@ function teamHead(t) {
     t.real < 5 ? `<span class="tag warn">${5 - t.real} 人卡库里没有</span>` : '',
     t.adjust ? `<span class="tag acc">人工 ${t.adjust > 0 ? '+' : ''}${t.adjust}</span>` : '',
     (t.gaps || []).length ? `<span class="tag warn">缺 ${t.gaps.join('/')}</span>` : '',
+    t.evidence ? `<span class="tag">火力证据 ${t.evidence.strong}强/${t.evidence.supporting}弱/${t.evidence.low}先验</span>` : '',
   ].join('');
   // 区内名次才是决定名额的那个数，全球 VRS 只用来排种子。以前这里把全球名次
   // 标成「区内 VRS」，一直是错的。
@@ -99,7 +97,7 @@ function teamHead(t) {
       <div class="nm">${esc(t.name)}${tags}</div>
       <div class="sub2">${esc(sub || '—')}</div>
     </div>
-    ${num(t.entry == null ? '<span class="na">—</span>' : t.entry, 'entry')}
+    ${num(t.entry == null ? '<span class="na">—</span>' : t.entry, '预测分')}
     ${num(t.cohesion == null ? '<span class="na">—</span>' : t.cohesion,
           t.chem != null && t.chem > t.cohesion ? `默契 · 原始 ${t.chem}` : '默契')}
     ${num(t.hltv ? '#' + t.hltv : '<span class="na">—</span>', 'HLTV')}
@@ -110,13 +108,14 @@ function teamHead(t) {
 
 function playerRow(p) {
   const card = p.card, cur = p.cur, s = p.stat;
-  // 现况这一列按“比卡面高了还是低了”着色——每一分差都来自位置改判或年龄曲线，
-  // 而那条曲线正是这一页想让人盯着看的东西。
+  // 现况按“比卡面高了还是低了”着色；悬停可看这一维的来源、置信度和解释。
   const cell = (k, extra) => {
     if (!cur) return `<td class="gB ${extra || ''} na">—</td>`;
     const cls = ['gB', extra || '', card && cur[k] < card[k] ? 'down'
                                   : card && cur[k] > card[k] ? 'up' : ''].join(' ').trim();
-    return `<td class="${cls}">${cur[k]}</td>`;
+    const src = (cur.sources || {})[k] || {};
+    const tip = [src.source, src.confidence, src.why].filter(Boolean).join(' · ');
+    return `<td class="${cls}" title="${esc(tip)}">${cur[k]}</td>`;
   };
   const A = (v, extra) => `<td class="gA ${extra || ''}">${v}</td>`;
   const Cc = (v, extra) => `<td class="gC ${extra || ''}">${v}</td>`;
@@ -127,6 +126,7 @@ function playerRow(p) {
       ${p.flag ? `<img class="flag" loading="lazy" src="${esc(p.flag)}">` : ''}
       <span>${esc(p.nickname)}</span></div></td>
     <td class="l dim">${POS_CN[p.position] || p.position}${
+      p.caller && p.position !== 'IGL' ? '·指挥' : ''}${
       p.role_src ? `<i class="guess" title="位置由竞技数据判定：${esc(p.role_src)}">?</i>` : ''}</td>
     <td>${p.grade == null ? '<span class="na">—</span>'
                           : `<span class="g g${p.grade}">${p.grade}</span>`}</td>

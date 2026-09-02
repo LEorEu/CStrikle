@@ -8,7 +8,7 @@
     50.0
    ],
    [
-    0.952,
+    0.953,
     69.0
    ],
    [
@@ -71,7 +71,7 @@
    "why": "51 图，样本偏少，只做有上限的向上校正",
    "sample_count": 51,
    "rating": 1.18,
-   "scale_target": 85,
+   "scale_target": 84,
    "manual_override": false,
    "floored": false,
    "top20": false
@@ -871,7 +871,7 @@
    "why": "176 图，S 级口径，落在锚点覆盖区间内",
    "sample_count": 176,
    "rating": 1.18,
-   "scale_target": 85,
+   "scale_target": 84,
    "manual_override": false,
    "floored": false,
    "top20": true
@@ -2337,26 +2337,6 @@
    "top20": false
   },
   {
-   "player": "xertioN",
-   "page": "XertioN",
-   "grade": 4,
-   "role": "RIFLER",
-   "team": "MOUZ",
-   "vrs": 2,
-   "old_firepower": 81,
-   "new_firepower": 85,
-   "delta": 4,
-   "evidence_source": "performance_up_only",
-   "evidence_strength": "strong",
-   "why": "174 图，S 级口径，落在锚点覆盖区间内",
-   "sample_count": 174,
-   "rating": 1.18,
-   "scale_target": 85,
-   "manual_override": false,
-   "floored": false,
-   "top20": true
-  },
-  {
    "player": "NickelBack",
    "page": "NickelBack",
    "grade": 1,
@@ -2475,6 +2455,26 @@
    "manual_override": false,
    "floored": true,
    "top20": false
+  },
+  {
+   "player": "xertioN",
+   "page": "XertioN",
+   "grade": 4,
+   "role": "RIFLER",
+   "team": "MOUZ",
+   "vrs": 2,
+   "old_firepower": 81,
+   "new_firepower": 84,
+   "delta": 3,
+   "evidence_source": "performance_up_only",
+   "evidence_strength": "strong",
+   "why": "174 图，S 级口径，落在锚点覆盖区间内",
+   "sample_count": 174,
+   "rating": 1.18,
+   "scale_target": 84,
+   "manual_override": false,
+   "floored": false,
+   "top20": true
   },
   {
    "player": "HooXi",

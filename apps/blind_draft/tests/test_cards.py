@@ -1,4 +1,5 @@
 import collections
+import json
 import unittest
 from pathlib import Path
 
@@ -66,6 +67,25 @@ class CardGenerationTests(unittest.TestCase):
         self.assertEqual(
             [{k: v for k, v in c.items() if k != "titles"} for c in self.cards],
             [{k: v for k, v in c.items() if k != "titles"} for c in again],
+        )
+
+    def test_published_file_matches_generator(self):
+        """已发布文件就是运行时读取的真值，不许和实时生成器静默分叉。"""
+        from blinddraft.cards import OUT_PATH
+
+        published = json.loads(OUT_PATH.read_text(encoding="utf-8"))
+        # JSON 会把 titles 里的 tuple 写成 list；先走同一次序列化再比较结构。
+        live = json.loads(json.dumps(
+            [{k: v for k, v in c.items() if k != "_trace"} for c in self.cards],
+            ensure_ascii=False,
+        ))
+        self.assertEqual(published["card_version"], __import__(
+            "blinddraft.cards", fromlist=["CARD_VERSION"]).CARD_VERSION)
+        self.assertEqual(published["count"], len(live))
+        self.assertEqual(
+            published["cards"], live,
+            "draft_cards.json 与实时生成结果不同；运行 "
+            "`python -m blinddraft.cards --write` 后审查并提交生成物",
         )
 
     def test_champion_squads_have_one_igl(self):

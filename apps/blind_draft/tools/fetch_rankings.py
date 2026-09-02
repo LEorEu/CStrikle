@@ -186,7 +186,8 @@ def fill_role_gaps(teams):
     步枪的中位数，否则宁可留空。真在乎的队请写进人工层。
 
     人工层 `data/blind_draft/team_roles.json` 压在最上面，格式
-    `{"队名": {"IGL": "昵称", "AWPER": "昵称"}}`。
+    `{"队名": {"IGL": "昵称", "AWPER": "昵称"}}`。同一人可以同时是
+    IGL 和 AWPER：武器位置仍记 AWPER，另写 `caller=true`。
 
     这一步是**幂等**的：先把上一次兜底判的位置退回去，再重判。
     """
@@ -211,10 +212,37 @@ def fill_role_gaps(teams):
             if r.pop("role_source", None):
                 gaps.append(r["role"])
                 r["role"] = "RIFLER"
-        if not gaps:
-            continue
         pinned = manual.get(t["name"]) or manual.get(t.get("abbr") or "") or {}
         left, taken = [], set()
+
+        def named(pos):
+            want = pinned.get(pos)
+            if not want:
+                return None
+            return next((r for r in starters
+                         if r["name"].casefold() == str(want).casefold()), None)
+
+        # 人工层不是“只补缺口”，它是当前真值覆盖。先把武器位置落好，再单独
+        # 记录 caller；同一个 Maka 因此可以是 AWPER + caller，而 Graviti 回步枪。
+        manual_awp, manual_igl = named("AWPER"), named("IGL")
+        if manual_awp:
+            for r in starters:
+                if r is not manual_awp and r["role"] == "AWPER":
+                    r["role"] = "RIFLER"
+            manual_awp["role"] = "AWPER"
+            manual_awp["role_source"] = "manual"
+            taken.add(manual_awp["id"])
+            gaps = [g for g in gaps if g != "AWPER"]
+            filled.append([t["name"], "AWPER", manual_awp["name"], "manual"])
+        if manual_igl:
+            for r in starters:
+                if r is not manual_igl and r["role"] == "IGL":
+                    r["role"] = "RIFLER"
+            if manual_igl is not manual_awp:
+                manual_igl["role"] = "IGL"
+                manual_igl["role_source"] = "manual"
+            gaps = [g for g in gaps if g != "IGL"]
+            filled.append([t["name"], "IGL", manual_igl["name"], "manual"])
 
         def riflers():
             return [(r, stats[r["id"]]) for r in starters
@@ -223,22 +251,16 @@ def fill_role_gaps(teams):
 
         for pos in sorted(set(gaps)):
             got = src = None
-            want = pinned.get(pos)
-            if want:
-                got = next((r for r in starters
-                            if r["name"].casefold() == str(want).casefold()), None)
-                src = "manual"
-            if got is None:
-                cand = riflers()
-                if pos == "AWPER" and cand:
-                    r, v = min(cand, key=lambda x: _num(x[1]["hs_rate"]))
-                    if _num(v["hs_rate"]) < AWP_HS_MAX:
-                        got, src = r, "hs_rate"
-                elif pos == "IGL" and cand:
-                    r, v = min(cand, key=lambda x: _num(x[1]["kpr"]))
-                    ks = sorted(_num(x[1]["kpr"]) for x in cand)
-                    if _num(v["kpr"]) <= ks[len(ks) // 2]:
-                        got, src = r, "kpr?"      # 问号是认真的：只有 67% 对
+            cand = riflers()
+            if pos == "AWPER" and cand:
+                r, v = min(cand, key=lambda x: _num(x[1]["hs_rate"]))
+                if _num(v["hs_rate"]) < AWP_HS_MAX:
+                    got, src = r, "hs_rate"
+            elif pos == "IGL" and cand:
+                r, v = min(cand, key=lambda x: _num(x[1]["kpr"]))
+                ks = sorted(_num(x[1]["kpr"]) for x in cand)
+                if _num(v["kpr"]) <= ks[len(ks) // 2]:
+                    got, src = r, "kpr?"      # 问号是认真的：只有 67% 对
             if got is None:
                 left.append(pos)
                 continue
@@ -247,6 +269,13 @@ def fill_role_gaps(teams):
             taken.add(got["id"])
             filled.append([t["name"], pos, got["name"], src])
         t["role_gaps"] = left or None
+        caller = manual_igl or next((r for r in starters if r["role"] == "IGL"), None)
+        for r in starters:
+            r["caller"] = r is caller
+            if r is caller and manual_igl:
+                r["caller_source"] = "manual"
+            else:
+                r.pop("caller_source", None)
     return filled
 
 

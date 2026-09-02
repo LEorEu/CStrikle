@@ -66,6 +66,14 @@ TEMPLATE = {
 WEIGHT = {"RIFLER": (.55, .05, .20, .20),
           "AWPER":  (.45, .05, .20, .30),
           "IGL":    (.25, .35, .35, .05)}
+# 同一组权重的整数表示，专门用于写进生成物的 overall。
+#
+# 直接 `round(sum(value * 0.35, ...), 1)` 会把结果交给二进制浮点：数学上同为
+# x.x5 的两张卡，可能一张向上、一张向下；更糟的是，不同 Python/求和路径可能
+# 让已发布文件和实时生成结果差 0.1。这里用百分权重做整数运算，并明确采用
+# ROUND_HALF_UP。overall 是展示/估值字段，不值得为浮点尾差制造 50 多张待发布卡。
+WEIGHT_POINTS = {pos: tuple(round(w * 100) for w in weights)
+                 for pos, weights in WEIGHT.items()}
 ATTRS = ("firepower", "leadership", "experience", "stability")
 # Top20 履历在**同档内**能拉开的火力幅度。档间距离由模板负责,修正项只管档内排序;
 # 这个值调大就会侵蚀相邻档位,调到 0 则同档所有人火力只差随机抖动。
@@ -287,6 +295,13 @@ def _rng(page):
     return random.Random(int(seed, 16))
 
 
+def overall(card) -> float:
+    """稳定到跨运行时的 1 位小数 overall（整数 ROUND_HALF_UP）。"""
+    total = sum(card[key] * weight for key, weight in
+                zip(ATTRS, WEIGHT_POINTS[card["position"]]))
+    return ((total + 5) // 10) / 10.0
+
+
 def corrections(p, grade, pos, ranks, champs, ref_year):
     """设计稿 §20:在基础模板上做有限修正,只定方向不追求还原真实 rating。
 
@@ -382,7 +397,7 @@ def build_card(p, grade, pos, ranks, champs, overrides, ref_year, trace=False):
     for key in ATTRS:
         if key in ov:
             card[key] = max(1, min(99, int(ov[key])))
-    card["overall"] = round(sum(card[k] * w for k, w in zip(ATTRS, WEIGHT[pos])), 1)
+    card["overall"] = overall(card)
     if trace:
         for key in ATTRS:
             steps[key]["override"] = ov.get(key)
@@ -483,8 +498,7 @@ def apply_firepower(cards, overrides, trace=False) -> int:
         if c["firepower"] < F.FLOOR:
             was = c["firepower"]
             c["firepower"] = F.FLOOR
-            c["overall"] = round(sum(c[k] * w for k, w in
-                                     zip(ATTRS, WEIGHT[c["position"]])), 1)
+            c["overall"] = overall(c)
             if trace and "_trace" in c:
                 # 后台展示的推导必须和卡上的数一致,否则那一页就在撒谎。
                 st = c["_trace"]["attrs"]["firepower"]
@@ -499,8 +513,7 @@ def apply_firepower(cards, overrides, trace=False) -> int:
             continue
         old = card["firepower"]
         card["firepower"] = m["new_firepower"]
-        card["overall"] = round(sum(card[k] * w for k, w in
-                                    zip(ATTRS, WEIGHT[card["position"]])), 1)
+        card["overall"] = overall(card)
         hit += 1
         if trace and "_trace" in card:
             st = card["_trace"]["attrs"]["firepower"]

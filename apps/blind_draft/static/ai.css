@@ -101,9 +101,8 @@ td.down { color: var(--warn); font-weight: 600; }
 td.up { color: var(--ok); font-weight: 600; }
 td.na, .na { color: #414855; }
 .note2 { color: var(--acc); font-size: 12px; white-space: normal; min-width: 150px; }
-/* 卡库里没有的人：左边两组本来就没有数，压暗但不隐藏——他们是真人，
-   不是占位卡，正是这一页要让人看见的那 53 个。 */
-tr.nocard td { opacity: .62; }
+/* 卡库外真人只有“卡面”缺失；当前四维是真正进 Match 的数，不能一起压暗。 */
+tr.nocard td.gA { opacity: .55; }
 tr.nocard td.l .pname span { font-style: italic; }
 .team-head.reserve .pos { opacity: .45; }
 .team-head.reserve .nm { opacity: .8; }

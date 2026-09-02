@@ -1,6 +1,6 @@
 {
  "card_version": "v7",
- "count": 647,
+ "count": 648,
  "cards": [
   {
    "firepower": 90,
@@ -39,7 +39,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 55.0
+   "overall": 55.1
   },
   {
    "firepower": 53,
@@ -124,7 +124,7 @@
    "majors": 10,
    "champions": 0,
    "titles": [],
-   "overall": 53.8
+   "overall": 53.9
   },
   {
    "firepower": 58,
@@ -180,7 +180,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.7
+   "overall": 43.8
   },
   {
    "firepower": 59,
@@ -231,7 +231,7 @@
    "majors": 6,
    "champions": 0,
    "titles": [],
-   "overall": 84.5
+   "overall": 84.6
   },
   {
    "firepower": 63,
@@ -287,7 +287,7 @@
      "spirit"
     ]
    ],
-   "overall": 84.3
+   "overall": 84.4
   },
   {
    "firepower": 56,
@@ -399,7 +399,7 @@
      "natus vincere"
     ]
    ],
-   "overall": 75.2
+   "overall": 75.3
   },
   {
    "firepower": 50,
@@ -433,7 +433,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 45.8
+   "overall": 45.9
   },
   {
    "firepower": 61,
@@ -640,7 +640,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.0
+   "overall": 45.1
   },
   {
    "firepower": 51,
@@ -786,7 +786,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.2
+   "overall": 52.3
   },
   {
    "firepower": 50,
@@ -983,7 +983,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.1
+   "overall": 44.2
   },
   {
    "firepower": 65,
@@ -1051,7 +1051,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 66.5
+   "overall": 66.6
   },
   {
    "firepower": 62,
@@ -1124,7 +1124,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.6
+   "overall": 44.7
   },
   {
    "firepower": 59,
@@ -1405,7 +1405,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 43.7
   },
   {
    "firepower": 50,
@@ -1524,7 +1524,7 @@
      "astralis"
     ]
    ],
-   "overall": 85.4
+   "overall": 85.5
   },
   {
    "firepower": 55,
@@ -1618,7 +1618,7 @@
    "majors": 8,
    "champions": 0,
    "titles": [],
-   "overall": 65.8
+   "overall": 65.9
   },
   {
    "firepower": 50,
@@ -1652,7 +1652,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.0
+   "overall": 43.1
   },
   {
    "firepower": 55,
@@ -1703,7 +1703,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.0
+   "overall": 43.1
   },
   {
    "firepower": 68,
@@ -2133,7 +2133,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.0
+   "overall": 43.1
   },
   {
    "firepower": 77,
@@ -2369,7 +2369,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 54.4
+   "overall": 54.5
   },
   {
    "firepower": 55,
@@ -2598,7 +2598,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 62.5
+   "overall": 62.6
   },
   {
    "firepower": 71,
@@ -2632,7 +2632,7 @@
    "majors": 10,
    "champions": 0,
    "titles": [],
-   "overall": 64.2
+   "overall": 64.3
   },
   {
    "firepower": 84,
@@ -2675,7 +2675,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 65.9
+   "overall": 66.0
   },
   {
    "firepower": 92,
@@ -2786,7 +2786,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 54.2
+   "overall": 54.3
   },
   {
    "firepower": 55,
@@ -2803,7 +2803,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.2
+   "overall": 45.3
   },
   {
    "firepower": 52,
@@ -2820,7 +2820,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 43.7
   },
   {
    "firepower": 50,
@@ -2837,7 +2837,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.7
+   "overall": 43.8
   },
   {
    "firepower": 50,
@@ -2905,7 +2905,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 55.0
+   "overall": 55.1
   },
   {
    "firepower": 66,
@@ -2939,7 +2939,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 45.4
+   "overall": 45.5
   },
   {
    "firepower": 63,
@@ -3024,7 +3024,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 48.1
+   "overall": 48.2
   },
   {
    "firepower": 63,
@@ -3145,7 +3145,7 @@
      "ldlc"
     ]
    ],
-   "overall": 65.4
+   "overall": 65.5
   },
   {
    "firepower": 59,
@@ -3338,7 +3338,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 54.9
+   "overall": 55.0
   },
   {
    "firepower": 51,
@@ -3372,7 +3372,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.0
+   "overall": 45.1
   },
   {
    "firepower": 63,
@@ -3389,7 +3389,7 @@
    "majors": 9,
    "champions": 0,
    "titles": [],
-   "overall": 56.2
+   "overall": 56.3
   },
   {
    "firepower": 50,
@@ -3423,7 +3423,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.5
+   "overall": 43.6
   },
   {
    "firepower": 50,
@@ -3589,7 +3589,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.2
+   "overall": 42.3
   },
   {
    "firepower": 59,
@@ -3674,7 +3674,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 53.5
+   "overall": 53.6
   },
   {
    "firepower": 60,
@@ -3691,7 +3691,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 48.3
+   "overall": 48.4
   },
   {
    "firepower": 51,
@@ -3725,7 +3725,7 @@
    "majors": 12,
    "champions": 0,
    "titles": [],
-   "overall": 63.3
+   "overall": 63.4
   },
   {
    "firepower": 56,
@@ -3875,7 +3875,7 @@
    "majors": 7,
    "champions": 0,
    "titles": [],
-   "overall": 53.5
+   "overall": 53.6
   },
   {
    "firepower": 94,
@@ -4004,7 +4004,7 @@
      "natus vincere"
     ]
    ],
-   "overall": 69.5
+   "overall": 69.6
   },
   {
    "firepower": 70,
@@ -4060,7 +4060,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 46.6
+   "overall": 46.7
   },
   {
    "firepower": 55,
@@ -4162,7 +4162,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 41.0
+   "overall": 41.1
   },
   {
    "firepower": 53,
@@ -4179,7 +4179,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 43.7
   },
   {
    "firepower": 59,
@@ -4247,7 +4247,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 61.5
+   "overall": 61.6
   },
   {
    "firepower": 74,
@@ -4281,7 +4281,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 50.2
+   "overall": 50.3
   },
   {
    "firepower": 82,
@@ -4493,7 +4493,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.4
+   "overall": 45.5
   },
   {
    "firepower": 51,
@@ -4561,7 +4561,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 42.5
+   "overall": 42.6
   },
   {
    "firepower": 50,
@@ -4663,7 +4663,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 47.2
+   "overall": 47.3
   },
   {
    "firepower": 63,
@@ -5020,7 +5020,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 43.7
   },
   {
    "firepower": 59,
@@ -5139,7 +5139,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 65.2
+   "overall": 65.3
   },
   {
    "firepower": 53,
@@ -5382,7 +5382,7 @@
      "natus vincere"
     ]
    ],
-   "overall": 75.2
+   "overall": 75.3
   },
   {
    "firepower": 73,
@@ -5433,7 +5433,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 43.7
   },
   {
    "firepower": 55,
@@ -5640,7 +5640,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.2
+   "overall": 44.3
   },
   {
    "firepower": 55,
@@ -5985,7 +5985,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 44.2
+   "overall": 44.3
   },
   {
    "firepower": 83,
@@ -6138,7 +6138,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 53.5
+   "overall": 53.6
   },
   {
    "firepower": 52,
@@ -6198,7 +6198,7 @@
      "vitality"
     ]
    ],
-   "overall": 67.3
+   "overall": 67.4
   },
   {
    "firepower": 52,
@@ -6266,7 +6266,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.3
+   "overall": 43.4
   },
   {
    "firepower": 62,
@@ -6283,7 +6283,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 54.8
+   "overall": 54.9
   },
   {
    "firepower": 61,
@@ -6317,7 +6317,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 53.2
+   "overall": 53.3
   },
   {
    "firepower": 50,
@@ -6509,7 +6509,7 @@
    "majors": 14,
    "champions": 0,
    "titles": [],
-   "overall": 85.2
+   "overall": 85.3
   },
   {
    "firepower": 61,
@@ -6611,7 +6611,7 @@
    "majors": 7,
    "champions": 0,
    "titles": [],
-   "overall": 75.2
+   "overall": 75.3
   },
   {
    "firepower": 80,
@@ -6696,7 +6696,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 64.0
+   "overall": 64.1
   },
   {
    "firepower": 50,
@@ -6713,7 +6713,7 @@
    "majors": 9,
    "champions": 0,
    "titles": [],
-   "overall": 54.8
+   "overall": 54.9
   },
   {
    "firepower": 50,
@@ -6747,7 +6747,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.3
+   "overall": 42.4
   },
   {
    "firepower": 51,
@@ -6854,7 +6854,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.5
+   "overall": 43.6
   },
   {
    "firepower": 51,
@@ -6905,7 +6905,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 44.7
+   "overall": 44.8
   },
   {
    "firepower": 56,
@@ -7200,7 +7200,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.9
+   "overall": 44.0
   },
   {
    "firepower": 54,
@@ -7319,7 +7319,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.2
+   "overall": 43.3
   },
   {
    "firepower": 51,
@@ -7370,7 +7370,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 52.4
+   "overall": 52.5
   },
   {
    "firepower": 52,
@@ -7421,7 +7421,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 54.3
+   "overall": 54.4
   },
   {
    "firepower": 54,
@@ -7574,7 +7574,7 @@
    "majors": 10,
    "champions": 0,
    "titles": [],
-   "overall": 55.2
+   "overall": 55.3
   },
   {
    "firepower": 50,
@@ -7800,7 +7800,7 @@
    "majors": 14,
    "champions": 0,
    "titles": [],
-   "overall": 66.0
+   "overall": 66.1
   },
   {
    "firepower": 61,
@@ -7895,7 +7895,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 43.7
   },
   {
    "firepower": 63,
@@ -7968,7 +7968,7 @@
      "cloud9"
     ]
    ],
-   "overall": 65.3
+   "overall": 65.4
   },
   {
    "firepower": 72,
@@ -8160,7 +8160,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 45.5
+   "overall": 45.6
   },
   {
    "firepower": 57,
@@ -8390,7 +8390,7 @@
      "sk"
     ]
    ],
-   "overall": 83.9
+   "overall": 84.0
   },
   {
    "firepower": 91,
@@ -8416,7 +8416,7 @@
      "sk"
     ]
    ],
-   "overall": 85.5
+   "overall": 85.6
   },
   {
    "firepower": 55,
@@ -8545,7 +8545,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 65.2
+   "overall": 65.3
   },
   {
    "firepower": 54,
@@ -8936,7 +8936,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 57.2
+   "overall": 57.3
   },
   {
    "firepower": 73,
@@ -8953,7 +8953,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 64.2
+   "overall": 64.3
   },
   {
    "firepower": 50,
@@ -9089,7 +9089,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 55.0
+   "overall": 55.1
   },
   {
    "firepower": 50,
@@ -9225,7 +9225,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 43.7
   },
   {
    "firepower": 66,
@@ -9310,7 +9310,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 45.2
+   "overall": 45.3
   },
   {
    "firepower": 57,
@@ -9517,6 +9517,23 @@
    "overall": 54.7
   },
   {
+   "firepower": 50,
+   "leadership": 54,
+   "experience": 26,
+   "stability": 50,
+   "page": "Steel (Joshua Nissan)",
+   "nickname": "steel",
+   "position": "IGL",
+   "grade": 1,
+   "country": "Canada",
+   "team": "Without a Roof",
+   "age": 36,
+   "majors": 1,
+   "champions": 0,
+   "titles": [],
+   "overall": 43.0
+  },
+  {
    "firepower": 63,
    "leadership": 23,
    "experience": 42,
@@ -9633,7 +9650,7 @@
    "majors": 8,
    "champions": 0,
    "titles": [],
-   "overall": 54.1
+   "overall": 54.2
   },
   {
    "firepower": 84,
@@ -9757,7 +9774,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 47.0
+   "overall": 47.1
   },
   {
    "firepower": 81,
@@ -9893,7 +9910,7 @@
    "majors": 8,
    "champions": 0,
    "titles": [],
-   "overall": 53.9
+   "overall": 54.0
   },
   {
    "firepower": 64,
@@ -10063,7 +10080,7 @@
    "majors": 8,
    "champions": 0,
    "titles": [],
-   "overall": 52.9
+   "overall": 53.0
   },
   {
    "firepower": 50,
@@ -10301,7 +10318,7 @@
    "majors": 6,
    "champions": 0,
    "titles": [],
-   "overall": 55.1
+   "overall": 55.2
   },
   {
    "firepower": 50,
@@ -10420,7 +10437,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 51.6
+   "overall": 51.7
   },
   {
    "firepower": 65,
@@ -10471,7 +10488,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 45.1
+   "overall": 45.2
   },
   {
    "firepower": 52,
@@ -10539,7 +10556,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 57.9
+   "overall": 58.0
   },
   {
    "firepower": 69,
@@ -10556,7 +10573,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 57.1
+   "overall": 57.2
   },
   {
    "firepower": 50,
@@ -10658,7 +10675,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 46.0
+   "overall": 46.1
   },
   {
    "firepower": 51,
@@ -10743,7 +10760,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.2
+   "overall": 52.3
   },
   {
    "firepower": 75,
@@ -10828,7 +10845,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 69.2
+   "overall": 69.3
   },
   {
    "firepower": 81,
@@ -10879,7 +10896,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 43.2
+   "overall": 43.3
   },
   {
    "firepower": 54,
@@ -11100,7 +11117,7 @@
    "majors": 4,
    "champions": 0,
    "titles": [],
-   "overall": 57.2
+   "overall": 57.3
   },
   {
    "firepower": 54,
@@ -11227,7 +11244,7 @@
    "overall": 69.1
   },
   {
-   "firepower": 85,
+   "firepower": 84,
    "leadership": 27,
    "experience": 68,
    "stability": 70,
@@ -11241,7 +11258,7 @@
    "majors": 7,
    "champions": 0,
    "titles": [],
-   "overall": 75.7
+   "overall": 75.2
   },
   {
    "firepower": 88,
@@ -11301,7 +11318,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 54.1
+   "overall": 54.2
   },
   {
    "firepower": 52,
@@ -11335,7 +11352,7 @@
    "majors": 3,
    "champions": 0,
    "titles": [],
-   "overall": 52.7
+   "overall": 52.8
   },
   {
    "firepower": 51,
@@ -11369,7 +11386,7 @@
    "majors": 2,
    "champions": 0,
    "titles": [],
-   "overall": 43.1
+   "overall": 43.2
   },
   {
    "firepower": 50,
@@ -11386,7 +11403,7 @@
    "majors": 1,
    "champions": 0,
    "titles": [],
-   "overall": 42.0
+   "overall": 42.1
   },
   {
    "firepower": 56,
@@ -11403,7 +11420,7 @@
    "majors": 5,
    "champions": 0,
    "titles": [],
-   "overall": 51.1
+   "overall": 51.2
   },
   {
    "firepower": 63,
@@ -11522,7 +11539,7 @@
    "majors": 0,
    "champions": 0,
    "titles": [],
-   "overall": 43.6
+   "overall": 43.7
   },
   {
    "firepower": 50,

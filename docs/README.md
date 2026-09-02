@@ -17,7 +17,9 @@ CStrikle，blast.tv 那个 Counter-Strikle 的自建版：猜一名神秘 CS 职
 ## [blind-draft/](blind-draft/) — Blind Draft（在做）
 
 用 $15 预算、在身份不完全公开的情况下签 5 名职业选手，组一支临时战队，
-再让它去打一届真实的 Major。选人这一层已经可玩，比赛这一层还没做。
+再让它去打一届真实的 Major。选人和命令行比赛引擎已经跑通，当前开发主线是
+把 AI 当前卡和 BO1 / BO3 / 高压 Run 接成玩家可感知的闭环；见
+**[blind-draft/开发主线.md](blind-draft/开发主线.md)**。
 
 ## 两边共用的
 
