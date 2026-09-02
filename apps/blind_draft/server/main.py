@@ -232,9 +232,9 @@ def anchor_page():
 
 
 @app.get("/api/anchor")
-def api_anchor(teams: int = AN.DEFAULT_TEAMS):
+def api_anchor(teams: int = AN.DEFAULT_TEAMS, mode: str = "teams"):
     """打锚台。**这一页写人工层**——和只读的 AI 页不同,理由见 bdserver/anchor.py。"""
-    return AN.build_view(teams)
+    return AN.build_view(teams, mode)
 
 
 @app.put("/api/anchor/{key:path}")

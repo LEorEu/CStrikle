@@ -138,8 +138,54 @@ def _fold(s: str) -> str:
     return unicodedata.normalize("NFKD", s or "").casefold()
 
 
-def build_view(teams: int = DEFAULT_TEAMS) -> dict:
-    """-> 候选选手 + 已打的锚 + 拟合用的散点。只读,不写。"""
+#: 「补缺口」模式看的 rating 区段。每段至少要有 GAP_TARGET 个锚,
+#: 否则标尺在那一段就是外推——而外推正是这个项目栽过两次的地方。
+GAP_BANDS = [(0.80, 0.90), (0.90, 0.95), (0.95, 1.00), (1.00, 1.05),
+             (1.05, 1.10), (1.10, 1.15), (1.15, 1.20), (1.20, 1.30), (1.30, 1.50)]
+GAP_TARGET = 3
+#: 补缺口时的样本下限。图数太少的人打了锚也不能用来定标尺。
+GAP_MIN_MAPS = 40
+
+
+def band_gaps(rows) -> list:
+    """-> [{lo, hi, have, need}],每段现有多少锚、还差多少。"""
+    out = []
+    for lo, hi in GAP_BANDS:
+        have = sum(1 for p in rows
+                   if p["fire"] is not None and p["role"] != "IGL"
+                   and p["rating"] is not None and lo <= p["rating"] < hi)
+        out.append({"lo": lo, "hi": hi, "have": have,
+                    "need": max(0, GAP_TARGET - have)})
+    return out
+
+
+def anchored_rows(anchors, by_id, by_page, by_nick) -> list:
+    """已存的锚点 + 它们的 rating,用来算区段缺口。和当前视图无关。"""
+    stat_by_page = {r["card_page"]: r for r in by_id.values() if r.get("card_page")}
+    out = []
+    for page, a in anchors.items():
+        card = by_page.get(page) or by_nick.get(_fold(page))
+        row = stat_by_page.get(page)
+        if not card or not row:
+            continue
+        rating = None
+        try:
+            rating = float(str(row.get("rating")).replace("+", ""))
+        except (TypeError, ValueError):
+            pass
+        out.append({"fire": a.get("firepower"), "role": card["position"],
+                    "rating": rating})
+    return out
+
+
+def build_view(teams: int = DEFAULT_TEAMS, mode: str = "teams") -> dict:
+    """-> 候选选手 + 已打的锚 + 拟合用的散点。只读,不写。
+
+    mode="teams" 按全球 VRS 取前 N 支队(默认,适合系统性地过一遍)。
+    mode="gaps"  **按 rating 区段补缺口**:哪一段锚点不够就从全池捞人,
+                 不管他在哪支队。标尺的有效区间由锚点的 rating 跨度决定,
+                 而不是由队伍排名决定——需要补下沿的人往往在 VRS 30 名开外。
+    """
     snap = json.loads(SNAP_PATH.read_text(encoding="utf-8"))
     stats = json.loads(STATS_PATH.read_text(encoding="utf-8"))
     by_id = stats["players"]
@@ -154,7 +200,9 @@ def build_view(teams: int = DEFAULT_TEAMS) -> dict:
         asof = date.today()
 
     ranked = sorted((t for t in snap["teams"] if t.get("vrs_rank")),
-                    key=lambda t: t["vrs_rank"])[:max(1, teams)]
+                    key=lambda t: t["vrs_rank"])
+    if mode != "gaps":
+        ranked = ranked[:max(1, teams)]
 
     out = []
     for t in ranked:
@@ -196,6 +244,29 @@ def build_view(teams: int = DEFAULT_TEAMS) -> dict:
         out.append({"name": t["name"], "vrs": t.get("vrs_rank"),
                     "region": t.get("region"), "roster": roster})
 
+    if mode == "gaps":
+        # 全池摊平,按缺口区段挑人:每段先挑图数最足的,凑够 need 的三倍备选,
+        # 已经打过锚的人也留着(要能看到那一段现在长什么样)。
+        flat = [p for t in out for p in t["roster"]]
+        gaps = band_gaps(flat)
+        picked, seen = [], set()
+        for band in gaps:
+            pool = [p for p in flat
+                    if p["rating"] is not None and band["lo"] <= p["rating"] < band["hi"]
+                    and p["role"] != "IGL" and p["maps"] >= GAP_MIN_MAPS]
+            pool.sort(key=lambda p: (p["fire"] is not None, -p["maps"]))
+            take = pool[:max(band["need"] * 3, 3)] if band["need"] else pool[:2]
+            for p in take:
+                if p["key"] not in seen:
+                    seen.add(p["key"])
+                    picked.append(dict(p, band="%.2f–%.2f" % (band["lo"], band["hi"]),
+                                       band_need=band["need"]))
+        picked.sort(key=lambda p: (p["rating"] or 0))
+        out = [{"name": "缺锚点的区段 · rating %s" % b, "vrs": None, "region": "",
+                "roster": [p for p in picked if p["band"] == b]}
+               for b in sorted({p["band"] for p in picked})]
+        out = [g for g in out if g["roster"]]
+
     # 拟合用的点:**只收 peak=True 且填了火力的**。别人的火力是履历判断,
     # 和当前 rating 不构成对应关系,混进去会把线拉歪。
     fit = [{"nickname": p["nickname"], "rating": p["rating"], "fire": p["fire"],
@@ -206,6 +277,10 @@ def build_view(teams: int = DEFAULT_TEAMS) -> dict:
     done = sum(1 for t in out for p in t["roster"] if p["fire"] is not None)
     total = sum(len(t["roster"]) for t in out)
     return {"teams": out, "fit": fit, "bands": BANDS, "hint": HINT,
+            # 缺口按**已存的全部锚点**算,不按当前视图——否则切模式会让缺口
+            # 自己把自己填满,而缺口的意义正是「标尺在哪一段还是外推」。
+            "gaps": band_gaps(anchored_rows(anchors, by_id, by_page, by_nick)),
+            "mode": mode,
             "snapshot_date": snap.get("snapshot_date"),
             "counts": {"players": total, "anchored": done, "in_fit": len(fit),
                        "saved": len(anchors)},
@@ -219,7 +294,8 @@ def put(key: str, peak, firepower, note: str, teams: int = DEFAULT_TEAMS) -> dic
     一个 typo 会写进一条永远不显示的孤儿记录:文件里 count 在涨,页面上
     却一个都没多——这个项目已经栽过好几次这种「数据悄悄去了别处」。
     """
-    known = {p["key"] for t in build_view(teams)["teams"] for p in t["roster"]}
+    known = {p["key"] for m in ("teams", "gaps")
+             for t in build_view(teams, m)["teams"] for p in t["roster"]}
     if key not in known:
         raise KeyError(key)
     anchors = load_anchors()

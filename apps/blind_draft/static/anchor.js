@@ -37,8 +37,9 @@ function bandOf(fire) {
 
 /* ------------------------------------------------------------------ 载入 */
 async function load() {
-  const teams = $('#teams').value;
-  const r = await fetch('/api/anchor?teams=' + teams);
+  const v = $('#teams').value;
+  const q = v === 'gaps' ? 'teams=45&mode=gaps' : 'teams=' + v;
+  const r = await fetch('/api/anchor?' + q);
   DATA = await r.json();
   render();
 }
@@ -54,7 +55,8 @@ function render() {
     + '<b>火力</b> 问的是「他巅峰时该是多少」——'
     + '只有勾了巅峰的人才进右边那张图，因为只有他们的当前 rating 能代表巅峰。'
     + '<br>建议值是一条<b>提示折线</b>，不是结论；点一下就填进去，随便改。'
-    + '指挥不给建议值——实测 rating 对指挥的火力没有信号。';
+    + '指挥不给建议值——实测 rating 对指挥的火力没有信号。'
+    + gapsHTML();
 
   $('#list').innerHTML = DATA.teams.map(teamHTML).join('');
   bind();
@@ -62,9 +64,24 @@ function render() {
   drawLadder();
 }
 
+/* 标尺的有效区间由锚点的 rating 跨度决定。哪一段锚点不够，标尺在那一段
+ * 就是外推——而外推是这个项目栽过两次的地方（LOW_TIER_DISCOUNT、
+ * 二次曲线往 0.83 外推给出 42.4）。所以缺口要一直摆在眼前。 */
+function gapsHTML() {
+  const g = DATA.gaps || [];
+  const short = g.filter((b) => b.need > 0);
+  if (!short.length) return '<br>各 rating 区段的锚点都够了，标尺全程有支撑。';
+  return '<br><b>标尺还差锚点的区段：</b>'
+    + short.map((b) => `${b.lo.toFixed(2)}–${b.hi.toFixed(2)}`
+        + `（有 ${b.have}，还差 ${b.need}）`).join('　')
+    + '　—— 这些区段现在只能靠外推，'
+    + '<b>选「补缺口」模式</b>可以直接捞出该段样本最足的人。';
+}
+
 function teamHTML(t) {
   return `<div class="team">
-    <h3>${esc(t.name)} <small>全球 VRS #${t.vrs} · ${esc(t.region || '')}</small></h3>
+    <h3>${esc(t.name)} <small>${t.vrs ? '全球 VRS #' + t.vrs + ' · ' + esc(t.region || '')
+                                       : '按 rating 区段捞出来的候选'}</small></h3>
     <table>
       <colgroup>
         <col class="c-nick"><col class="c-role"><col class="c-age">
@@ -130,7 +147,8 @@ async function save(tr) {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'X-Admin-Token': TOKEN },
     body: JSON.stringify({ peak: p.peak, firepower: p.fire, note: p.note,
-                           teams: Number($('#teams').value) }),
+                           teams: $('#teams').value === 'gaps'
+                                    ? 45 : Number($('#teams').value) }),
   });
   if (!r.ok) {
     const detail = await r.text();
