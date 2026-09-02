@@ -60,31 +60,16 @@ SUPPORTING_CAP = 6
 #: 本轮处理的档位。G4/G5 默认不自动下修(指南 §4.2.A),只做 sanity check。
 ACTIVE_GRADES = (1, 2, 3)
 
-#: **现役枪手的火力下限。**
+#: **这个世界的地板:rating 0.70 = 火力 50。对所有人,包括指挥。**
 #:
-#: 参照物是 karrigan:36 岁、纯叫战术、S 级大赛里每次都是倒数第一的有力竞争者,
-#: 人工锚给了 55。一个还能坐在 S 级首发位上的枪手,工作内容就是开枪,
-#: 不该低于一个不开枪的老指挥。留 5 点余量,下限定在 60。
+#: 这是人给的定义,不是从数据推的:一整年打到 0.70 就是职业赛场的下沿,
+#: 再低的选手不会还坐在首发位上。karrigan 的 0.83 → 55 是这条线上的另一个点,
+#: 两者一致。
 #:
-#: 这不是"没有数据就给个数",是一条**结构性断言**:现役职业枪手的火力有下界。
-#: 所以它对无证据的人同样生效——它不宣称任何人具体多强,只宣称没人比这更弱。
-#: 旧模板把 G1 压在 48–58,那一段里有 47 个人低于 karrigan,是模板的错不是他们的。
-GUNNER_FLOOR = 60
-
-
-def ability_grade(fire, role, template):
-    """这个火力值**看起来像**哪一档。
-
-    用 TEMPLATE 的火力底板当分界:RIFLER 是 52/60/70/80/89。
-    它回答的不是"他应该是几档"——档位是生涯证据,不归这一层管——
-    而是"如果只看枪法,他落在哪一档的位置上"。两者差得越远,
-    越值得人工看一眼:要么是真的被低估了该升档,要么是数据/身份出了问题。
-    """
-    best = 1
-    for g in (1, 2, 3, 4, 5):
-        if fire >= template[role][g][0]:
-            best = g
-    return best
+#: 注意它约束的是**赛季均值**。单场当然可以低于 0.70——那是 stability
+#: 管的方差,不是 firepower 管的均值。
+FLOOR_ANCHOR = (0.70, 50)
+FLOOR = FLOOR_ANCHOR[1]
 
 
 def _num(v):
@@ -146,6 +131,10 @@ def build_scale(points=None, cards=None):
     pts = points if points is not None else load_anchor_points(cards)
     if len(pts) < 6:
         raise ValueError("锚点太少(%d 个),标尺立不住" % len(pts))
+    # 地板是人给的定义,和人工锚点同等地位。有了它,下沿以下不再是外推。
+    if not any(abs(r - FLOOR_ANCHOR[0]) < 1e-9 for r, *_ in pts):
+        pts = sorted(pts + [(FLOOR_ANCHOR[0], float(FLOOR_ANCHOR[1]),
+                             "地板(人给的定义)", 0)])
 
     lo, hi = pts[0][0], pts[-1][0]
     # 等频分箱:每箱至少 3 个人,箱数随锚点数长
@@ -250,8 +239,11 @@ def preview(cards=None, overrides=None):
              for r in rows}
     by_page = {c["page"]: c for c in cards}
     by_nick = {c["nickname"].casefold(): c for c in cards}
-    from . import cards as _CM
-    template = _CM.TEMPLATE
+    hand = {}
+    if ANCHOR_PATH.exists():
+        hand = {k: v.get("firepower") for k, v in
+                json.loads(ANCHOR_PATH.read_text(encoding="utf-8")).get("anchors", {}).items()
+                if v.get("firepower") is not None}
 
     active = {}
     for t in snap["teams"]:
@@ -273,12 +265,20 @@ def preview(cards=None, overrides=None):
         manual = "firepower" in (overrides.get(card["page"]) or {})
 
         new, src = old, "template"
-        if card["position"] == "IGL":
+        if card["page"] in hand:
+            # **人手打的数是最高权威。** 它比任何从它拟出来的曲线都高一级,
+            # 也不受档位、位置、样本量的任何限制——那些规则是用来评没打过锚
+            # 的人的。曾经这里没有这一支,于是 31 个锚里有 21 个被规则算掉了
+            # (luchov 打 85 变成 60,因为 51 图被判"弱证据"只准涨 6 点)。
+            new, src = hand[card["page"]], "hand_anchor"
+        elif card["position"] == "IGL":
             src = "igl_untouched"                     # 指挥不进通道
         elif manual:
             src = "manual_override"                   # 人工层优先,算法不覆盖
         elif card["grade"] not in ACTIVE_GRADES:
-            # G4/G5:默认不自动下修,只允许强证据往上刷新(指南 §4.1 / §4.2.A)
+            # G4/G5 里**没打过锚的人**:默认不自动下修,只允许强证据往上刷新
+            # (指南 §4.1 / §4.2.A)。打过锚的人上面那一支已经接管了——
+            # 这条规则保护的是生涯巅峰不被统计估计抹掉,不是不被人的判断改。
             if strength == "strong" and target is not None and target > old:
                 new, src = target, "performance_up_only"
             else:
@@ -294,14 +294,14 @@ def preview(cards=None, overrides=None):
                 src = "performance_supporting"
             else:
                 src = "career_kept"                   # Supporting 只向上
-        # 下限最后生效,盖过上面所有分支——包括"无证据、回退模板"那条。
-        # 顺序很重要:先按证据算,再托底,这样 evidence_source 仍然记录真实来源,
-        # 只是多一个 floored 标记说明最终值是被托上来的。
+        # 地板最后生效,盖过上面所有分支——**包括人工锚点和指挥**。
+        # 它不是"没数据就给个数",是这个世界的定义:没有比 0.70 rating 更差
+        # 的职业选手还坐在首发位上。
         floored = False
-        if card["position"] != "IGL" and new < GUNNER_FLOOR:
-            new, floored = GUNNER_FLOOR, True
-            if src in ("template", "career_kept"):
-                src = "gunner_floor"
+        if new < FLOOR:
+            new, floored = FLOOR, True
+            if src in ("template", "career_kept", "igl_untouched"):
+                src = "floor"
         rows.append({
             "player": card["nickname"], "page": card["page"], "grade": card["grade"],
             "role": card["position"], "team": team, "vrs": vrs,
@@ -310,20 +310,32 @@ def preview(cards=None, overrides=None):
             "sample_count": maps, "rating": rating,
             "scale_target": target, "manual_override": manual,
             "floored": floored, "top20": card["page"] in top20,
-            "ability_grade": ability_grade(int(new), card["position"], template),
-            "grade_gap": ability_grade(int(new), card["position"], template) - card["grade"],
         })
+    # 快照里有人同时挂在两支队上,而且是**两个不同的 5e id**(NiKo 在 Falcons
+    # 和 Millennium、buster 在 DEPO 和 BOGATYRI)——所以按 id 去重碰不到,
+    # 必须在解析出卡之后按 page 去。不去重的话最后按 page 收敛时「哪一条证据
+    # 生效」取决于遍历顺序,两条证据不同时结果就是随机的。
+    # 取排名更高的那支队:一队的样本才是他现在的水平,VRS=0 多半是旧条目。
+    best = {}
+    for r in rows:
+        prev = best.get(r["page"])
+        if prev is None or (r["vrs"] or 9999) < (prev["vrs"] or 9999):
+            best[r["page"]] = r
+    rows = list(best.values())
     rows.sort(key=lambda r: (-abs(r["delta"]), r["player"]))
     counts = {"players": len(rows), "moved": sum(1 for r in rows if r["delta"]),
               "floored": sum(1 for r in rows if r["floored"]),
-              "grade_mismatch": sum(1 for r in rows if r["grade_gap"] >= 2)}
+              "hand": sum(1 for r in rows if r["evidence_source"] == "hand_anchor")}
     for k in ("strong", "supporting", "none"):
         counts[k] = sum(1 for r in rows if r["evidence_strength"] == k)
     return {"rows": rows, "counts": counts,
             "scale": {"knots": [[round(x, 3), round(y, 1)] for x, y in fn.knots],
                       "valid_from": lo, "valid_to": hi,
-                      "gunner_floor": GUNNER_FLOOR,
+                      "floor": FLOOR, "floor_rating": FLOOR_ANCHOR[0],
                       "anchors": len(load_anchor_points(cards))}}
+
+
+HAND = {}
 
 
 def flags(rows):
@@ -333,8 +345,8 @@ def flags(rows):
         for tag, hit in (
                 ("涨 10 以上", r["delta"] >= 10),
                 ("跌 8 以上", r["delta"] <= -8),
-                ("G1/G2 却 F80+", r["grade"] <= 2 and r["new_firepower"] >= 80),
-                ("G3 却 F88+", r["grade"] == 3 and r["new_firepower"] >= 88),
+                ("和人工锚差 3 以上", r["evidence_source"] != "hand_anchor"
+                 and r["page"] in HAND and abs(r["new_firepower"] - HAND[r["page"]]) >= 3),
                 ("有 Top20 却被下修", r["top20"] and r["delta"] < 0),
                 # 托底是**有文档的机制**,不是异常。混进这一行会让 75 个正常的
                 # 托底把真正该看的东西淹掉。
@@ -376,8 +388,8 @@ def main():
     print()
     print("现役卡 %d 张:强证据 %d / 弱证据 %d / 无可靠证据 %d;动了 %d 张"
           % (c["players"], c["strong"], c["supporting"], c["none"], c["moved"]))
-    print("   其中 %d 张是被枪手下限 %d 托上来的(旧模板把他们压到了 karrigan 之下)"
-          % (c["floored"], s["gunner_floor"]))
+    print("   人工锚直接生效 %d 张;被地板(rating %.2f = 火力 %d)托上来 %d 张"
+          % (c["hand"], FLOOR_ANCHOR[0], FLOOR, c["floored"]))
     print()
     print("%-13s %-4s %-7s %5s %5s %6s  %s"
           % ("选手", "档", "位置", "旧", "新", "变动", "依据"))
@@ -387,17 +399,23 @@ def main():
         print("%-13s G%-3d %-7s %5d %5d %+6d  %s (%d 图)"
               % (r["player"], r["grade"], r["role"], r["old_firepower"],
                  r["new_firepower"], r["delta"], r["evidence_source"], r["sample_count"]))
-    gm = sorted((r for r in data["rows"] if r["grade_gap"] >= 2),
-                key=lambda r: (-r["grade_gap"], -r["new_firepower"]))
+    # 档位和火力已经解耦,所以「他的火力像哪一档」这个问题本身不成立了
+    # ——G5 的火力不一定高于 G4。真正值得看的是**同档之内谁被拉开了**。
     print()
-    print("能力明显高于档位的 %d 人 —— **档位归生涯证据管,这一层不动它**,"
-          "列出来给人工判断要不要升档:" % len(gm))
-    print("%-13s %-4s %-7s %6s %-10s %s" % ("选手", "档", "位置", "新火力", "看起来像", "依据"))
-    for r in gm:
-        print("%-13s G%-3d %-7s %6d  G%-9d %s (%d 图)"
-              % (r["player"], r["grade"], r["role"], r["new_firepower"],
-                 r["ability_grade"], r["evidence_source"], r["sample_count"]))
+    print("同档之内跨度最大的几档(解耦之后这才是要看的东西):")
+    for g in (5, 4, 3, 2, 1):
+        sub_ = [r for r in data["rows"] if r["grade"] == g and r["role"] != "IGL"]
+        if len(sub_) < 3:
+            continue
+        hi = max(sub_, key=lambda r: r["new_firepower"])
+        lo = min(sub_, key=lambda r: r["new_firepower"])
+        print("   G%d  %d–%d   最高 %s   最低 %s"
+              % (g, lo["new_firepower"], hi["new_firepower"], hi["player"], lo["player"]))
 
+    HAND.update({k: v.get("firepower") for k, v in
+                 (json.loads(ANCHOR_PATH.read_text(encoding="utf-8")).get("anchors", {})
+                  if ANCHOR_PATH.exists() else {}).items()
+                 if v.get("firepower") is not None})
     fl = flags(data["rows"])
     print()
     print("需要人工过目的 %d 条(Phase 2,不自动修):" % len(fl))

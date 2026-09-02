@@ -476,6 +476,22 @@ def apply_firepower(cards, overrides, trace=False) -> int:
     except (ValueError, OSError):
         return 0                      # 没有锚点文件 / 锚点太少,保持模板值
     by_page = {c["page"]: c for c in cards}
+    # **地板是全库的,不只是现役的。** 「rating 0.70 = 火力 50」说的是这把尺子
+    # 有没有底,不是"我们对这个人了解多少"——所以退役的、没数据的一样适用。
+    # 把它放在这里(而不是火力层里面)就是因为火力层只看现役。
+    for c in cards:
+        if c["firepower"] < F.FLOOR:
+            was = c["firepower"]
+            c["firepower"] = F.FLOOR
+            c["overall"] = round(sum(c[k] * w for k, w in
+                                     zip(ATTRS, WEIGHT[c["position"]])), 1)
+            if trace and "_trace" in c:
+                # 后台展示的推导必须和卡上的数一致,否则那一页就在撒谎。
+                st = c["_trace"]["attrs"]["firepower"]
+                st["floor"] = {"from": was, "to": F.FLOOR,
+                               "why": "rating %.2f = 火力 %d 是这个世界的地板"
+                                      % (F.FLOOR_ANCHOR[0], F.FLOOR)}
+                st["final"] = F.FLOOR
     hit = 0
     for page, m in moves.items():
         card = by_page.get(page)
@@ -541,11 +557,14 @@ def spec_markdown() -> str:
         f"强证据    >= {_F.STRONG_MAPS} 图 且在区间内 → 直接用标尺值",
         f"弱证据    {_F.SUPPORTING_MAPS}–{_F.STRONG_MAPS - 1} 图 → 只向上校正,"
         f"上限 {_F.SUPPORTING_CAP} 点",
-        "无证据    保持模板值(下限仍生效)",
-        f"下限      非指挥的现役选手不低于 {_F.GUNNER_FLOOR}(参照 karrigan 的人工锚 55)",
-        "指挥      整个不进这一层(实测 rating 对指挥火力无信号)",
-        "人工层    firepower 被手动覆盖过的人整个跳过",
-        "历史峰值  有 Top20 履历的人只升不降",
+        "无证据    保持模板值(地板仍生效)",
+        "人工锚    firepower_anchors.json 里打过锚的人**直接用那个数**,",
+        "          不受档位/位置/样本量任何限制——人的判断高于从它拟的曲线",
+        f"地板      **全库**不低于 {_F.FLOOR}(= rating {_F.FLOOR_ANCHOR[0]},人给的定义);",
+        "          退役的、没数据的、指挥,一样适用",
+        "指挥      不进标尺(实测 rating 对指挥火力无信号),但吃人工锚和地板",
+        "人工层    draft_overrides 里改过 firepower 的人整个跳过",
+        "历史峰值  没打过锚的 G4/G5 只升不降",
         f"处理范围  现役 G{ACTIVE_LO}–G{ACTIVE_HI};G4/G5 只允许强证据往上刷新",
         "```", "",
         "### 通用档位(自上而下互斥,取第一个满足的)", "", "```",
