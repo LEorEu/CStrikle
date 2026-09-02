@@ -14,10 +14,8 @@ top20"扣火力、按最近几年证据重判档位、按队伍排名锚定—�
   等级     Major + S+ + S。放宽到 A 级只多 2% 覆盖，相关性反而从 0.618 掉到
            0.573，因为低级别赛事炸鱼刷出来的 1.25 和 S 级的 1.25 不是一回事
            （asap S 级 1.09/11 图，含 A 级变 1.24/31 图）。
-           **但"查不到"不等于"没在打比赛"**：实测 56 个查不到 S 级数据的人里，
-           55 个在同一年打了 250~380 张图，一张都不在 Major/S+/S。所以退一档
-           查全等级、再按 LOW_TIER_DISCOUNT 折算回 S 级口径，标 tier="all"。
-           折算过的数比一张记着生涯巅峰的卡更接近他现在的水平。
+           **查不到就是查不到**，不退档。曾经有过一条"退一档查全等级再折算"
+           的兜底，那条路是错的，见下面第 3 条。
   样本量   必须按 map_count 往均值收缩。xKacpersky 近 3 月 1.52 是 6 张图打的。
 
 两个接口的坑，踩过了写在这里：
@@ -27,6 +25,16 @@ top20"扣火力、按最近几年证据重判档位、按队伍排名锚定—�
      逐人查**——那样根本不经过分页，返回恰好一行。id 表另外抓（见 fetch_ids）。
   2. **total_rows / total_page 不可信**，multidimension 那个接口永远返回 20/1。
      不要拿它判断进度或总数。
+
+  3. **`grade: []` 不是"所有赛事等级"，是"完全不筛"。** 这两件事差很远：
+     等级编号里有一档（实测是 5）在 5eplay 网页上根本不显示，不是赛事分级。
+     Ax1Le 近 12 个月 S 级 0 图，而 `grade: []` 给出 252 图 / rating 1.23——
+     其中 155 图来自那一档。逐档拆开是
+         g1 Major 0 ／ g7 S+ 0 ／ g2 S 0 ／ g3 0 ／ g4 100 ／ g5 155 ／ g6 2
+     而网页上勾"所有水平"是 102 图 = g4 + g6，**正好对得上，g5 不在里面**。
+     所以曾经的低等级兜底抓回来的是一个网页上不存在的数字。已经删掉。
+     对照组（donk g1=27 g7=23 g2=100、ZywOo 27/29/129）说明 `[1,7,2]`
+     这条主路一直是对的，坏的只有兜底那条。
 
 安全口径（`data/images.json` 那次教训）：**只合并，不删除。** 某个人这次抓失败，
 保留他上一次的数据并标 stale，绝不从文件里消失；跑完打印 新增/更新/失败/未变
@@ -63,13 +71,13 @@ WINDOW_MONTHS = 12
 GRADES = ["1", "7", "2"]            # Major / S+ / S
 GRADE_LABEL = "Major + S+ + S"
 
-# 查不到顶级样本的人不是"没有数据",是"没打过 S 级赛事"——实测 56 个这样的人里
-# 55 个在同一年打了 250~380 张图,只是一张都不在 Major/S+/S。所以退一档去查全等级,
-# 再折算回 S 级口径。折扣是量出来的:120 个两种口径都有的人,
-#     gap = 0.136 x 非S级占比      r = 0.731
-# 外推到"全部都是低级别"就是下面这个数。**它是外推不是实测**(样本里非 S 占比
-# 最高只到 82%),所以这种行标 tier="all",别和实测行混着用。
-LOW_TIER_DISCOUNT = 0.127
+# 查不到 S 级样本的人,这里**不留任何数**。曾经有过一条兜底:退一档查全等级、
+# 减去一个折扣当作 S 级口径。它错在源头——`grade: []` 不是"所有赛事等级"而是
+# "完全不筛",会把网页上根本不显示的那一档一起吃进来(见文件头第 3 条)。
+# 折扣本身也是外推出来的,等于拿一个假数去校准另一个假数。
+#
+# 现在的口径是:**没有 S 级样本 = 没有数据**。这一行不写进文件,消费方看到的是
+# 留白,而不是一个看着像实测的数字。留白是结论,折算不是。
 SLEEP = 0.25                        # 别把人家接口打疼
 
 # 我们要留下来的字段。impact 恒为 0，dagger/v4/v5 太稀疏，都不收。
@@ -111,6 +119,9 @@ def post(path: str, body: dict, tries: int = 3) -> dict:
 
 def options(player_id: str = "", page: int = 1, time_value: str = "",
             grades=None) -> dict:
+    # 注意 `grade: []`——它不是"所有赛事等级",是"完全不筛",会带进网页上根本
+    # 不显示的那一档(见文件头第 3 条)。正常抓取永远不要走到这个分支;
+    # 留着只为诊断时能逐档拆。
     return {"tt_ids": [], "time_value": time_value, "grade": grades or [],
             "player_id": player_id, "time_type": "recent" if time_value else "",
             "tt_series": [], "maps": [], "page": page}
@@ -366,8 +377,6 @@ def main():
     ap.add_argument("--all", action="store_true",
                     help="抓全部 648 张卡；默认只抓当前有队的人（AI 层只用得到这些）")
     ap.add_argument("--limit", type=int, default=0, help="只抓前 N 个，用来试跑")
-    ap.add_argument("--no-low-tier", action="store_true",
-                    help="不查全等级兜底（默认查：没有 S 级样本不等于没在打比赛）")
     ap.add_argument("--dry-run", action="store_true", help="只报匹配情况，不发查询、不写文件")
     args = ap.parse_args()
 
@@ -420,7 +429,7 @@ def main():
     if args.limit:
         items = items[:args.limit]
 
-    added = updated = unchanged = nodata = lowtier = failed = 0
+    added = updated = unchanged = nodata = failed = 0
     for i, (pid, name5e) in enumerate(items, 1):
         try:
             row = fetch_one(pid, tv)
@@ -433,24 +442,13 @@ def main():
             continue
         finally:
             time.sleep(SLEEP)
-        if row is None and not args.no_low_tier:
-            # 没有 S 级样本 != 没在打比赛。退一档查全等级，折算回 S 级口径。
-            try:
-                row = fetch_one(pid, tv, [])
-            except RuntimeError:
-                row = None
-            finally:
-                time.sleep(SLEEP)
-            if row is not None:
-                row["tier"] = "all"
-                r = to_num(row.get("rating"))
-                if r is not None:
-                    row["rating_s_equiv"] = round(r - LOW_TIER_DISCOUNT, 3)
-                lowtier += 1
         if row is None:
+            # 没有 Major/S+/S 样本。不退档、不折算、不写行——他在这个口径下
+            # 就是没有数据。旧文件里若有他的行(多半是当初兜底写进去的),删掉。
             nodata += 1
-            continue                       # 真的一场比赛都查不到
-        row.setdefault("tier", "S")
+            players.pop(pid, None)
+            continue
+        row["tier"] = "S"
         row["5e_id"] = pid
         row["card_page"] = page_of.get(pid)      # 当前世界的人不一定有卡
         row.pop("stale", None)
@@ -468,15 +466,13 @@ def main():
 
     stats = {"card_matched": len(hit), "pool": len(pool), "queried": len(items),
              "added": added, "updated": updated, "unchanged": unchanged,
-             "low_tier_fallback": lowtier, "no_sample_at_all": nodata,
-             "failed": failed}
+             "no_sample_at_all": nodata, "failed": failed}
     write_out(players, tv, stats)
     print("\n写入 %s" % OUT_PATH.relative_to(ROOT))
     print("  新增 %d  更新 %d  未变 %d  失败 %d（失败的人保留旧值并标 stale）"
           % (added, updated, unchanged, failed))
-    print("  其中退到全等级折算的 %d 人（tier=all）；一场比赛都查不到的 %d 人"
-          % (lowtier, nodata))
-    print("  文件里现有 %d 人（只合并不删除——比对 HEAD 应当只增不减）" % len(players))
+    print("  没有 Major/S+/S 样本的 %d 人（不写行——留白就是结论）" % nodata)
+    print("  文件里现有 %d 人" % len(players))
     return 1 if failed else 0
 
 

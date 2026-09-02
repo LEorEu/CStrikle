@@ -170,7 +170,6 @@ def build_view(size=None) -> dict:
                          | {"hs_rate": _num(srow.get("hs_rate")),
                             "maps": _num(srow.get("map_count")),
                             "tier": srow.get("tier", ""),
-                            "conv": _num(srow.get("rating_s_equiv")),
                             "fb": _num(srow.get("first_blood")),
                             "fd": _num(srow.get("first_death"))}
                          if srow else None),

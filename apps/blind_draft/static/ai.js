@@ -143,9 +143,8 @@ function playerRow(p) {
     ${s ? Cc(n2(s.rating), 'sep') + Cc(n1(s.adr)) + Cc(n1(s.kast)) + Cc(n2(s.kd))
           + Cc(n2(s.kpr)) + Cc(n2(s.dpr)) + Cc(n1(s.hs_rate))
           + Cc(s.maps == null ? '—' : s.maps, 'dim')
-          + Cc(s.tier === 'all' ? '<span class="conv" title="没有 S 级样本，由全等级折算">折算</span>'
-                                : esc(s.tier), 'dim')
-        : '<td class="gC sep na" colspan="9">5E 没有这个人的样本</td>'}
+          + Cc(esc(s.tier), 'dim')
+        : '<td class="gC sep na" colspan="9">这一年没有 Major / S+ / S 级样本</td>'}
 
     <td class="l note2">${p.notes.map(esc).join('；')}</td>
   </tr>`;

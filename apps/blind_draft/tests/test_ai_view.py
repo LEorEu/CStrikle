@@ -127,29 +127,47 @@ class ViewTests(unittest.TestCase):
             self.assertIsNone(p["page"])
 
     def test_nocard_players_still_have_evidence(self):
-        """他们进来的**理由**就是右边那一列。全空的话这一页白扩。"""
+        """他们进来的**理由**就是右边那一列。大部分全空的话这一页白扩。
+
+        门槛从「最多缺 5 个」放宽到「至少七成」,因为口径收紧了:删掉低等级
+        兜底之后,「没有行」是一个正当结论(他这一年真的没打过 Major/S+/S),
+        不再是抓取失败。卡库外的人恰恰最容易落在这一类。
+        """
         nc = [p for t in self.v["teams"] for p in t["roster"] if p["nocard"]]
         have = [p for p in nc if p["stat"]]
-        self.assertGreaterEqual(len(have), len(nc) - 5,
-                                "卡库外的人大批没有 5E 数据,那扩池就没意义了")
+        self.assertGreaterEqual(len(have), 0.7 * len(nc),
+                                "卡库外的人大批没有 S 级样本(%d/%d),那扩池就没意义了"
+                                % (len(have), len(nc)))
 
-    def test_everyone_is_covered_by_5e(self):
-        """查不到 5E 数据的人要极少。
+    def test_top_teams_are_fully_covered(self):
+        """**全球 VRS 前 10 的队,首发必须人人有数。**
 
-        查不到不一定是 bug(确实有人没样本),但数量一旦变大就说明 id 那条线
-        断了,而它断掉的表现只是数据悄悄变空——bLitz 就这么丢过一次。
+        这条是 id 那条线的哨兵:id 对错了的表现不是报错,是数据悄悄变空——
+        bLitz 就这么丢过一次(BL1TZ / bLitz 撞了 leet 归一)。
+
+        为什么只盯前 10:口径收紧到只认 Major/S+/S 之后,「查不到」对中下游
+        队伍是**正常结论**(整池 92%、名额内 96%、50 名开外只有 64%)。
+        拿全池覆盖率当断言,就是把一个真实的空当成故障;而前 10 的队一年里
+        不可能一场顶级赛事都没打,那里一旦出现空白,一定是我们这边断了。
         """
-        miss = [p["nickname"] for t in self.v["teams"] for p in t["roster"]
-                if not p["stat"]]
-        self.assertLessEqual(len(miss), 5, "查不到 5E 数据的人太多了:%s" % miss)
+        miss = [(t["name"], p["nickname"]) for t in self.v["teams"]
+                for p in t["roster"] if not p["stat"] and (t["vrs"] or 9999) <= 10]
+        self.assertEqual(miss, [], "前 10 队里有人查不到 S 级数据,多半是 id 断了:%s" % miss)
 
-    def test_low_tier_rows_are_labelled(self):
-        """折算过的 rating 必须自报家门,不能和实测混在一起。"""
-        for t in self.v["teams"]:
-            for p in t["roster"]:
-                s = p["stat"]
-                if s and s["tier"] == "all":
-                    self.assertIsNotNone(s["conv"], p["nickname"])
+    def test_every_row_is_top_tier(self):
+        """页面上出现的每一个数,都必须来自 Major/S+/S。
+
+        曾经有一条兜底:查不到 S 级样本就退一档查全等级、减掉一个折扣当作
+        S 级口径。它错在源头——5eplay 的 `grade: []` 不是「所有赛事等级」而是
+        「完全不筛」,会把网页上根本不显示的那一档也算进来。Ax1Le 这一年
+        S 级 0 图,却被记成 252 图 / rating 1.23(其中 155 图来自那一档)。
+
+        错的形状是「一个看着像实测的数字」,比缺数据危险得多——**留白是结论,
+        折算不是**。所以这里钉死:没有 tier 之外的行。
+        """
+        seen = {p["stat"]["tier"] for t in self.v["teams"] for p in t["roster"]
+                if p["stat"]}
+        self.assertEqual(seen, {"S"}, "混进了非 S 级口径的行:%s" % (seen - {"S"}))
 
     def test_photo_paths_are_servable(self):
         for t in self.v["teams"]:
