@@ -136,32 +136,17 @@ SHRINK_MAPS = 31.0
 # 10~79 图之间照旧按 SHRINK_MAPS 向先验收缩——图越少，越靠先验。
 FIRE_MIN_MAPS = 10
 
-# 真正被「近一年 S 级出场少」说明的不是火力，是**兑现率**：他打不进高级别
-# 赛事本身就是一条关于稳定性的证据。所以样本量单独接到 Stability 上，扣分
-# 分段线性。这是这条线上唯一一处当前证据能碰 Stability 的地方——KAST 仍然
-# 不许用来生成它（聚合 KAST 不是逐图方差）。
-STAB_BY_MAPS = ((80, 0.0), (30, -6.0), (10, -14.0), (1, -18.0))
-STAB_FLOOR = 25             # 扣到底也要留一条地板，别让分布跑出 §6.3 的形状
-
-
-def stability_by_maps(maps):
-    """近一年 S 级出场量 -> Stability 扣分。没有 5E 行时返回 0。
-
-    没有行和「有行但只打了 3 张图」是两回事：前者我们是**真不知道**（可能
-    根本不在 5E 体系里），不该因为查不到就判他不稳；后者是查到了、他就是没
-    怎么打。所以扣分只发给有行的人。
-    """
-    maps = int(maps or 0)
-    if maps <= 0:
-        return 0.0
-    if maps >= STAB_BY_MAPS[0][0]:
-        return 0.0
-    if maps <= STAB_BY_MAPS[-1][0]:
-        return STAB_BY_MAPS[-1][1]
-    for (m0, v0), (m1, v1) in zip(STAB_BY_MAPS, STAB_BY_MAPS[1:]):
-        if m1 <= maps <= m0:
-            return v0 + (v1 - v0) * (m0 - maps) / float(m0 - m1)
-    return 0.0
+# **`map_count` 是 Evidence Confidence，不是 Stability。**
+#
+# 试过一版把出场量接到 Stability 上（图少 -> 扣稳定值），理由是「打不进 S 级
+# 赛事本身就说明兑现率低」。听着成立，实测不能要：那等于对同一批人罚两次——
+# 数据少已经让他们的火力被拉回先验，再削稳定值，弱队既更容易失常、分布又更
+# 宽，净效果是**爆冷变少**（实力差 10~15 时 BO1 强队胜率 87.7% -> 91.9%）。
+# 一支队打得少是我们的**认知问题**，不该变成他在比赛里的惩罚。
+#
+# 所以样本量只做一件事：决定火力那一维信不信当前证据（FIRE_MIN_MAPS 是硬
+# 门槛，低于它直接回退）。Stability 仍然只有生涯先验一个来源，KAST 也依旧
+# 不许用来生成它——聚合 KAST 不是逐图方差。
 # 当前赛场的职业首发火力下限。和 firepower.py 的世界定义一致；年龄回退不能
 # 把 karrigan/FalleN 这类仍在一线首发的 IGL 算到 20–40。
 CURRENT_FIRE_FLOOR = 50
@@ -328,34 +313,6 @@ def _performance_firepower(card, row, scale):
     return out
 
 
-def _sample_stability(c, row, notes):
-    """按近一年 S 级出场量下调 Stability，就地改 c，返回来源说明。
-
-    只有出场量这一条当前证据能碰 Stability。rating / KAST 都不行——前者说的是
-    火力，后者是聚合值、不是逐图方差（§三个世界必须分开）。
-    """
-    base = {"source": "career_prior", "confidence": "low",
-            "why": "现有聚合 KAST 不能代表逐图方差"}
-    maps = int(_num((row or {}).get("map_count")) or 0)
-    if not maps:
-        return base
-    drop = stability_by_maps(maps)
-    base.update(maps=maps)
-    if drop >= -0.05:
-        base["why"] = "%d 图 S 级出场，样本充足，稳定值不因出场量下调" % maps
-        return base
-    was = c["stability"]
-    c["stability"] = max(STAB_FLOOR, int(round(was + drop)))
-    if c["stability"] != was:
-        notes.append("近一年仅 %d 张 S 级图，稳定 %d→%d"
-                     % (maps, was, c["stability"]))
-    base.update(source="career_prior_thin_sample", confidence="low",
-                why="近一年仅 %d 张 S 级图：出场少本身就是兑现率低的证据，"
-                    "生涯先验 %d 扣 %.0f 分" % (maps, was, -drop),
-                penalty=round(drop, 1))
-    return base
-
-
 def settle(card, stat=None, scale=None, caller=None):
     """全队仲裁完后落当前位置，再逐维生成 AI 当前卡。
 
@@ -405,8 +362,6 @@ def settle(card, stat=None, scale=None, caller=None):
         c["firepower"] = perf["value"]
         notes.append("当前火力 %d→%d：%s" % (was, c["firepower"], perf["why"]))
 
-    stab = _sample_stability(c, stat, notes)
-
     c["_notes"] = notes
     c["_filler"] = False
     c["_sources"] = {
@@ -415,7 +370,9 @@ def settle(card, stat=None, scale=None, caller=None):
                                     else "career_evidence_current_role"),
                        "confidence": "medium"},
         "experience": {"source": "career_evidence", "confidence": "high"},
-        "stability": stab,
+        "stability": {"source": "career_prior", "confidence": "low",
+                      "why": "现有聚合 KAST 不能代表逐图方差；出场量只是证据"
+                             "置信度，不折算成稳定值"},
     }
     c["overall"] = round(P.overall(c), 1)
     return c
@@ -441,19 +398,12 @@ def make_current_player(row, team, age, stat, scale):
     c["firepower"] = perf["value"]
     if perf["source"].startswith("current_performance"):
         c["_notes"].append("当前火力 %d：%s" % (c["firepower"], perf["why"]))
-    # 卡库外真人的 Stability 本来就是角色模板，出场量这条证据同样适用——而且
-    # 对他们更有话说：既没进过玩家卡库（没打过 Major），近一年 S 级又打得少。
-    stab = _sample_stability(c, stat, c["_notes"])
-    if stab.get("source") == "career_prior":
-        stab = {"source": "role_template_g1", "confidence": "low"}
-    else:
-        stab["source"] = "role_template_g1_thin_sample"
     c["_sources"] = {
         "firepower": perf,
         "leadership": {"source": ("caller_template_g1" if is_caller
                                     else "role_template_g1"), "confidence": "low"},
         "experience": {"source": "unknown_career_g1", "confidence": "low"},
-        "stability": stab,
+        "stability": {"source": "role_template_g1", "confidence": "low"},
     }
     c["overall"] = round(P.overall(c), 1)
     return c
@@ -678,11 +628,13 @@ def entry_of(team, rosters_idx, cohesion_cap):
     不知道”而把一支每天训练的真实队判成没有磨合。当前队的差异不靠这项排名，
     它只表达玩家草台班子相对真队的税。
     """
+    from . import proto_match_v2 as V2          # 延迟导入:V2 反过来要用 major
     r = M.entry_rating(team["roster"], rosters_idx, cohesion_cap)
-    r = dict(r, chem_raw=max(r["chem_raw"], cohesion_cap),
-             cohesion=cohesion_cap, entry=r["base"] + cohesion_cap)
+    r = dict(r, chem_raw=max(r["chem_raw"], cohesion_cap), cohesion=cohesion_cap)
     adj = team.get("adjust") or 0.0
-    return dict(r, entry=r["entry"] + adj, adjust=adj) if adj else r
+    # Entry 只有一个定义,在比赛引擎里(§4.1 纯火力)。这里不再算第二份。
+    return dict(r, entry=V2.entry_of(team["roster"], cohesion_cap, adj),
+                adjust=adj)
 
 
 # ------------------------------------------------------------------ 输出
@@ -719,7 +671,7 @@ def main():
         flag = "" if t["real"] == 5 else "  [AI先验 %d 人]" % (5 - t["real"])
         if t.get("adjust"):
             flag += "  [人工 %+.0f]" % t["adjust"]
-        print("%2d  %-20s VRS #%-3s  评分 %5.1f  磨合 %4.1f%s"
+        print("%2d  %-20s VRS #%-3s  Entry %5.1f  磨合 %4.1f%s"
               % (i, t["name"], t.get("vrs") or "-", e, r["cohesion"], flag))
         print("      " + "  ".join(
             "%s(%s%s)" % (c["nickname"], c["position"][:3],

@@ -236,76 +236,115 @@ class ViewTests(unittest.TestCase):
                                     p["photo"])
 
 
-class SampleSizeStabilityTests(unittest.TestCase):
-    """§P1：近一年 S 级出场量是唯一能碰 Stability 的当前证据。
+class OneEntryDefinitionTests(unittest.TestCase):
+    """项目里只允许有一个东西叫 Entry：`proto_match_v2.entry_of`（§4.1 纯火力）。
 
-    这一组锁的是那条扣分曲线本身，以及三条边界——它们各自代表一个判断，
-    改了就等于改了「打得少说明什么」这个结论，不该悄悄漂。
+    以前 `major.entry_rating` 还产出一个复合值（火力 40% + L/E/S 各 20%），
+    页面用它、比赛用另一个，对同一批 32 支队的名次差到 15 位。删掉之后这一组
+    盯着它不要以任何形式回来。
     """
 
-    def test_the_penalty_curve_hits_its_anchors(self):
-        for maps, want in A.STAB_BY_MAPS:
-            self.assertAlmostEqual(A.stability_by_maps(maps), want, places=6)
+    @classmethod
+    def setUpClass(cls):
+        from blinddraft import proto_match_v2 as V2
+        cls.V2 = V2
+        cls.cfg = M.load_config()
+        cls.cap = float(cls.cfg.get("cohesion_cap", M.COHESION_CAP))
+        cls.rosters = M.load_rosters_cached()
+        pool, _asof = A.build_pool_field(cls.cfg)
+        cls.field = [t for t in pool if t.get("stage")]
 
-    def test_a_full_season_is_never_penalised(self):
-        """样本够就是够，不能因为「比别人少一点」继续扣。"""
-        for maps in (80, 90, 128, 185):
-            self.assertEqual(A.stability_by_maps(maps), 0.0)
+    def test_entry_rating_no_longer_produces_an_entry(self):
+        r = M.entry_rating(self.field[0]["roster"], self.rosters, self.cap)
+        self.assertNotIn("entry", r)
+        self.assertNotIn("base", r)          # 那个复合分本身也不许留着
+        self.assertIn("chem_raw", r)         # 磨合度还是赛场层的事
+        self.assertIn("cohesion", r)
 
-    def test_the_curve_only_ever_goes_down_as_maps_drop(self):
-        last = 0.0
-        for maps in range(200, 0, -1):
-            got = A.stability_by_maps(maps)
-            self.assertLessEqual(got, last + 1e-9)
-            last = got
+    def test_the_page_and_the_match_read_the_same_entry(self):
+        """`/ai` 显示的和 `/play` 里真正上场的必须逐队相等。"""
+        by_match = {t.name: t for t in self.V2.major_field(1)[0]}
+        for t in self.field:
+            shown = A.entry_of(t, self.rosters, self.cap)["entry"]
+            self.assertAlmostEqual(shown, by_match[t["name"]].entry(), places=9,
+                                   msg="%s 的 Entry 两处对不上" % t["name"])
 
-    def test_no_5e_row_is_not_the_same_as_a_thin_one(self):
-        """查不到 ≠ 查到了但打得少。前者我们是真不知道，不该判他不稳。"""
-        self.assertEqual(A.stability_by_maps(0), 0.0)
-        self.assertEqual(A.stability_by_maps(None), 0.0)
-        self.assertLess(A.stability_by_maps(1), 0.0)
+    def test_entry_ignores_leadership_experience_stability(self):
+        """把这三维改成任何值，赛场那一侧的 Entry 都不许动。"""
+        t = self.field[0]
+        moved = [dict(c, leadership=95, experience=95, stability=95)
+                 for c in t["roster"]]
+        self.assertAlmostEqual(self.V2.entry_of(t["roster"], self.cap),
+                               self.V2.entry_of(moved, self.cap), places=9)
 
-    def test_only_sample_size_touches_stability_never_kast(self):
-        """KAST 是聚合值，不是逐图方差——它不许生成 Stability（§三个世界）。"""
-        card = {"firepower": 70, "leadership": 20, "experience": 50,
-                "stability": 60, "position": "RIFLER"}
-        notes = []
-        src = A._sample_stability(dict(card), {"kast": 99.9, "rating": 1.4}, notes)
-        self.assertEqual(src["source"], "career_prior")
-        self.assertNotIn("penalty", src)
 
-    def test_the_field_penalises_thin_samples_and_leaves_full_ones_alone(self):
-        thin = full = 0
-        for t in self.__class__.field:
-            for p in t["roster"]:
-                src = p["_sources"]["stability"]
-                maps = src.get("maps") or 0
-                if maps >= A.STAB_BY_MAPS[0][0]:
-                    full += 1
-                    self.assertNotIn("penalty", src)
-                elif maps and maps < 30:
-                    thin += 1
-                    self.assertLess(src["penalty"], 0.0)
-        self.assertGreater(thin, 0)
-        self.assertGreater(full, 0)
+class EvidenceConfidenceTests(unittest.TestCase):
+    """`map_count` 是 Evidence Confidence，只决定信不信当前火力。
 
-    def test_firepower_uses_evidence_down_to_the_documented_floor(self):
-        """门槛是 10 图。10 图以上必须用上 rating，以下才准回退。"""
-        self.assertEqual(A.FIRE_MIN_MAPS, 10)
-        for t in self.__class__.field:
-            for p in t["roster"]:
-                src = p["_sources"]["firepower"]
-                maps = src.get("maps") or 0
-                if maps >= A.FIRE_MIN_MAPS and p["position"] != "IGL":
-                    self.assertTrue(
-                        src["source"].startswith("current_performance"),
-                        "%s 有 %d 图却回退了：%s"
-                        % (p["nickname"], maps, src.get("why")))
+    曾经试过让出场量去扣 Stability（图少 = 兑现率低）。实测那是对同一批人
+    罚两次：数据少已经把火力拉回先验，再削稳定值，净效果是**爆冷变少**——
+    一支队打得少是我们的认知问题，不该变成它在比赛里的惩罚。这一组盯着
+    那条结论不要再被「听起来有道理」地加回来。
+    """
 
     @classmethod
     def setUpClass(cls):
         pool, _asof = A.build_pool_field(M.load_config())
         cls.field = [t for t in pool if t.get("stage")]
+
+    def test_ten_maps_is_the_hard_floor_for_firepower(self):
+        """门槛是 10 图：够了就必须用上 rating，不够才准回退。"""
+        self.assertEqual(A.FIRE_MIN_MAPS, 10)
+        for t in self.field:
+            for p in t["roster"]:
+                src = p["_sources"]["firepower"]
+                maps = src.get("maps") or 0
+                if p["position"] == "IGL":
+                    continue
+                if maps >= A.FIRE_MIN_MAPS:
+                    self.assertTrue(
+                        src["source"].startswith("current_performance"),
+                        "%s 有 %d 图却回退了：%s"
+                        % (p["nickname"], maps, src.get("why")))
+                elif maps:
+                    self.assertEqual(src["source"], "career_age_fallback",
+                                     "%s 只有 %d 图，不该读当前标尺"
+                                     % (p["nickname"], maps))
+
+    def test_sample_size_never_reaches_stability(self):
+        """出场量不许出现在 Stability 的来源里，也不许留下扣分字段。"""
+        for t in self.field:
+            for p in t["roster"]:
+                src = p["_sources"]["stability"]
+                self.assertIn(src["source"],
+                              ("career_prior", "role_template_g1"))
+                self.assertNotIn("penalty", src)
+                self.assertNotIn("maps", src)
+
+    def test_thin_sample_players_keep_their_prior_stability(self):
+        """样本薄的人稳定值必须还等于生涯先验（位置重套之后的那份）。
+
+        直接量后果：正赛里图数最少的那批，稳定值不该系统性低于全场。
+        """
+        thin, thick = [], []
+        for t in self.field:
+            for p in t["roster"]:
+                maps = p["_sources"]["firepower"].get("maps") or 0
+                if not maps:
+                    continue
+                (thin if maps < 30 else thick).append(p["stability"])
+        self.assertTrue(thin and thick)
+        # 允许天然差距，但不该出现「薄样本整体被压掉一档」那种十几分的落差
+        self.assertLess(abs(sum(thin) / len(thin) - sum(thick) / len(thick)), 12)
+
+    def test_kast_still_cannot_generate_stability(self):
+        """聚合 KAST 不是逐图方差——这条从 M1 起就没变过。"""
+        card = {"firepower": 70, "leadership": 20, "experience": 50,
+                "stability": 60, "position": "RIFLER", "age": 24, "grade": 3,
+                "nickname": "x", "_pos": "RIFLER"}
+        got = A.settle(dict(card), {"kast": 99.9, "map_count": 3}, None)
+        self.assertEqual(got["stability"], 60)
+        self.assertEqual(got["_sources"]["stability"]["source"], "career_prior")
 
 
 class SpearmanTests(unittest.TestCase):

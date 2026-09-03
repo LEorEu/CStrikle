@@ -80,15 +80,19 @@ def list_events(top=12):
 # ------------------------------------------------------------------ Entry Rating
 
 def entry_rating(roster, rosters, cohesion_cap=COHESION_CAP):
-    """§4:赛前评价。基础分 + 封顶后的先天默契,不含 Form / 高压 / Rogue。
+    """一支队的先天默契和封顶后的磨合度。**这里不再产出 Entry。**
 
-    money 固定传 0 是有意的——省下的预算是 Rogue Point 的替身,而 §4 明说
-    Rogue Buff 不参与 Entry Rating,不能让人靠留钱买到一张 Stage 3 邀请函。
+    以前它还返回 `base`(火力 40% + L/E/S 各 20%)和 `entry = base + 默契`。
+    那是 v1 的口径、量纲 ≈65,而比赛读的是 `proto_match_v2.entry_of` 的纯火力
+    (≈80)。两个数都叫 Entry,对同一批 32 支队的名次能差 15 位——FUT 在旧尺子上
+    全场第 22,在新尺子上第 7。所以复合值整个删掉,Entry 只有一个定义。
+
+    这里只剩磨合度:它是**赛前**就定死的先天量、和当天状态无关,所以仍然住在
+    赛场层,而不是比赛引擎里。
     """
-    s = P.score(roster, rosters, 0)
-    chem = min(s["chem"], cohesion_cap)
-    return {"base": s["base"], "chem_raw": s["chem"], "cohesion": chem,
-            "entry": s["base"] + chem, "notes": s["notes"]}
+    chem, notes = P.chemistry(roster, rosters)
+    return {"chem_raw": chem, "cohesion": min(chem, cohesion_cap),
+            "notes": notes}
 
 
 class Entry(object):
@@ -116,7 +120,10 @@ class Entry(object):
 
     @property
     def entry(self):
-        return self.rating["entry"]
+        """Entry 走比赛引擎那一个定义,赛场层不再自己算一份。"""
+        from . import proto_match_v2 as V2       # 延迟导入:V2 反过来要用本模块
+        return V2.entry_of(self.roster, self.rating["cohesion"],
+                           getattr(self, "adjust", 0.0))
 
     def __repr__(self):
         return "<Entry %s %.1f>" % (self.name, self.entry)
@@ -441,16 +448,16 @@ def print_field(field, event, cohesion_cap):
     当成一列印出来，major_pool 赛场没有这个字段，那一列就留空。
     """
     print("=" * 70)
-    print("%s  —  Entry Rating 顺位(不是历史真实 VRS,也不决定 Stage)" % event)
-    print("Entry Rating = 基础分 + 磨合度,磨合度 = min(裸默契, %.1f)" % cohesion_cap)
+    print("%s  —  Entry 顺位(不是历史真实 VRS,也不决定 Stage)" % event)
+    print("Entry = 纯火力(Carry 权重 .35/.25/.40) + 磨合度 + 结构修正;")
+    print("磨合度 = min(裸默契, %.1f)。全项目只有这一个东西叫 Entry。" % cohesion_cap)
     print("=" * 70)
     show_event = len({getattr(e, "event", None) for e in field}) > 1
     for i, e in enumerate(field, 1):
         stage = getattr(e, "regional_stage", None)
         tail = ("   [%s]" % e.event) if show_event and getattr(e, "event", None) else ""
-        print("    %2d  %-22s  %5.1f   基础 %5.1f  磨合 %4.1f (裸默契 %4.1f)  %s%s"
-              % (i, e.name, e.entry, e.rating["base"], e.rating["cohesion"],
-                 e.rating["chem_raw"],
+        print("    %2d  %-22s  Entry %5.1f   磨合 %4.1f (裸默契 %4.1f)  %s%s"
+              % (i, e.name, e.entry, e.rating["cohesion"], e.rating["chem_raw"],
                  ("Stage %d" % stage) if stage else "", tail))
     print()
     print("玩家怎么插进来、每个 Stage 怎么打：python -m blinddraft.proto_match_v2 --field")

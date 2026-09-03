@@ -402,6 +402,22 @@ def play_match(a, b, rng, bo, pressure, scale=None):
 # 已删除，全部走 major_field。
 
 
+def entry_of(roster, chem=0.0, adjust=0.0):
+    """**Entry 的唯一定义**：纯火力 + 默契 + 结构修正（§4.1）。
+
+    项目里只有这一个东西叫 Entry。曾经并存的 `major.entry_rating` 是 v1 口径
+    （火力 40% + L/E/S 各 20%，量纲 ≈65），它对同一批 32 支队给出的名次和这个
+    差最多 15 位——FUT 在那把尺子上是全场第 22，在这把上是第 7。页面显示一套、
+    比赛读另一套，人一定会被绕晕，所以那个复合值已经删掉。
+
+    赛场那一侧（`/ai`、`ai_teams`、`major` 的赛场列表）通过这个函数取值，
+    不再自己算一份。
+    """
+    t = Team("", roster, chem)
+    t.structure += adjust
+    return t.entry()
+
+
 def named_team(label, nicknames, cards=None):
     cards = cards or {c["nickname"]: c for c in P.load_cards()}
     return Team(label, [cards[n] for n in nicknames], 0.0, is_player=True)
