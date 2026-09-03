@@ -64,8 +64,22 @@ PRESSURE_DECIDER = 1.25     # 2-2 生死局
 STAGE_WINS = 3
 STAGE_LOSSES = 3
 
+# §17.2 叙事标签的阈值。MVP 不用阈值（永远有一个），这两个是「今天出圈了」
+# 才挂。定 12 而不是 10：12 的触发率已经接近每四张图一次，再往下调 LIFE GAME
+# 会变成常态，稀有性没了标签也就不值钱了。
+LIFE_GAME_AT = 12.0
+UNDERPERFORM_AT = -12.0
+
 
 # ------------------------------------------------------------------ 一支队的静态部分
+
+# 一次 Form Roll 的完整账本。前三个字段的顺序和位置不能动——mvp / life /
+# under 以及展示层都按 t[0] / t[1] / t[2] 取 card / eff / delta。
+#   delta == team + solo + exp_gain + lead_gain + capped，逐项可加，
+#   所以「这个人的火力为什么变了」永远能拆到底，不留残差。
+Roll = collections.namedtuple(
+    "Roll", "card eff delta team solo exp_gain lead_gain capped sigma weight")
+
 
 def soft_cap(x):
     """§18:卡面最高 99,比赛里可以超过,但超出部分打折。"""
@@ -103,6 +117,18 @@ class MatchTeam(object):
             avg = st.mean(c["leadership"] for c in roster)
             self.lead = avg * .60
             self.team_lead = avg * .60        # §20:无 IGL,团队领导力明显降低
+
+        # §17.1 Carry Hierarchy：谁是这队的第一枪，由**卡面火力**在开赛前定死，
+        # 不由当天 Form 重排。否则一次高 Roll 会被奖励两次——自己涨分，还从
+        # 后排跳到 .35 那把椅子上。实测低火力队友能在 12.7% 的图里挤掉真正的
+        # 明星，卡面差距越大越荒谬（donk 96 被 spaze 50 抢走主枪权重）。
+        order = sorted(range(len(roster)), key=lambda i: -roster[i]["firepower"])
+        rest = order[2:]
+        self.star_w = [0.0] * len(roster)
+        self.star_w[order[0]] = .35
+        self.star_w[order[1]] = .25
+        for i in rest:
+            self.star_w[i] = .40 / len(rest)
 
         self.exp = st.mean(c["experience"] for c in roster)
         self.stab = st.mean(c["stability"] for c in roster)
@@ -148,18 +174,31 @@ class MatchTeam(object):
         solo = math.sqrt(1.0 - TEAM_FORM_SHARE)
         z_team = rng.gauss(0.0, 1.0)
         rolled, detail = [], []
-        for c in self.roster:
+        for w, c in zip(self.star_w, self.roster):
             sigma = (100 - c["stability"]) / 4.0
-            r = sigma * (shared * z_team + solo * rng.gauss(0.0, 1.0))
-            if r < 0.0:
-                buf = (EXP_BUFFER * pressure * (c["experience"] / 100.0)
-                       + LEAD_BUFFER * (self.team_lead / 100.0))
-                r *= 1.0 - min(buf, BUFFER_CAP)
+            team = sigma * shared * z_team           # 今天全队的状态
+            solo_part = sigma * solo * rng.gauss(0.0, 1.0)   # 他自己的状态
+            raw = team + solo_part
+            exp_gain = lead_gain = 0.0
+            r = raw
+            if raw < 0.0:
+                # 缓冲只作用在负 Roll 上。两条分开记账，这样「指挥把这队从
+                # 崩盘边上拉回来多少」是一个能直接读出来的数，而不是玄学。
+                e_part = EXP_BUFFER * pressure * (c["experience"] / 100.0)
+                l_part = LEAD_BUFFER * (self.team_lead / 100.0)
+                buf = min(e_part + l_part, BUFFER_CAP)
+                r = raw * (1.0 - buf)
+                if e_part + l_part > 0.0:            # 触到 BUFFER_CAP 时按比例分
+                    scale = buf / (e_part + l_part)
+                    exp_gain = -raw * e_part * scale
+                    lead_gain = -raw * l_part * scale
             eff = soft_cap(c["firepower"] + r)
+            capped = eff - (c["firepower"] + r)      # §18 超过 99 被削掉的部分
             rolled.append(eff)
-            detail.append((c, eff, eff - c["firepower"]))
-        f = sorted(rolled, reverse=True)
-        fire = f[0] * .35 + f[1] * .25 + st.mean(f[2:]) * .40
+            detail.append(Roll(c, eff, eff - c["firepower"], team, solo_part,
+                               exp_gain, lead_gain, capped, sigma, w))
+        # 权重按 self.star_w（卡面火力定的位次），不对 rolled 重新排序。
+        fire = sum(w * e for w, e in zip(self.star_w, rolled))
         return fire * .40 + self.floor - self.choke(pressure), detail
 
     def choke(self, pressure):
@@ -169,9 +208,12 @@ class MatchTeam(object):
         return CHOKE * pressure * (1.0 - self.exp / 100.0) * relief
 
     def baseline(self):
-        """一个人都不 Roll 时的强度。应当等于 Entry Rating。"""
-        f = sorted((c["firepower"] for c in self.roster), reverse=True)
-        fire = f[0] * .35 + f[1] * .25 + st.mean(f[2:]) * .40
+        """一个人都不 Roll 时的强度。应当等于 Entry Rating。
+
+        用的是同一套 self.star_w，而它由卡面火力排序生成，所以这里的结果
+        和旧版 `sorted(firepower)` 逐分相同——不变量不受 Carry Hierarchy 影响。
+        """
+        fire = sum(w * c["firepower"] for w, c in zip(self.star_w, self.roster))
         return fire * .40 + self.floor
 
 
@@ -184,10 +226,30 @@ def win_prob(sa, sb, scale=WIN_SCALE):
 
 
 class MapResult(object):
-    def __init__(self, sa, sb, p, winner_a, mvp):
+    """§17.2 一张图讲三个不同的故事，各自有各自的口径。
+
+    以前只有一个 `mvp`，取的是**赢家那一方**里 `eff - base` 最大的人。两个错：
+    输掉的一方永远无人上榜（「载物尽力了队友带不动」这种叙事根本无法发生），
+    而比超常幅度等于系统性奖励低卡面高波动的人——实测 spaze(F50) 的 MVP 率
+    24.3% 反超 donk(F96) 的 19.5%，donk 的 LIFE GAME 率则恒为 0。
+    """
+
+    def __init__(self, sa, sb, p, winner_a, mvp, life, under, da, db, a, b):
         self.sa, self.sb, self.p = sa, sb, p
         self.winner_a = winner_a
-        self.mvp = mvp                        # (card, eff, delta) 本图最超常的人
+        self.mvp = mvp                        # 谁打得最好：有效火力最高，两队合评
+        self.life = life                      # 谁远超自己：正 delta 最大
+        self.under = under                    # 谁崩了：负 delta 最大
+        # 十个人各自的 (card, eff, delta)。标签只是摘要，这两份才是全文——
+        # 「我这五个人今天分别打成什么样」应当能逐个看到，而不是只看一个 MVP。
+        self.da, self.db = da, db
+        self.a, self.b = a, b      # 归因展示要报队名和 team_lead
+
+
+def _standout(da, db, key, chooser):
+    """双方合评一个人，返回 ((card, eff, delta), 是不是 a 队的)。"""
+    ta, tb = chooser(da, key=key), chooser(db, key=key)
+    return (ta, True) if chooser(key(ta), key(tb)) == key(ta) else (tb, False)
 
 
 def play_map(a, b, rng, pressure):
@@ -195,8 +257,10 @@ def play_map(a, b, rng, pressure):
     sb, db = b.play_map(rng, pressure)
     p = win_prob(sa, sb)
     winner_a = rng.random() < p
-    top = max(da if winner_a else db, key=lambda t: t[2])
-    return MapResult(sa, sb, p, winner_a, top)
+    mvp = _standout(da, db, lambda t: t[1], max)      # 最终表现
+    life = _standout(da, db, lambda t: t[2], max)     # 最大正偏离
+    under = _standout(da, db, lambda t: t[2], min)    # 最大负偏离
+    return MapResult(sa, sb, p, winner_a, mvp, life, under, da, db, a, b)
 
 
 class MatchResult(object):
@@ -355,6 +419,80 @@ def player_path(stages):
 
 # ------------------------------------------------------------------ 输出
 
+def map_scoreboard(m, indent="      "):
+    """一张图里十个人各自打成什么样，按队内 Carry 顺位排。
+
+    标签只回答「谁最突出」，这里回答「我这五个人分别怎么样」——玩家要判断
+    自己那笔钱花得值不值，看的是这个，不是一个 MVP 名字。
+    """
+    lines = []
+    for detail, side, team in ((m.da, "你", m.a), (m.db, "对手", m.b)):
+        lines.append("%s%s %s — 火力聚合 %.1f  ×.40 = %.1f 分队伍强度"
+                     % (indent, side, team.name, fire_sum(detail),
+                        fire_sum(detail) * .40))
+        for t in sorted(detail, key=lambda t: -t.weight):
+            why = ["全队 %+.1f" % t.team, "个人 %+.1f" % t.solo]
+            if t.lead_gain:
+                why.append("指挥挽回 %+.1f" % t.lead_gain)
+            if t.exp_gain:
+                why.append("经验挽回 %+.1f" % t.exp_gain)
+            if round(t.capped, 1):
+                why.append("软顶 %+.1f" % t.capped)
+            lines.append("%s  %-14s %-6s ×%.2f  %3d → %3d  %+5.1f  = %s%s"
+                         % (indent, t.card["nickname"], t.card["position"][:6],
+                            t.weight, t.card["firepower"], round(t.eff),
+                            t.delta, "，".join(why),
+                            "  LIFE GAME" if t.delta >= LIFE_GAME_AT else
+                            ("  UNDERPERFORM" if t.delta <= UNDERPERFORM_AT
+                             else "")))
+        lg = lead_effect(detail)
+        lines.append("%s  ↳ 指挥(领导力 %.0f)把负 Roll 削掉 %.0f%%，"
+                     "这张图共挽回 %.1f 点火力 → 队伍强度 %+.2f"
+                     % (indent, team.team_lead,
+                        100 * min(LEAD_BUFFER * team.team_lead / 100.0,
+                                  BUFFER_CAP),
+                        sum(t.lead_gain for t in detail), lg))
+    return "\n".join(lines)
+
+
+def fire_sum(detail):
+    """按固定 Carry 权重聚合出的当图队伍火力。"""
+    return sum(t.weight * t.eff for t in detail)
+
+
+def lead_effect(detail):
+    """Leadership 这一张图实际换来多少队伍强度。
+
+    它不是平均分摊的：救回来的那点火力还要乘各人的 Carry 权重，所以同样的
+    指挥，救第一枪和救第五枪的价值差 2.6 倍。
+    """
+    return sum(t.weight * t.lead_gain for t in detail) * .40
+
+
+def map_story(m):
+    """一张图的三条叙事，CLI 与网页共用同一套口径。
+
+    MVP 永远有；LIFE GAME / UNDERPERFORM 过阈值才挂，而且可能落在对手身上——
+    这正是「他们家那个替补今天上头了」和「我的核心崩了」该被看见的地方。
+    """
+    def who(t, mine):
+        return "%s %d→%d%s" % (t.card["nickname"], t.card["firepower"],
+                               round(t.eff), "" if mine else " (对手)")
+
+    mvp, mine = m.mvp
+    life, lmine = m.life
+    under, umine = m.under
+    # 一个低卡面的人爆种到全场最高时，他同时是 MVP 和 LIFE GAME。这时候合成
+    # 一行，否则同一个人同一组数字会连着印两遍。
+    both = life.delta >= LIFE_GAME_AT and life.card is mvp.card and lmine == mine
+    out = ["MVP " + who(mvp, mine) + (" LIFE GAME" if both else "")]
+    if life.delta >= LIFE_GAME_AT and not both:
+        out.append("LIFE GAME " + who(life, lmine))
+    if under.delta <= UNDERPERFORM_AT:
+        out.append("UNDERPERFORM " + who(under, umine))
+    return " · ".join(out)
+
+
 def show_match(r, rnd, stage):
     """§26 的那个比赛面板,先做成文本。"""
     a, b = r.a, r.b
@@ -370,11 +508,8 @@ def show_match(r, rnd, stage):
     print("  RESULT: %s  (%d-%d)"
           % ("WIN" if r.winner is a else "LOSS", r.a_maps, r.b_maps))
     for i, m in enumerate(r.maps, 1):
-        c, eff, d = m.mvp
-        tag = "  LIFE GAME" if d >= 12 else ""
-        print("    Map %d  %5.1f : %-5.1f  %s  MVP %s %d -> %d%s"
-              % (i, m.sa, m.sb, "A" if m.winner_a else "B",
-                 c["nickname"], c["firepower"], round(eff), tag))
+        print("    Map %d  %5.1f : %-5.1f  %s   %s"
+              % (i, m.sa, m.sb, "A" if m.winner_a else "B", map_story(m)))
 
 
 def main():
@@ -507,7 +642,12 @@ def _flip(r):
     """玩家在 b 位时,把比赛结果翻过来显示,免得面板永远从对手视角写。"""
     f = MatchResult.__new__(MatchResult)
     f.a, f.b, f.bo, f.pressure, f.before = r.b, r.a, r.bo, r.pressure, r.before
-    f.maps = [MapResult(m.sb, m.sa, 1 - m.p, not m.winner_a, m.mvp) for m in r.maps]
+    def swap(x):                              # 三个 standout 的归属也要跟着翻
+        return (x[0], not x[1])
+    f.maps = [MapResult(m.sb, m.sa, 1 - m.p, not m.winner_a,
+                        swap(m.mvp), swap(m.life), swap(m.under),
+                        m.db, m.da, m.b, m.a)
+              for m in r.maps]
     f.a_maps, f.b_maps = r.b_maps, r.a_maps
     f.winner, f.loser = r.winner, r.loser
     f.pre = 1 - r.pre
@@ -598,10 +738,9 @@ def show_quick_run(player, legs):
                   % (leg["player_choke"], leg["opponent_choke"]))
         print("  %s  %d:%d" % ("WIN" if won else "LOSS", r.a_maps, r.b_maps))
         for i, m in enumerate(r.maps, 1):
-            c, eff, delta = m.mvp
-            tag = " · LIFE GAME" if delta >= 12 else ""
-            print("    Map %d  强度 %5.1f:%-5.1f  MVP %-14s %d→%d%s"
-                  % (i, m.sa, m.sb, c["nickname"], c["firepower"], round(eff), tag))
+            print("    Map %d  强度 %5.1f:%-5.1f  %s"
+                  % (i, m.sa, m.sb, map_story(m)))
+            print(map_scoreboard(m))
     print()
     print("RUN RESULT  %d-%d" % (wins, len(legs) - wins))
 

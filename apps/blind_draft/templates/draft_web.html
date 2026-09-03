@@ -173,7 +173,21 @@ td.name{font-weight:600}
 .run-score b{font-size:24px}.run-score .win{color:var(--good)}.run-score .loss{color:var(--bad)}
 .maps{display:flex; flex-direction:column; gap:5px; font-size:11.5px; color:var(--ink-2)}
 .mapline{padding-top:5px; border-top:1px dashed var(--line)}
+.mapline summary{cursor:pointer; list-style:none}
+.mapline summary::-webkit-details-marker{display:none}
+.mapline summary::before{content:"▸ "; color:var(--ink-3)}
+.mapline[open] summary::before{content:"▾ "}
+.sheet{width:100%; border-collapse:collapse; margin:7px 0 3px; font-size:12px}
+.sheet th{text-align:left; font-weight:600; color:var(--ink-3); font-size:10.5px;
+  letter-spacing:.08em; text-transform:uppercase; padding:3px 6px;
+  border-bottom:1px solid var(--line)}
+.sheet td{padding:3px 6px; border-bottom:1px solid var(--line)}
+.sheet .side{background:var(--panel-2); font-weight:600}
+.sheet .up{color:var(--good)} .sheet .down{color:var(--bad)}
+.sheet .why{color:var(--ink-3); font-size:11px}
+.sheet .w{color:var(--ink-3)}
 .life{color:var(--warn); font-weight:600}
+.under{color:var(--bad); font-weight:600}
 .run-error{color:var(--bad)}
 
 ul.notes{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;
@@ -830,11 +844,41 @@ function renderRun(){
       <span>你的 Entry ${run.entry}，低于本届第 32 名。</span></div></div></section>`;
 
   const legs = run.legs.map(leg=>{
-    const maps = leg.maps.map(m=>`<div class="mapline">
+    // MVP 看最终表现，LIFE GAME / UNDERPERFORM 看偏离，三条各挂各的；
+    // 谁的人也标出来，否则「对手替补上头」和「我的核心崩了」看起来一模一样。
+    const who = s => `${esc(s.nickname)} ${s.base_firepower}→${Math.round(s.effective_firepower)}`
+      + (s.side==='opponent'?' <small class="hint">对手</small>':'');
+    const same = (x,y) => x && y && x.nickname===y.nickname && x.side===y.side;
+    const sign = v => (v>0?'+':'')+v.toFixed(1);
+    // 一行 = 一个人这张图的完整账本。delta 逐项拆得开，玩家不用自己推公式。
+    const row = r => {
+      const w = r.why, why = [`全队 ${sign(w.team_form)}`, `个人 ${sign(w.own_form)}`];
+      if(w.leadership_saved) why.push(`指挥挽回 ${sign(w.leadership_saved)}`);
+      if(w.experience_saved) why.push(`经验挽回 ${sign(w.experience_saved)}`);
+      if(w.soft_capped) why.push(`软顶 ${sign(w.soft_capped)}`);
+      const cls = r.delta>0?'up':(r.delta<0?'down':'');
+      return `<tr><td>${esc(r.nickname)}</td><td class="w">${esc(r.position)}</td>
+        <td class="w num">×${r.carry_weight.toFixed(2)}</td>
+        <td class="num">${r.base_firepower} → ${Math.round(r.effective_firepower)}</td>
+        <td class="num ${cls}">${sign(r.delta)}</td>
+        <td class="why">${why.join('，')}</td></tr>`;
+    };
+    const sheet = (m,label,rows,fire,gain,name) => `<tr class="side"><td colspan="6">
+        ${label}${name?' '+esc(name):''} · 火力聚合 ${fire} ×.40 = ${(fire*0.4).toFixed(1)} 分队伍强度
+        · 指挥挽回 ${sign(gain)} 分</td></tr>` + rows.map(row).join('');
+    const maps = leg.maps.map(m=>`<details class="mapline"><summary>
       Map ${m.number} · 强度 <b class="num">${m.player_strength}</b> :
-      <b class="num">${m.opponent_strength}</b> · MVP ${esc(m.mvp.nickname)}
-      ${m.mvp.base_firepower}→${Math.round(m.mvp.effective_firepower)}
-      ${m.mvp.life_game?'<span class="life">LIFE GAME</span>':''}</div>`).join('');
+      <b class="num">${m.opponent_strength}</b> · MVP ${who(m.mvp)}
+      ${same(m.life_game,m.mvp)?'<span class="life">LIFE GAME</span>':''}
+      ${m.life_game&&!same(m.life_game,m.mvp)
+        ?` · <span class="life">LIFE GAME</span> ${who(m.life_game)}`:''}
+      ${m.underperform?` · <span class="under">UNDERPERFORM</span> ${who(m.underperform)}`:''}
+      </summary><table class="sheet">
+      <thead><tr><th>选手</th><th>位置</th><th>权重</th><th>火力</th>
+        <th>变化</th><th>因为什么</th></tr></thead><tbody>
+      ${sheet(m,'你',m.players,m.player_fire,m.leadership_gain,'')}
+      ${sheet(m,'对手',m.opponents,m.opponent_fire,m.opponent_leadership_gain,leg.opponent.name)}
+      </tbody></table></details>`).join('');
     return `<article class="run-leg ${leg.won?'win':'loss'}">
       <h3>${esc(leg.label)}</h3>
       <div><b>${esc(leg.opponent.name)}</b> · Entry ${leg.opponent.entry}

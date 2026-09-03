@@ -17,24 +17,62 @@ def _card_row(c):
         "firepower", "leadership", "experience", "stability", "overall")}
 
 
+def _standout(entry):
+    """(Roll, 是不是玩家这边) -> JSON。"""
+    t, mine = entry
+    return dict(_roll_row(t), side="player" if mine else "opponent")
+
+
+def _roll_row(t):
+    """一个人这张图的火力账本：变了多少，以及每一分变化来自哪里。
+
+    team + solo + exp_gain + lead_gain + capped == delta，前端直接摊开显示，
+    不需要自己再推一遍公式。
+    """
+    return {
+        "nickname": t.card["nickname"],
+        "position": t.card["position"],
+        "base_firepower": t.card["firepower"],
+        "effective_firepower": round(t.eff, 1),
+        "delta": round(t.delta, 1),
+        "carry_weight": round(t.weight, 4),
+        "swing": round(t.sigma, 2),            # σ，由 Stability 决定
+        "why": {"team_form": round(t.team, 1),
+                "own_form": round(t.solo, 1),
+                "leadership_saved": round(t.lead_gain, 1),
+                "experience_saved": round(t.exp_gain, 1),
+                "soft_capped": round(t.capped, 1)},
+    }
+
+
 def _match_row(r, label, stage, rnd):
     """玩家已被放在 a 位的 MatchResult -> JSON。"""
     won = r.winner is r.a
     maps = []
     for i, m in enumerate(r.maps, 1):
-        card, effective, delta = m.mvp
         maps.append({
             "number": i,
             "player_strength": round(m.sa, 1),
             "opponent_strength": round(m.sb, 1),
             "player_won": bool(m.winner_a),
             "win_probability": round(m.p, 4),
-            "mvp": {"nickname": card["nickname"],
-                    "side": "player" if m.winner_a else "opponent",
-                    "base_firepower": card["firepower"],
-                    "effective_firepower": round(effective, 1),
-                    "delta": round(delta, 1),
-                    "life_game": delta >= 12},
+            # 三条叙事各有各的口径，见 match.MapResult。mvp 一定有，
+            # life_game / underperform 过阈值才出现，且可能落在对手身上。
+            "mvp": _standout(m.mvp),
+            "life_game": (_standout(m.life)
+                          if m.life[0].delta >= X.LIFE_GAME_AT else None),
+            "underperform": (_standout(m.under)
+                             if m.under[0].delta <= X.UNDERPERFORM_AT else None),
+            # 十个人的完整账本，按 Carry 顺位排。标签只是它的摘要。
+            "players": [_roll_row(t) for t in
+                        sorted(m.da, key=lambda t: -t.weight)],
+            "opponents": [_roll_row(t) for t in
+                          sorted(m.db, key=lambda t: -t.weight)],
+            "player_fire": round(X.fire_sum(m.da), 1),
+            "opponent_fire": round(X.fire_sum(m.db), 1),
+            # 指挥这张图实际换来多少队伍强度（救回的火力已按 Carry 权重折算）。
+            "leadership_gain": round(X.lead_effect(m.da), 2),
+            "opponent_leadership_gain": round(X.lead_effect(m.db), 2),
         })
     return {
         "label": label, "stage": stage, "round": rnd,

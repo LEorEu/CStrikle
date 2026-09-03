@@ -19,12 +19,14 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 | 3 | [玩法蓝图_v0.2.md](玩法蓝图_v0.2.md) | 最初的正式设计稿。Grade / Price / Power 的分离、生涯代表版本评价、位置权重都出自这里 | 想知道某条规则的原始意图 |
 | 4 | [卡牌与落地记录.md](卡牌与落地记录.md) | 选手卡怎么生成（v7：火力已与 Grade 解耦）、实现时和蓝图差在哪、用真实数据核对的数字 | 要改卡库或生成器之前 |
 | 5 | [原型实测记录.md](原型实测记录.md) | 真人试玩记录，每条结论后面跟着产生它的那组数字和复算方法 | 想知道某个参数为什么是现在这个值 |
-| 6 | [比赛引擎_v0.1.md](比赛引擎_v0.1.md) | 把这五个人放进一届真实 Major 的瑞士轮及其验证记录 | 调 Match 参数时 |
-| 7 | [数据快照.md](数据快照.md) | AI 对手的「现在」从哪来：五个数据源各管什么、怎么刷新、踩过哪些坑 | 要重抓数据、或怀疑阵容/排名不对时 |
-| 8 | [评审_GPT_比赛引擎.md](评审_GPT_比赛引擎.md) | 第三方复核比赛引擎 v0.1 | 想知道某个结论被质疑过没有 |
-| 9 | [火力解耦_v0.1.md](火力解耦_v0.1.md) | 用 5E 实测把 Firepower 从 Grade 的模板里解放出来 | 要改火力这一维时 |
-| 10 | [FribergCS2_Draft_四维重构工作指南_v0.1.md](FribergCS2_Draft_四维重构工作指南_v0.1.md) | v7 重构的执行口径 | 动四维之前 |
-| — | [grade与rating数据.txt](grade与rating数据.txt) | 上面那份的讨论原料 | 考古 |
+| 6 | [比赛引擎_v0.3.md](比赛引擎_v0.3.md) | **比赛数值层的当前权威**：四维各做一件事、Map Residual 取代胜负骰、Entry 不再静态计入 L/E/S | **动比赛数值之前只看这份** |
+| 7 | [比赛引擎_v0.1.md](比赛引擎_v0.1.md) | 上一版：把五个人放进一届真实 Major 的瑞士轮，以及当时的验证记录。赛事外壳仍然有效，数值层已被 v0.3 取代 | 看赛制/瑞士轮，或考古某个旧参数 |
+| 8 | [数据快照.md](数据快照.md) | AI 对手的「现在」从哪来：五个数据源各管什么、怎么刷新、踩过哪些坑 | 要重抓数据、或怀疑阵容/排名不对时 |
+| 9 | [评审_GPT_比赛引擎.md](评审_GPT_比赛引擎.md) | 第三方复核比赛引擎 v0.1 | 想知道某个结论被质疑过没有 |
+| 10 | [火力解耦_v0.1.md](火力解耦_v0.1.md) | 用 5E 实测把 Firepower 从 Grade 的模板里解放出来 | 要改火力这一维时 |
+| 11 | [FribergCS2_Draft_四维重构工作指南_v0.1.md](FribergCS2_Draft_四维重构工作指南_v0.1.md) | v7 重构的执行口径 | 动四维之前 |
+| — | [1.txt](1.txt) | 比赛引擎两轮复盘的原始讨论，v0.3 就是从这里收敛出来的 | 考古某条口径为什么这么定 |
+| — | [major赛制.txt](major赛制.txt) | 真实 Major 赛制资料 | 核对赛事外壳 |
 | — | [原始讨论_ChatGPT.md](原始讨论_ChatGPT.md) | 整个模式的原始素材，从看线上站点开始聊起 | 考古 |
 
 **第 4 份是按时间顺序写的**，二 / 三 / 五节是 v1 / v2 当时的状态，不是现状；
@@ -43,6 +45,7 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 | `blinddraft.major` | 入场层：生成赛场 → 玩家插队 → 定 Stage → 首轮对阵 | — |
 | `blinddraft.match` | 比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联 | — |
 | `blinddraft.ai_teams` | AI 对手：队伍快照 + 当前角色 + 逐维当前化 | — |
+| `blinddraft.proto_match_v2` | **Match Engine v2 原型**：实现设计稿 v0.3，四维各干一件事、一图 11 个随机数（10 Player + 1 Map Residual）。与 v1 并存，`--lab / --tune / --compare / --demo` | — |
 | `bdtools.fetch_rankings` | 队伍快照（阵容+位置+HLTV/VRS 排名）、5E 选手照片与队标 | `team_snapshot.json`、`5e_images.json`、`img/` |
 | `bdtools.fetch_5e_stats` | 5eplay 当前个人竞技数据 | `5e_player_stats.json` |
 | `bdtools.export_web` | 把卡和常量注进网页模板 | `.cache/proto_draft_web.html` |
@@ -60,7 +63,9 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 `test_cards.py` 11 项，盯着卡库、确定性取整、快照年龄、已发布文件与
 「卡牌与落地记录.md」里的 SPEC 块不许漂移；`test_tuning_console.py` 10 项，
 盯着后台展示的推导和卡上的数不许对不上；`test_ai_view.py` 19 项，盯着
-AI 页与 Match 共用同一份阵容、四维和来源口径。
+AI 页与 Match 共用同一份阵容、四维和来源口径；`test_star_visibility.py` 8 项，
+盯着比赛叙事认得出谁是核心（F96 的 MVP 率必须明显高过 F50）、Carry 权重由卡面
+定死、逐人归因逐项加得回 delta。
 
 ## 调参后台
 
@@ -129,8 +134,11 @@ Firepower；其余维度保留带置信度的生涯先验。在有证据的地�
 ## 一句话状态
 
 卡是固定的，市场会给他报错价，卡面只给球探区间；选人时你看得见可以去追哪几种
-阵容，散场时每一张牌都会翻开。当前网页已能把选出的五人送进真实三段 Swiss，
-并展示 BO1 / BO3、压力、MVP 与 Life Game；下一步是用真人试玩校准反馈与节奏。
+阵容，散场时每一张牌都会翻开。网页已能把选出的五人送进真实三段 Swiss，每张图
+给出十个人的逐人火力账本——每一分变化都拆到「全队状态 / 个人状态 / 指挥挽回 /
+经验挽回 / 软顶」。比赛数值层正在做第二轮重构（[比赛引擎_v0.3.md](比赛引擎_v0.3.md)）：
+v1 已修掉 Carry 权重乱跳和 MVP 口径两处错并在服役，v2 原型
+（`blinddraft.proto_match_v2`）六项验收已过，还差接进 Major 三阶段外壳。
 
 ```
 python -m blinddraft.major --seed 1              # 只看入场：排第几、挤掉谁
@@ -170,6 +178,7 @@ python -m blinddraft.match --roster "s1mple,electroNic,Magisk,mzinho,Senzu"     
 FribergCS2_Blind_Draft_系统思维导图_v0.1.md      -> 系统地图_v0.1.md
 FribergCS2_Blind_Draft_System_Design_v0.2.md     -> 玩法蓝图_v0.2.md
 FribergCS2_Blind_Draft_Match_Engine_Design_v0.1.md -> 比赛引擎_v0.1.md
+FribergCS2_Blind_Draft_Match_Engine_Design_v0.3.md -> 比赛引擎_v0.3.md
 DESIGN_GAMEPLAY.md                               -> 卡牌与落地记录.md
 DESIGN_DRAFT_PROTOTYPE.md                        -> 原型实测记录.md
 ChatGPT-小项目反馈与建议.md                       -> 原始讨论_ChatGPT.md
