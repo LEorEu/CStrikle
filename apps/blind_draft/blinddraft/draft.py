@@ -315,37 +315,55 @@ def chemistry(roster, rosters):
     return total, notes
 
 
+_CAP_CACHE = []
+
+
+def cohesion_cap():
+    """磨合度上限。配置读一次就缓存——score() 在枚举替代阵容时会被调上千次。"""
+    if not _CAP_CACHE:
+        from . import major as M                  # 延迟导入:M 反过来要用本模块
+        _CAP_CACHE.append(float(M.load_config().get("cohesion_cap",
+                                                    M.COHESION_CAP)))
+    return _CAP_CACHE[0]
+
+
 def score(roster, rosters, money=0):
-    """money = 剩余预算,按固定兑换率折成全队火力。"""
+    """一支阵容的纸面强度。**用的就是比赛引擎那把尺子。**
+
+    money = 剩余预算,按固定兑换率折成全队火力。
+
+    以前这里是 `火力 40% + 指挥 20% + 经验 20% + 稳定 20%`,和 v1 的 Entry 同源。
+    问题不在于它算得对不对,而在于**比赛不这么算**:v0.3 §4.1 之后 L/E/S 的静态
+    权重已经拿掉了,决定一张图胜负的是纯火力 + IGL 的战术执行 + 磨合。于是散场
+    那页会告诉你「选 A 比选 B 好 2 分」,而引擎根本不按这个数打——后悔值和实际
+    后果是脱节的。
+
+    现在整段直接问引擎:`Team.entry()`(含 Carry 权重和无狙罚分)加 `tactical()`。
+    这里**不留任何一份公式的副本**,所以引擎改了系数,散场那页会跟着改。
+    延迟导入是因为 proto_match_v2 反过来要用本模块取卡。
+    """
+    from . import proto_match_v2 as V2
     boost = min(money, SAVE_CAP) * SAVE_RATE
-    get = lambda c, k: c[k] + (boost if k == SAVE_ATTR else 0.0)
+    boosted = [dict(c, **{SAVE_ATTR: c[SAVE_ATTR] + boost}) for c in roster]
 
-    f = sorted((get(c, "firepower") for c in roster), reverse=True)
-    fire = f[0] * .35 + f[1] * .25 + st.mean(f[2:]) * .40
-
-    igls = [c for c in roster if c.get("caller", c["position"] == "IGL")]
-    if igls:
-        top = max(igls, key=lambda c: c["leadership"])
-        # 只有最强的那个 IGL 算指挥;其余四人按步枪的领导力算,多塞指挥不是加成
-        others = [get(c, "leadership")
-                  if not c.get("caller", c["position"] == "IGL") else 25
-                  for c in roster if c is not top]
-        lead = get(top, "leadership") * .70 + st.mean(others) * .30
-    else:
-        lead = st.mean(get(c, "leadership") for c in roster) * .60
-
-    exp = st.mean(get(c, "experience") for c in roster)
-    stab = st.mean(get(c, "stability") for c in roster)
-
-    base = fire * .40 + lead * .20 + exp * .20 + stab * .20
-    no_awp = not any(c["position"] == "AWPER" for c in roster)
-    if no_awp:
-        base -= 4.0
+    team = V2.Team("", boosted, 0.0)
+    pairs = list(zip(team.weights, team.roster))
+    fire = sum(w * c["firepower"] for w, c in pairs)
+    base = team.entry() + team.tactical      # entry() 里已经含了无狙的 -4
 
     chem, notes = chemistry(roster, rosters)
-    return {"fire": fire, "lead": lead, "exp": exp, "stab": stab, "no_awp": no_awp,
-            "base": base, "chem": chem, "notes": notes, "money": money,
-            "total": base + chem, "swing": (100 - stab) / 4}
+    # 上场的是**封顶后**的磨合度(§5.2),不是裸默契。这条必须和 player_run 一致:
+    # 追一对真队友能让默契冲到 9,而引擎只认 4——页面按 9 显示就又是两把尺子。
+    cohesion = min(chem, cohesion_cap())
+    # 单场发挥的区间也走引擎:§6 的分布是**不对称**的,高稳定收窄的是两边不同
+    # 的宽度,所以给两个数而不是一个 ±。
+    return {"fire": fire, "tactical": team.tactical, "no_awp": team.no_awp,
+            "lead": team.team_lead, "has_igl": team.has_igl,
+            "base": base, "chem": chem, "cohesion": cohesion,
+            "capped": chem > cohesion, "notes": notes, "money": money,
+            "total": base + cohesion,
+            "swing_down": sum(w * V2.sigma_down(c["stability"]) for w, c in pairs),
+            "swing_up": sum(w * V2.sigma_up(c["stability"]) for w, c in pairs)}
 
 
 # ----------------------------------------------------------------- 发牌
@@ -724,9 +742,12 @@ def reveal(picked, boards, left, rosters, passed):
     print("  默契:" + ("" if s["notes"] else " 无 —— 五个人互相没打过、也不同国"))
     for n in s["notes"]:
         print("    " + n)
-    print(f"  默契合计 {s['chem']:+.1f}")
-    print(f"\n  总分 {s['total']:.1f}   单场发挥 {s['total'] - s['swing']:.1f} ~ "
-          f"{s['total'] + s['swing']:.1f}")
+    print(f"  磨合度 {s['cohesion']:+.1f}"
+          + (f"   (裸默契 {s['chem']:+.1f},封顶 {cohesion_cap():.1f})"
+             if s["capped"] else ""))
+    print(f"\n  总分 {s['total']:.1f}   单场发挥 "
+          f"{s['total'] - s['swing_down']:.1f} ~ {s['total'] + s['swing_up']:.1f}"
+          f"   （引擎口径：纯火力 + 战术执行 + 磨合）")
 
     ranked = all_lineups(boards, rosters)
     totals = [t for t, _, _ in ranked]

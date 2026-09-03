@@ -259,6 +259,7 @@ const D = /*__DATA__*/;
 const CARDS = D.cards; CARDS.forEach((c,i)=>c.i=i);
 const BUDGET = D.budget, SLOTS = D.slots, TURNS = D.turns;
 const RATE = D.saveRate, CAP = D.saveCap;
+const ENG = D.engine;          /* 比赛引擎的系数，由 Python 注入，见 export_web */
 const SCOUT_W = D.scoutWidth, SCOUT_P = D.scoutPos;
 
 /* 球探区间:宽度与真值在区间里的位置都随机,只保证真值一定在区间内。
@@ -441,25 +442,48 @@ function whyBetter(mineR, mineLeft, altR, altLeft){
   return bits.join(" · ");
 }
 
+/* 这一段和 blinddraft/draft.py 的 score() 必须逐分一致，而那一份现在直接问
+   比赛引擎（proto_match_v2）。所以这里的每个系数都由 export_web 从 Python
+   注入（ENG.*），JS 不许自己写死任何一个——以前 .35/.25/.40 和那条 -4 是
+   两边各抄一遍的，引擎一改就会静默错开。 */
+function carryWeights(n){                    /* §4.2 顺位按卡面火力定死 */
+  const w = new Array(n).fill(ENG.restWeight/(n-2));
+  return w;
+}
+function tactical(r){                        /* §9 Leadership 的全部作用 */
+  const igls = r.filter(c=>c.p==="I");
+  if (!igls.length) return ENG.noIgl;
+  let lead = 0; for (const c of igls) if (c.l>lead) lead = c.l;
+  const v = ENG.at65 + (ENG.at96-ENG.at65)*(lead-65)/(96-65);
+  return Math.max(-ENG.clamp, Math.min(ENG.clamp, v));
+}
+function sigma(stab, at50, at90){
+  return Math.max(0.5, at50 + (at90-at50)*(stab-50)/40);
+}
+
 function score(r, money){
   const boost = Math.min(money||0, CAP)*RATE;
-  const f = r.map(c=>c.f+boost).sort((a,b)=>b-a);
-  const fire = f[0]*.35 + f[1]*.25 + mean(f.slice(2))*.40;
-  const igls = r.filter(c=>c.p==="I");
-  let lead;
-  if (igls.length){
-    let top = igls[0];
-    for (const c of igls) if (c.l>top.l) top=c;
-    const others = r.filter(c=>c!==top).map(c=> c.p==="I" ? 25 : c.l);
-    lead = top.l*.70 + mean(others)*.30;
-  } else lead = mean(r.map(c=>c.l))*.60;
-  const exp = mean(r.map(c=>c.e)), stab = mean(r.map(c=>c.s));
-  let base = fire*.40 + lead*.20 + exp*.20 + stab*.20;
+  const fp = r.map(c=>c.f+boost);
+  /* 权重跟着人走：按火力排序取前两名，其余平摊 */
+  const order = fp.map((v,i)=>i).sort((a,b)=>fp[b]-fp[a]);
+  const w = carryWeights(r.length);
+  w[order[0]] = ENG.star[0]; w[order[1]] = ENG.star[1];
+
+  let fire = 0, down = 0, up = 0;
+  for (let i=0;i<r.length;i++){
+    fire += w[i]*fp[i];
+    down += w[i]*sigma(r[i].s, ENG.sigDown[0], ENG.sigDown[1]);
+    up   += w[i]*sigma(r[i].s, ENG.sigUp[0],   ENG.sigUp[1]);
+  }
   const noAwp = !r.some(c=>c.p==="A");
-  if (noAwp) base -= 4;
+  const tac = tactical(r);
+  const base = fire + (noAwp ? ENG.noAwp : 0) + tac;
   const ch = chemistry(r);
-  return {fire, lead, exp, stab, base, noAwp, chem:ch.total, notes:ch.notes,
-          total: base+ch.total, swing:(100-stab)/4};
+  /* 上场的是封顶后的磨合度（§5.2），不是裸默契 */
+  const cohesion = Math.min(ch.total, ENG.cohesionCap);
+  return {fire, tactical:tac, noAwp, base, chem:ch.total, cohesion,
+          capped: ch.total > cohesion, notes:ch.notes,
+          total: base+cohesion, swingDown:down, swingUp:up};
 }
 
 /* ---------- 发牌 ---------- */
@@ -762,7 +786,7 @@ function renderReveal(){
           （前 ${Math.round(100*(better+1)/lineups.length)}%）
           · 最优 <b class="num">${totals[0].toFixed(1)}</b>
           · 瞎点平均 <b class="num">${avg.toFixed(1)}</b>
-          · 单场发挥 <span class="num">${(s.total-s.swing).toFixed(1)}~${(s.total+s.swing).toFixed(1)}</span></span>
+          · 单场发挥 <span class="num">${(s.total-s.swingDown).toFixed(1)}~${(s.total+s.swingUp).toFixed(1)}</span></span>
       </div>
       ${traitHtml}
       <div class="tiles">

@@ -43,7 +43,7 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 | 模块 | 管什么 | 产出 |
 |---|---|---|
 | `blinddraft.cards` | 玩家卡生成器（生涯代表版本） | `data/blind_draft/draft_cards.json`（v7，已提交） |
-| `blinddraft.draft` | 命令行原型，选人这一层的全部逻辑都在这 | — |
+| `blinddraft.draft` | 命令行原型，选人这一层的全部逻辑都在这。`score()` 走引擎口径（纯火力 + 战术执行 + 封顶后的磨合），不留公式副本 | — |
 | `blinddraft.major` | 赛场层：赛场从哪来、Entry Rating 怎么算。**不管怎么打** | — |
 | `blinddraft.ai_teams` | AI 对手：队伍快照 + 当前角色 + 逐维当前化 | — |
 | `blinddraft.proto_match_v2` | **比赛引擎**：实现设计稿 v0.3，四维各干一件事、一图 11 个随机数（10 Player + 1 Map Residual），并按区域 VRS 名额跑完整的 Road to Major。赛事外壳（插队、Swiss、三段串联）也在这里 | — |

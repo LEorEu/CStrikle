@@ -105,7 +105,13 @@ class ViewTests(unittest.TestCase):
                    if t["name"] == "3DMAX")
         score = P.score(raw["roster"], P.load_rosters())
         self.assertFalse(score["no_awp"], "指挥狙仍然应该满足主狙要求")
-        self.assertGreater(score["lead"], 45, "Maka 的 caller 领导力没有进入队伍分")
+        # 队伍分现在走引擎口径：领导力唯一的出口是 tactical，所以要查的是
+        # 「Maka 的 caller 身份让这支队算有 IGL」，不是旧那个 20% 加权项。
+        self.assertTrue(score["has_igl"], "指挥狙没有被算成这支队的 IGL")
+        self.assertGreater(score["lead"], 45, "Maka 的 caller 领导力没进 team_lead")
+        from blinddraft import proto_match_v2 as V2
+        self.assertGreater(score["tactical"], V2.NO_IGL_TACTICAL,
+                           "有 IGL 的队不该拿到无 IGL 的战术罚分")
 
     def test_our_order_is_dense_among_scored_teams(self):
         """五人完整的队都能算 entry；快照缺人才留空，顺位必须连续。"""

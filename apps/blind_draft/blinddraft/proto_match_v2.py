@@ -443,8 +443,25 @@ def roster_cards(spec):
     return [index[w.casefold()] for w in want]
 
 
+def player_cohesion(roster, cfg=None):
+    """玩家临时队的磨合度 = min(裸默契, COHESION_CAP)。
+
+    以前这里写死 0.0，而 AI 一律吃满 cap——于是 `chemistry()` 算出来的那些东西
+    （真队友重聚、同国、同代、两个指挥抢话）在选人页上写得清清楚楚，**却完全
+    没有进比赛**。玩家页面显示「默契 −2.0」，引擎按 0 打；追一对真队友和不追
+    打出来一模一样。v1 是算的，v2 接管 `/play` 时漏了。
+
+    cap 调的是「草台班子税」有多重（§45.6），不是把玩家的默契一笔抹掉。
+    """
+    cfg = cfg if cfg is not None else M.load_config()
+    cap = float(cfg.get("cohesion_cap", M.COHESION_CAP))
+    return M.entry_rating(roster, M.load_rosters_cached(), cap)["cohesion"]
+
+
 def roster_team(spec, label=None):
-    return Team(label or spec, roster_cards(spec), 0.0, is_player=True)
+    """任意阵容 -> 一支玩家队。默契按 `/play` 的口径算，两处不许不一样。"""
+    roster = roster_cards(spec)
+    return Team(label or spec, roster, player_cohesion(roster), is_player=True)
 
 
 # ------------------------------------------------------------------ 固定测试阵容
@@ -789,7 +806,7 @@ def player_run(nicknames=None, pages=None, seed=1, cfg=None):
         roster = [by_page[str(x)] for x in pages]
     else:
         roster = [cards[n] for n in nicknames]
-    me = Team("YOUR TEAM", roster, 0.0, is_player=True)
+    me = Team("YOUR TEAM", roster, player_cohesion(roster, cfg), is_player=True)
 
     field, asof = major_field(seed, cfg)
     stage, shove, full = insert_player(field, me)
