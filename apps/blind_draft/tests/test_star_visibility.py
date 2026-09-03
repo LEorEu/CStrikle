@@ -5,6 +5,8 @@
 让 F50 的队友抢走 MVP，那这笔钱就白花了——`docs/blind-draft/1.txt` 把它定成
 一条硬验收：F50 和 F96 的 MVP 率差不多，就判引擎坏了。
 """
+import collections
+import json
 import random
 import unittest
 
@@ -241,6 +243,105 @@ class MatchV2Tests(unittest.TestCase):
                  for c in base]
         self.assertAlmostEqual(V.Team("a", base).entry(),
                                V.Team("b", moved).entry(), places=9)
+
+
+class MajorShellTests(unittest.TestCase):
+    """v2 的赛事外壳：VRS 名额、插队级联、三段 Swiss 的记账。"""
+
+    def setUp(self):
+        # 每个用例重建赛场：insert_player 会就地改 team.stage，共享一份会串味。
+        from blinddraft import proto_match_v2 as V2
+        self.V = V2
+        self.field, self.asof = V2.major_field()
+
+    def test_stage_comes_from_regional_vrs_slots(self):
+        """§1.2 的区域名额表：8 / 8 / 16，且和 Entry 排名无关。"""
+        V = self.V
+        counts = collections.Counter(t.stage for t in self.field)
+        self.assertEqual(dict(counts), {3: 8, 2: 8, 1: 16})
+        # 关键回归：Stage 归属不许退化成「按 Entry 排名切 8/16/32」。
+        by_entry = sorted(self.field, key=lambda t: -t.entry())
+        as_rank = [3] * 8 + [2] * 8 + [1] * 16
+        actual = [t.stage for t in by_entry]
+        self.assertNotEqual(actual, as_rank,
+                            "Stage 又变回按 Entry 排名切了，VRS 名额被绕过")
+
+    def test_player_insert_cascades_one_tier_at_a_time(self):
+        """挤进某一层 -> 该层最弱的降级 -> 级联 -> 第 33 掉出。"""
+        V = self.V
+        cards = {c["nickname"]: c for c in P.load_cards()}
+        me = V.Team("YOU", [cards[n] for n in V.FIXTURES["donk carry"]],
+                    0.0, is_player=True)
+        field = [t for t in self.field]
+        stage, shove, full = V.insert_player(field, me)
+        self.assertIn(stage, (1, 2, 3))
+        self.assertEqual(len(full), V.FIELD_SIZE)
+        self.assertIn(me, full)
+        self.assertIsNotNone(shove.dropped)
+        self.assertNotIn(shove.dropped, full)
+        # 每降一级都是恰好一级，而且层级人数守恒
+        for _t, was, now in shove.demoted:
+            self.assertEqual(was - now, 1)
+        counts = collections.Counter(t.stage for t in full)
+        self.assertEqual(dict(counts), {3: 8, 2: 8, 1: 16})
+
+    def test_a_team_weaker_than_the_whole_field_fails_to_qualify(self):
+        V = self.V
+        junk = [V._fake("j%d" % i, 20, 50) for i in range(5)]
+        stage, shove, full = V.insert_player(list(self.field),
+                                             V.Team("JUNK", junk, 0.0, True))
+        self.assertEqual(stage, 0)
+        self.assertIsNone(shove.dropped)
+        self.assertEqual(len(full), V.FIELD_SIZE)
+
+    def test_a_full_major_books_every_team_to_three_wins_or_losses(self):
+        V = self.V
+        stages, logs = V.run_major([t for t in self.field], random.Random(7))
+        for s in (1, 2, 3):
+            teams, adv = stages[s]
+            self.assertEqual(len(teams), 16)
+            self.assertEqual(len(adv), 8)
+            for t in teams:
+                self.assertTrue(t.w >= 3 or t.l >= 3,
+                                "%s 停在 %d-%d" % (t.name, t.w, t.l))
+            # 晋级名单必须留着**本 Stage** 的战绩，不能被下一层 reset 掉
+            for t in adv:
+                self.assertGreaterEqual(t.w, 3)
+
+    def test_advancers_carry_forward_as_fresh_objects(self):
+        """晋级者带进下一层的是新实例，否则上一层的战绩会被擦掉。"""
+        V = self.V
+        stages, _logs = V.run_major([t for t in self.field], random.Random(5))
+        s1_adv = stages[1][1]
+        s2_teams = stages[2][0]
+        for t in s1_adv:
+            self.assertNotIn(t, s2_teams)
+            self.assertGreaterEqual(t.w, 3)
+
+    def test_format_and_pressure_follow_the_v03_ladder(self):
+        """§2 + §8.1：晋级局和淘汰局不给同一个压力值。"""
+        V = self.V
+        self.assertEqual(V.format_of((0, 0)), (1, V.PRESSURE["swiss"]))
+        self.assertEqual(V.format_of((2, 0)), (3, V.PRESSURE["advance"]))
+        self.assertEqual(V.format_of((0, 2)), (3, V.PRESSURE["elim"]))
+        self.assertEqual(V.format_of((2, 2)), (3, V.PRESSURE["decider"]))
+        self.assertLess(V.PRESSURE["advance"], V.PRESSURE["elim"])
+
+    def test_player_run_is_a_serializable_whole_tournament(self):
+        V = self.V
+        data = V.player_run(V.FIXTURES["donk carry"], seed=3)
+        self.assertTrue(data["qualified"])
+        self.assertIn(data["outcome"], ("eliminated", "playoffs"))
+        self.assertTrue(data["legs"])
+        self.assertEqual(data["wins"] + data["losses"], len(data["legs"]))
+        for leg in data["legs"]:
+            self.assertTrue(leg["maps"])
+            for m in leg["maps"]:
+                self.assertEqual(len(m["players"]), 5)
+                self.assertEqual(len(m["opponents"]), 5)
+                # 玩家永远在 a 位：margin 的符号要和玩家胜负一致
+                self.assertEqual(m["margin"] > 0, m["player_won"])
+        json.dumps(data, ensure_ascii=False)
 
 if __name__ == "__main__":
     unittest.main()

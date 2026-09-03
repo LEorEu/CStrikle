@@ -256,6 +256,10 @@ class Team(object):
 
         self.no_awp = not any(c["position"] == "AWPER" for c in roster)
         self.structure = (NO_AWP_PENALTY if self.no_awp else 0.0) + chem
+        # 赛事外壳用的字段：stage 由区域 VRS 名额定，seed 是 Stage 内的种子。
+        self.stage = None
+        self.seed = 0
+        self.vrs = self.hltv = None
         self.reset()
 
     def reset(self):
@@ -265,6 +269,23 @@ class Team(object):
     @property
     def record(self):
         return (self.w, self.l)
+
+    def fork(self):
+        """给晋级者做一个新实例带进下一个 Stage。
+
+        必须新建而不是复用：`run_stage` 开局会 reset 战绩，直接把同一个对象
+        传下去会把上一层的最终战绩擦掉，`stages[1]` 里的晋级名单就会显示成
+        下一层的比分（曾经真的出现过「Stage 1 晋级 MIBR(1-3)」）。
+        """
+        t = Team(self.name, self.roster, self.chem, self.is_player)
+        t.structure = self.structure          # 保住人工 adjust
+        t.stage, t.vrs, t.hltv = self.stage, self.vrs, self.hltv
+        return t
+
+    @property
+    def difficulty(self):
+        """§2.3 Buchholz：已交手对手的胜场总和减负场总和。"""
+        return sum(o.w for o in self.opponents) - sum(o.l for o in self.opponents)
 
     @property
     def done(self):
@@ -632,6 +653,197 @@ def tune(runs=6000):
     print("\n  两条路都不通：放大波动毁掉 Player Story，相关性只对齐不放大。")
     print("  所以队伍级的未建模随机必须单独有个出口，这就是 Map Residual。")
 
+# ------------------------------------------------------------------ 玩家的一届
+
+def player_run(nicknames=None, pages=None, seed=1, cfg=None):
+    """从选人到淘汰的一整届：VRS 赛场 -> 插队 -> 三段 Swiss -> 玩家路径。
+
+    返回一个 dict，字段和 `bdserver.run.build_run` 对齐，网页要接的时候不用
+    再翻译一次。这里只组装，比赛规则全在上面。
+    """
+    cards = {c["nickname"]: c for c in P.load_cards()}
+    if pages:
+        by_page = {c["page"]: c for c in P.load_cards()}
+        roster = [by_page[str(x)] for x in pages]
+    else:
+        roster = [cards[n] for n in nicknames]
+    me = Team("YOUR TEAM", roster, 0.0, is_player=True)
+
+    field, asof = major_field(seed, cfg)
+    stage, shove, full = insert_player(field, me)
+    base = {
+        "seed": int(seed), "snapshot": asof,
+        "entry": round(me.entry(), 1),
+        "roster": [{k: c.get(k) for k in
+                    ("page", "nickname", "position", "grade", "country",
+                     "team", "age", "firepower", "leadership", "experience",
+                     "stability")} for c in roster],
+        "stage": stage,
+        "qualified": stage > 0,
+        "demoted": [{"team": t.name, "from_stage": a, "to_stage": b}
+                    for t, a, b in shove.demoted],
+        "dropped": shove.dropped.name if shove.dropped else None,
+    }
+    if not stage:
+        return base | {"outcome": "not_qualified", "wins": 0, "losses": 0,
+                       "reached_playoffs": False, "stages": [], "legs": []}
+
+    stages, logs = run_major(full, random.Random(seed))
+    legs, stage_rows, alive = [], [], me
+    for s in (stage, stage + 1, 3):
+        if s > 3:
+            break
+        teams, adv = stages[s]
+        here = next((t for t in teams if t.is_player), None)
+        if here is None:
+            break
+        for rnd, results in logs[s]:
+            for r in results:
+                if r.a is here or r.b is here:
+                    legs.append(_leg_row(r, here, s, rnd))
+        advanced = any(t.is_player for t in adv)
+        stage_rows.append({"stage": s, "wins": here.w, "losses": here.l,
+                           "advanced": advanced})
+        if not advanced:
+            break
+        alive = here
+    reached = any(t.is_player for t in stages[3][1])
+    wins = sum(1 for x in legs if x["won"])
+    return base | {"wins": wins, "losses": len(legs) - wins,
+                   "outcome": "playoffs" if reached else "eliminated",
+                   "reached_playoffs": reached,
+                   "stages": stage_rows, "legs": legs}
+
+
+def _leg_row(r, me, stage, rnd):
+    """一场比赛 -> JSON。玩家永远摆在 a 位，免得面板从对手视角写。"""
+    mine_is_a = r.a is me
+    opp = r.b if mine_is_a else r.a
+    scene = ("2-2 高压生死局" if r.pressure >= PRESSURE["decider"]
+             else "晋级 BO3" if r.bo == 3 and r.pressure == PRESSURE["advance"]
+             else "淘汰 BO3" if r.bo == 3 else "BO1")
+    maps = []
+    for i, m in enumerate(r.maps, 1):
+        sa, sb = (m.sa, m.sb) if mine_is_a else (m.sb, m.sa)
+        da, db = (m.da, m.db) if mine_is_a else (m.db, m.da)
+        won = m.winner_a if mine_is_a else not m.winner_a
+        mvp, mvp_a = m.mvp
+        life, life_a = m.life
+        under, under_a = m.under
+        side = lambda flag: ("player" if flag == mine_is_a else "opponent")
+        maps.append({
+            "number": i,
+            "player_strength": round(sa, 1), "opponent_strength": round(sb, 1),
+            "player_won": bool(won),
+            "residual": round(m.residual if mine_is_a else -m.residual, 1),
+            "margin": round(m.margin if mine_is_a else -m.margin, 1),
+            "mvp": _roll_json(mvp, side(mvp_a)),
+            "life_game": (_roll_json(life, side(life_a))
+                          if life.delta >= LIFE_GAME_AT else None),
+            "underperform": (_roll_json(under, side(under_a))
+                             if under.delta <= UNDERPERFORM_AT else None),
+            "players": [_roll_json(t, "player")
+                        for t in sorted(da, key=lambda t: -t.weight)],
+            "opponents": [_roll_json(t, "opponent")
+                          for t in sorted(db, key=lambda t: -t.weight)],
+        })
+    return {
+        "label": "Stage %d · Round %d · %s" % (stage, rnd, scene),
+        "stage": stage, "round": rnd, "bo": r.bo, "pressure": r.pressure,
+        "opponent": {"name": opp.name, "entry": round(opp.entry(), 1),
+                     "vrs": opp.vrs, "stage": opp.stage},
+        "won": r.winner is me,
+        "player_maps": r.a_maps if mine_is_a else r.b_maps,
+        "opponent_maps": r.b_maps if mine_is_a else r.a_maps,
+        "maps": maps,
+    }
+
+
+def _roll_json(t, side):
+    return {"nickname": t.card["nickname"], "position": t.card["position"],
+            "side": side,
+            "base_firepower": t.card["firepower"],
+            "effective_firepower": round(t.eff, 1),
+            "delta": round(t.delta, 1),
+            "carry_weight": round(t.weight, 4),
+            "why": {"form": round(t.form, 1), "pressure": round(t.choke, 1),
+                    "soft_capped": round(t.capped, 1)}}
+
+
+def show_run(data):
+    """命令行版的一届。"""
+    print("=" * 74)
+    print("Match Engine v2 — Road to Major   快照 %s" % (data["snapshot"] or "?"))
+    print("=" * 74)
+    print("你的五个人（Entry %.1f，纯火力口径）:" % data["entry"])
+    for c in data["roster"]:
+        print("   %-7s %-14s %-16s 火力 %2d 稳定 %2d 经验 %2d 领导 %2d"
+              % (c["position"], c["nickname"], c["country"] or "",
+                 c["firepower"], c["stability"], c["experience"],
+                 c["leadership"]))
+    if not data["qualified"]:
+        print("\n未取得席位：你比 Stage 1 最弱的一支还弱。")
+        return
+    print("\n按 Entry 挤进 Stage %d。" % data["stage"])
+    for d in data["demoted"]:
+        print("   %s 从 Stage %d 掉到 Stage %d" %
+              (d["team"], d["from_stage"], d["to_stage"]))
+    if data["dropped"]:
+        print("   %s 失去席位。" % data["dropped"])
+    for leg in data["legs"]:
+        print()
+        print("%s" % leg["label"])
+        print("  对手 %-18s Entry %.1f · VRS %s · 本届 Stage %s"
+              % (leg["opponent"]["name"], leg["opponent"]["entry"],
+                 leg["opponent"]["vrs"] or "-", leg["opponent"]["stage"]))
+        print("  %s  %d:%d   压力 %.1f"
+              % ("WIN" if leg["won"] else "LOSS", leg["player_maps"],
+                 leg["opponent_maps"], leg["pressure"]))
+        for m in leg["maps"]:
+            tags = []
+            if m["life_game"]:
+                g = m["life_game"]
+                tags.append("LIFE GAME %s %d→%.0f%s"
+                            % (g["nickname"], g["base_firepower"],
+                               g["effective_firepower"],
+                               "" if g["side"] == "player" else "(对手)"))
+            if m["underperform"]:
+                u = m["underperform"]
+                tags.append("UNDERPERFORM %s %d→%.0f%s"
+                            % (u["nickname"], u["base_firepower"],
+                               u["effective_firepower"],
+                               "" if u["side"] == "player" else "(对手)"))
+            v = m["mvp"]
+            print("    Map %d  表现 %.1f : %.1f  Residual %+.1f  ->  %s"
+                  " · MVP %s %d→%.0f%s%s"
+                  % (m["number"], m["player_strength"], m["opponent_strength"],
+                     m["residual"], "你赢" if m["player_won"] else "对手赢",
+                     v["nickname"], v["base_firepower"],
+                     v["effective_firepower"],
+                     "" if v["side"] == "player" else "(对手)",
+                     ("  " + " · ".join(tags)) if tags else ""))
+    print()
+    for s in data["stages"]:
+        print("Stage %d  %d-%d  %s"
+              % (s["stage"], s["wins"], s["losses"],
+                 "晋级" if s["advanced"] else "淘汰"))
+    print("RUN RESULT  %d-%d · %s"
+          % (data["wins"], data["losses"],
+             "进入 Playoffs" if data["reached_playoffs"] else "被淘汰"))
+
+
+def show_field(seed=1):
+    """这一届 32 支队是怎么来的：VRS 名额定 Stage，Entry 定层内种子。"""
+    field, asof = major_field(seed)
+    print("Road to Major 赛场 · 快照 %s" % (asof or "?"))
+    print("  Stage 归属由区域 VRS 名额决定；Entry 只排 Stage 内的种子。")
+    for stage in (3, 2, 1):
+        tier = sorted((t for t in field if t.stage == stage),
+                      key=lambda t: -t.entry())
+        print("\nStage %d 直邀 %d 支" % (stage, len(tier)))
+        for i, t in enumerate(tier, 1):
+            print("  种子 %-3d %-18s Entry %6.1f  VRS %-4s HLTV %s"
+                  % (i, t.name, t.entry(), t.vrs or "-", t.hltv or "-"))
 
 def main():
     ap = argparse.ArgumentParser(description="Match Engine v2 原型")
@@ -641,10 +853,18 @@ def main():
                     help="扫 SIGMA_SCALE / TEAM_RHO，看爆冷能不能撑住")
     ap.add_argument("--demo", default=None, metavar="阵容",
                     help="打一场看逐人账本，名字见 FIXTURES")
+    ap.add_argument("--major", default=None, metavar="阵容",
+                    help="跑完整一届 Road to Major，名字见 FIXTURES")
+    ap.add_argument("--field", action="store_true",
+                    help="只看这一届 32 支队的 VRS 名额与层内种子")
     ap.add_argument("--runs", type=int, default=4000)
     ap.add_argument("--seed", type=int, default=5)
     args = ap.parse_args()
-    if args.tune:
+    if args.field:
+        show_field(args.seed)
+    elif args.major:
+        show_run(player_run(FIXTURES[args.major], seed=args.seed))
+    elif args.tune:
         tune(args.runs)
     elif args.compare:
         compare(args.runs)
@@ -652,6 +872,217 @@ def main():
         demo(args.demo, args.seed)
     else:
         lab(args.runs)
+
+
+
+
+# ================================================================== 赛事外壳
+#
+# §1~§2 的 Road to Major。这一层是**赛制**不是数值，所以它和 v1 讲的是同一套
+# 规则；但故意在 v2 里独立实现，不 import match.py——v1 退役时不用拆依赖。
+#
+# 和 v1 的一处**行为差异**，写在这里免得以后有人当成 bug：
+#
+#   v1 的 run_major 按 Entry 排名切 field[0:8] / [8:16] / [16:32] 决定谁在哪个
+#   Stage，`regional_stage` 算出来了却没人用。实测 32 支里有 13 支对不上——
+#   FUT 的 VRS 排名是全球第 4、按区域名额本该 Stage 3 直邀，却因为我们的 Entry
+#   只有 59.8（第 22）被扔进 Stage 1；FlyQuest VRS 第 51，反而进了 Stage 2。
+#
+#   v0.3 §1.2 把区域名额表写死了（EU 8/6/6、AM 5/1/2、AS 3/1/0），所以 v2 里
+#   **Stage 归属听 VRS，Stage 内的种子顺序才按 Entry 排**。两把尺子各管各的：
+#   VRS 回答「凭什么拿到这个席位」，Entry 回答「同一层里谁更强」。
+
+STAGE_WINS = 3
+STAGE_LOSSES = 3
+FIELD_SIZE = 32
+
+
+def format_of(record):
+    """§2 的赛制 + §8.1 的压力分级。
+
+    v1 只有三档（BO1 0 / BO3 1.0 / 生死局 1.25）。v0.3 §8.1 要求 Format 和
+    Pressure 分开，晋级局和淘汰局的心理压力不一样——赢一场就出线，和输一场就
+    回家，不该给同一个数。
+    """
+    w, l = record
+    if w == 2 and l == 2:
+        return 3, PRESSURE["decider"]
+    if w == 2:
+        return 3, PRESSURE["advance"]       # 赢了就晋级
+    if l == 2:
+        return 3, PRESSURE["elim"]          # 输了就淘汰
+    return 1, PRESSURE["swiss"]
+
+
+def _by_record(alive):
+    """按 (胜, 负) 分池，战绩好的池子先配。"""
+    pools = {}
+    for t in alive:
+        pools.setdefault(t.record, []).append(t)
+    return sorted(pools.items(), key=lambda kv: (-kv[0][0], kv[0][1]))
+
+
+def mid_stage_order(teams):
+    """§2.3：当前 W-L -> Difficulty -> Stage 初始种子。"""
+    return sorted(teams, key=lambda t: (-t.w, t.l, -t.difficulty, t.seed))
+
+
+def pair_group(group, avoid_rematch=True):
+    """组内高种子打低种子，尽量避开重复对手（§2 「尽量避免同 Stage 重赛」）。"""
+    def rec(pool):
+        if not pool:
+            return []
+        a, rest = pool[0], pool[1:]
+        for i in range(len(rest) - 1, -1, -1):
+            b = rest[i]
+            if avoid_rematch and b in a.opponents:
+                continue
+            sub = rec(rest[:i] + rest[i + 1:])
+            if sub is not None:
+                return [(a, b)] + sub
+        return None
+
+    got = rec(list(group))
+    return pair_group(group, False) if got is None else got
+
+
+def run_stage(teams, rng):
+    """一个 16 队 Swiss Stage：3 胜晋级、3 负淘汰。
+
+    返回 (晋级的 8 支（按本 Stage 最终表现排）, [(轮次, 该轮全部比赛), ...])。
+    每轮全场都要打，因为下一轮配对取决于所有队的战绩和 Difficulty。
+    """
+    for t in teams:
+        t.reset()
+    rounds = []
+    for rnd in range(1, 6):
+        alive = [t for t in teams if not t.done]
+        if not alive:
+            break
+        if rnd == 1:                       # §2.1  1v9 2v10 ... 8v16
+            order = sorted(teams, key=lambda t: t.seed)
+            pairs = [(order[i], order[i + 8]) for i in range(8)]
+        else:
+            pairs = []
+            for _, grp in _by_record(alive):
+                pairs.extend(pair_group(mid_stage_order(grp)))
+        results = []
+        for a, b in pairs:
+            bo, pressure = format_of(a.record)
+            r = play_match(a, b, rng, bo, pressure)
+            r.winner.w += 1
+            (b if r.winner is a else a).l += 1
+            a.opponents.append(b)
+            b.opponents.append(a)
+            results.append(r)
+        rounds.append((rnd, results))
+    adv = [t for t in teams if t.w >= STAGE_WINS]
+    adv.sort(key=lambda t: (t.l, -t.difficulty, t.seed))
+    return adv, rounds
+
+
+def run_major(field, rng):
+    """§2：Stage 1 -> 2 -> 3。Playoffs（§2.4）暂不打。
+
+    哪怕玩家直接从 Stage 3 进场，下面两个 Stage 也得先跑——Stage 2/3 的种子
+    9-16 必须由上一个 Stage 决出，这不是多做的功能，是正确性。
+    """
+    logs, stages = {}, {}
+    carry = []
+    for stage in (1, 2, 3):
+        direct = sorted((t for t in field if t.stage == stage),
+                        key=lambda t: -t.entry())
+        for i, t in enumerate(direct, 1):
+            t.seed = i                     # Stage 内种子按 Entry，§2.2
+        for i, t in enumerate(carry, 9):
+            t.seed = i                     # 上一层晋级者按上一层 Final Seed
+        teams = direct + carry
+        adv, logs[stage] = run_stage(teams, rng)
+        stages[stage] = (teams, adv)
+        carry = [t.fork() for t in adv]
+    return stages, logs
+
+
+# ------------------------------------------------------------------ 赛场与插队
+
+class Shove(object):
+    """玩家挤进来之后，谁被挤到了哪儿。"""
+
+    def __init__(self, dropped=None, demoted=()):
+        self.dropped = dropped
+        self.demoted = list(demoted)       # [(队, 原 Stage, 现 Stage)]
+
+
+def major_field(seed=1, cfg=None, cohesion_cap=None):
+    """VRS 席位 + 快照首发 + v2 口径的 Entry。
+
+    席位和 Stage 归属整个来自 `ai_teams.build_pool_field`（区域 VRS 名额），
+    这一层**不依赖 Entry 口径**，所以 v1 / v2 拿到的是同一批队、同样的分层。
+    换掉的只是每支队的 Entry 怎么算——v2 是纯火力（§4.1）。
+    """
+    from . import ai_teams as A
+    cfg = cfg if cfg is not None else M.load_config()
+    cap = (float(cfg.get("cohesion_cap", M.COHESION_CAP))
+           if cohesion_cap is None else float(cohesion_cap))
+    rosters = M.load_rosters_cached()
+    teams, asof = A.build_pool_field(cfg)
+    out = []
+    for t in teams:
+        if not t.get("stage"):
+            continue
+        rating = A.entry_of(t, rosters, cap)
+        team = Team(t["name"], t["roster"], min(rating["chem_raw"], cap))
+        team.stage = t["stage"]
+        team.vrs = t.get("vrs")
+        team.hltv = t.get("rank")
+        if t.get("adjust"):
+            team.structure += float(t["adjust"])
+        out.append(team)
+    if len(out) != FIELD_SIZE:
+        raise ValueError("regional_slots 应产生 %d 席，实际 %d"
+                         % (FIELD_SIZE, len(out)))
+    return out, asof
+
+
+def insert_player(field, player):
+    """玩家按 Entry 在**全场**排名定 Stage，再按名额守恒级联降级。
+
+    两把尺子在这里分工，不能混用：
+
+      AI 的 Stage  由区域 VRS 名额定（§1.2）——「你凭历史积分拿到这个席位」
+      玩家的 Stage 由 Entry 全场排名定——玩家是临时组的队，没有 VRS 积分，
+                   能衡量他的只有纸面实力
+
+    一开始试过「逐层挤」（Entry 高过某层最弱的就进那层），实测不成立：两把
+    尺子的秩相关只有 0.63，层间 Entry 重叠得很厉害——本届 Stage 2 最弱的 BIG
+    只有 61.5，而 Stage 1 最强的 Astralis 有 81.4。那样一支 62 分的队能挤进
+    Stage 2，却比 Stage 1 半数队都弱。
+
+    定下 Stage 之后仍然名额守恒、逐级级联：该层最弱的掉一级，下一层因此多
+    一支、最弱的再掉一级，Stage 1 多出来的那支失去席位。「你的加入让下面
+    几支各降一级」这个叙事保住了。
+    """
+    rank = sum(1 for t in field if t.entry() > player.entry()) + 1
+    if rank > FIELD_SIZE:
+        return 0, Shove(), list(field)
+    stage = 3 if rank <= 8 else 2 if rank <= 16 else 1
+    player.stage = stage
+
+    tiers = {s: sorted((t for t in field if t.stage == s),
+                       key=lambda t: -t.entry()) for s in (3, 2, 1)}
+    tiers[stage] = tiers[stage][:-1] + [player]
+    shove = Shove()
+    falling = sorted((t for t in field if t.stage == stage),
+                     key=lambda t: -t.entry())[-1]
+    for lower in range(stage - 1, 0, -1):
+        shove.demoted.append((falling, falling.stage, lower))
+        falling.stage = lower
+        tiers[lower] = sorted(tiers[lower] + [falling],
+                              key=lambda t: -t.entry())
+        falling = tiers[lower][-1]
+        tiers[lower] = tiers[lower][:-1]
+    shove.dropped = falling
+    return stage, shove, [t for s in (3, 2, 1) for t in tiers[s]]
 
 
 if __name__ == "__main__":

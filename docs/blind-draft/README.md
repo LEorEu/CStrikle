@@ -45,7 +45,7 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 | `blinddraft.major` | 入场层：生成赛场 → 玩家插队 → 定 Stage → 首轮对阵 | — |
 | `blinddraft.match` | 比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联 | — |
 | `blinddraft.ai_teams` | AI 对手：队伍快照 + 当前角色 + 逐维当前化 | — |
-| `blinddraft.proto_match_v2` | **Match Engine v2 原型**：实现设计稿 v0.3，四维各干一件事、一图 11 个随机数（10 Player + 1 Map Residual）。与 v1 并存，`--lab / --tune / --compare / --demo` | — |
+| `blinddraft.proto_match_v2` | **Match Engine v2 原型**：实现设计稿 v0.3，四维各干一件事、一图 11 个随机数（10 Player + 1 Map Residual），并按区域 VRS 名额跑完整的 Road to Major。与 v1 并存，`--lab / --tune / --compare / --demo / --field / --major` | — |
 | `bdtools.fetch_rankings` | 队伍快照（阵容+位置+HLTV/VRS 排名）、5E 选手照片与队标 | `team_snapshot.json`、`5e_images.json`、`img/` |
 | `bdtools.fetch_5e_stats` | 5eplay 当前个人竞技数据 | `5e_player_stats.json` |
 | `bdtools.export_web` | 把卡和常量注进网页模板 | `.cache/proto_draft_web.html` |
@@ -147,6 +147,8 @@ python -m blinddraft.match --seed 50296 --cap 4  # 打完整届
 python -m blinddraft.match --seed 50296 --quick-run # M2 控制变量三场切片
 python -m blinddraft.match --duel 80 50          # 两个 Entry 的 BO1/BO3 胜率
 python -m blinddraft.match --selftest            # 两条不变量
+python -m blinddraft.proto_match_v2 --field      # v2：本届 32 席的 VRS 名额
+python -m blinddraft.proto_match_v2 --major "donk carry"  # v2：跑完整一届
 python -m blinddraft.match --stats --cap 4       # §35 的 Q1/Q2
 python -m blinddraft.match --lab  --cap 4        # §35 的 Q3/Q4（控制变量）
 python -m blinddraft.ai_teams                   # AI 赛场 32 队名单
