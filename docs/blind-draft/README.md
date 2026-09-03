@@ -44,10 +44,9 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 |---|---|---|
 | `blinddraft.cards` | 玩家卡生成器（生涯代表版本） | `data/blind_draft/draft_cards.json`（v7，已提交） |
 | `blinddraft.draft` | 命令行原型，选人这一层的全部逻辑都在这 | — |
-| `blinddraft.major` | 入场层：生成赛场 → 玩家插队 → 定 Stage → 首轮对阵 | — |
-| `blinddraft.match` | 比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联 | — |
+| `blinddraft.major` | 赛场层：赛场从哪来、Entry Rating 怎么算。**不管怎么打** | — |
 | `blinddraft.ai_teams` | AI 对手：队伍快照 + 当前角色 + 逐维当前化 | — |
-| `blinddraft.proto_match_v2` | **Match Engine v2 原型**：实现设计稿 v0.3，四维各干一件事、一图 11 个随机数（10 Player + 1 Map Residual），并按区域 VRS 名额跑完整的 Road to Major。与 v1 并存，`--lab / --tune / --compare / --demo / --field / --major / --audit` | — |
+| `blinddraft.proto_match_v2` | **比赛引擎**：实现设计稿 v0.3，四维各干一件事、一图 11 个随机数（10 Player + 1 Map Residual），并按区域 VRS 名额跑完整的 Road to Major。赛事外壳（插队、Swiss、三段串联）也在这里 | — |
 | `bdtools.fetch_rankings` | 队伍快照（阵容+位置+HLTV/VRS 排名）、5E 选手照片与队标 | `team_snapshot.json`、`5e_images.json`、`img/` |
 | `bdtools.fetch_5e_stats` | 5eplay 当前个人竞技数据 | `5e_player_stats.json` |
 | `bdtools.export_web` | 把卡和常量注进网页模板 | `.cache/proto_draft_web.html` |
@@ -142,23 +141,32 @@ Firepower；其余维度保留带置信度的生涯先验。在有证据的地�
 给出十个人的逐人火力账本——每一分变化都拆到「全队状态 / 个人状态 / 指挥挽回 /
 经验挽回 / 软顶」。比赛数值层正在做第二轮重构（[比赛引擎_v0.3.md](比赛引擎_v0.3.md)）：
 v1 已修掉 Carry 权重乱跳和 MVP 口径两处错并在服役，v2 原型
-（`blinddraft.proto_match_v2`）六项验收已过，还差接进 Major 三阶段外壳。
+（`blinddraft.proto_match_v2`）六项验收已过，Road to Major 三阶段外壳已接通，
+`/play` 和命令行都跑它；v1 已退役删除。
+
+比赛引擎只有一处：`blinddraft.proto_match_v2`。v1（`blinddraft.match`）已退役
+删除，它的四个还有用的入口（`--roster` / `--duel` / `--stats` / 任意阵容上场）
+都搬到了 v2，口径换成 v2 的；旧文档和旧截图里 `python -m blinddraft.match ...`
+的数字是 v1 那把尺子上的，不能和现在的对着看。
 
 ```
-python -m blinddraft.major --seed 1              # 只看入场：排第几、挤掉谁
-python -m blinddraft.major --sweep-field        # 每局赛场翻新几支
-python -m blinddraft.match --seed 50296 --cap 4  # 打完整届
-python -m blinddraft.match --seed 50296 --quick-run # M2 控制变量三场切片
-python -m blinddraft.match --duel 80 50          # 两个 Entry 的 BO1/BO3 胜率
-python -m blinddraft.match --selftest            # 两条不变量
-python -m blinddraft.proto_match_v2 --field      # v2：本届 32 席的 VRS 名额
-python -m blinddraft.proto_match_v2 --major "donk carry"  # v2：跑完整一届
-python -m blinddraft.match --stats --cap 4       # §35 的 Q1/Q2
-python -m blinddraft.match --lab  --cap 4        # §35 的 Q3/Q4（控制变量）
-python -m blinddraft.ai_teams                   # AI 赛场 32 队名单
-python -m blinddraft.ai_teams                   # 本届 32 支真实队与当前四维
-python -m blinddraft.ai_teams --changes         # 只看位置/火力发生投影的人
-python -m blinddraft.match --roster "s1mple,electroNic,Magisk,mzinho,Senzu"        --label BC.GAME                             # 拿一支真实阵容直接上场
+python -m blinddraft.draft                                  # 盲选一局
+python -m blinddraft.major --seed 1                         # 这届赛场 32 支队怎么来的
+python -m blinddraft.major --sweep-field                    # 每局赛场翻新几支
+python -m blinddraft.ai_teams                               # 本届 32 支真实队与当前四维
+python -m blinddraft.ai_teams --changes                     # 只看位置/火力发生投影的人
+
+python -m blinddraft.proto_match_v2 --field                 # 本届 32 席的 VRS 名额与层内种子
+python -m blinddraft.proto_match_v2 --major "donk carry"    # 跑完整一届 Road to Major
+python -m blinddraft.proto_match_v2 --demo "donk carry"     # 打一场，看十个人的逐人账本
+python -m blinddraft.proto_match_v2 --lab                   # 六项验收
+python -m blinddraft.proto_match_v2 --tune                  # MAP_SCALE 扫描
+python -m blinddraft.proto_match_v2 --compare               # 和 v1 那条历史曲线对比
+python -m blinddraft.proto_match_v2 --audit                 # VRS × Entry 偏差审计
+python -m blinddraft.proto_match_v2 --stats --runs 200      # 整届分布：Playoffs 率、按分差的强队胜率
+python -m blinddraft.proto_match_v2 --duel 80 70            # 两个 Entry 之间的胜率锚（实测）
+python -m blinddraft.proto_match_v2 --major "s1mple,electroNic,Magisk,mzinho,Senzu" --label BC.GAME
+                                                            # 拿一支真实阵容直接上场
 ```
 
 赛场用哪一套口径由 `data/blind_draft/major_field.json` 的 `field_source` 决定：

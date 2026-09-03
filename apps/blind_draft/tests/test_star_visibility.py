@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-"""§17 明星可见度：比赛叙事必须认得出谁是这支队的核心。
+"""§17 明星可见度 + Match Engine v0.3 的验收闸门。
 
-这一组盯的不是胜负平衡，是**观感**。玩家花 $5 签下 donk，如果引擎系统性地
+明星可见度盯的不是胜负平衡，是**观感**。玩家花 $5 签下 donk，如果引擎系统性地
 让 F50 的队友抢走 MVP，那这笔钱就白花了——`docs/blind-draft/1.txt` 把它定成
 一条硬验收：F50 和 F96 的 MVP 率差不多，就判引擎坏了。
+
+这个文件曾经分 v1 / v2 两组，同一条不变量各写一遍。v1（`blinddraft.match`）
+已退役删除，所以现在只有一套断言，全部对着 `proto_match_v2`。原来 v1 独有的
+四条（Carry 权重由卡面定死、逐项归因加得回 delta、输的一方也能拿 MVP、
+不 Roll 时的强度等于 Entry）都翻译成了 v2 的口径，见 `MatchV2Tests`。
 """
 import collections
 import json
@@ -11,140 +16,7 @@ import random
 import unittest
 
 from blinddraft import draft as P
-from blinddraft import major as M
-from blinddraft import match as X
-
-
-def _fake(nick, fire, stab, exp=60, lead=25, pos="RIFLER"):
-    return {"nickname": nick, "position": pos, "firepower": fire,
-            "stability": stab, "experience": exp, "leadership": lead,
-            "caller": pos == "IGL"}
-
-
-class _Bare(object):
-    """只喂 MatchTeam 需要的字段，绕开卡库和默契，保证是控制变量。"""
-
-    def __init__(self, name, roster):
-        self.name, self.roster = name, roster
-        self.is_player = False
-        self.rating = {"chem_raw": 0.0}
-
-
-def _team(roster, cap=0.0):
-    return X.MatchTeam(_Bare("LAB", roster), 1, cap)
-
-
-# 1.txt 指定的形状：一个真明星，一路铺到边缘轮换。
-LADDER = [_fake("F96", 96, 87), _fake("F75", 75, 62), _fake("F68", 68, 57),
-          _fake("F62", 62, 50), _fake("F55", 55, 46)]
-
-# 你实际抽到过的那把，直接存成回归样本。
-STAR_CARRY = [_fake("donk", 96, 87, exp=82, lead=30),
-              _fake("molodoy", 87, 62, exp=53, lead=22, pos="AWPER"),
-              _fake("tN1R", 75, 57, exp=39, lead=23),
-              _fake("Kvem", 59, 46, exp=25, lead=18),
-              _fake("spaze", 50, 47, exp=27, lead=56, pos="IGL")]
-
-
-def _tally(roster, n=8000, seed=4):
-    """跑 n 张图，统计每人拿 MVP / LIFE GAME / UNDERPERFORM 的比例。"""
-    team = _team(roster)
-    rng = random.Random(seed)
-    mvp = {c["nickname"]: 0 for c in roster}
-    life = dict(mvp)
-    under = dict(mvp)
-    for _ in range(n):
-        _s, detail = team.play_map(rng, 0.0)
-        mvp[max(detail, key=lambda t: t[1])[0]["nickname"]] += 1
-        top = max(detail, key=lambda t: t[2])
-        if top[2] >= X.LIFE_GAME_AT:
-            life[top[0]["nickname"]] += 1
-        low = min(detail, key=lambda t: t[2])
-        if low[2] <= X.UNDERPERFORM_AT:
-            under[low[0]["nickname"]] += 1
-    f = lambda d: {k: v / n for k, v in d.items()}      # noqa: E731
-    return f(mvp), f(life), f(under)
-
-
-class StarVisibilityTests(unittest.TestCase):
-    def test_the_star_is_the_clear_mvp_favourite(self):
-        mvp, _life, _under = _tally(LADDER)
-        self.assertEqual(max(mvp, key=mvp.get), "F96")
-        # 「明显最多」而不是「多一点」：至少是第二名的两倍。
-        rest = sorted((v for k, v in mvp.items() if k != "F96"), reverse=True)
-        self.assertGreater(mvp["F96"], 2 * rest[0])
-        self.assertGreater(mvp["F96"], 0.55)
-
-    def test_weak_cards_never_out_mvp_the_star(self):
-        """1.txt 的硬验收线。改坏引擎时这条必须先响。"""
-        mvp, _life, _under = _tally(STAR_CARRY)
-        self.assertGreater(mvp["donk"], 4 * mvp["spaze"])
-        self.assertGreater(mvp["donk"], mvp["Kvem"])
-
-    def test_life_game_belongs_to_the_volatile_ones(self):
-        """MVP 归明星，爆种归低稳定的人——两个故事各归各的。"""
-        mvp, life, _under = _tally(LADDER)
-        self.assertEqual(max(life, key=life.get), "F55")
-        self.assertGreater(life["F55"], life["F96"])
-        self.assertEqual(mvp and max(mvp, key=mvp.get), "F96")
-
-    def test_low_stability_swings_both_ways(self):
-        """低稳定既容易爆种也容易崩，不能只有好的一面。"""
-        _mvp, life, under = _tally(LADDER)
-        self.assertGreater(under["F55"], under["F96"])
-        self.assertGreater(life["F55"], 0.0)
-        self.assertGreater(under["F55"], 0.0)
-
-    def test_star_weight_is_fixed_by_the_card_not_by_todays_roll(self):
-        """§17.1：椅子在开赛前定死，当天手热不改变队内定位。"""
-        team = _team(LADDER)
-        self.assertEqual(team.star_w, [.35, .25, .40 / 3, .40 / 3, .40 / 3])
-        # 顺序打乱后，权重必须跟着人走，而不是跟着 roster 下标走。
-        shuffled = [LADDER[3], LADDER[0], LADDER[4], LADDER[2], LADDER[1]]
-        self.assertEqual(_team(shuffled).star_w,
-                         [.40 / 3, .35, .40 / 3, .40 / 3, .25])
-
-    def test_baseline_still_equals_entry_rating(self):
-        """固定权重不许动「不 Roll 时强度 == Entry」这条老不变量。"""
-        cards = P.load_cards()
-        rosters = P.load_rosters()
-        mates = P.mate_index(rosters)
-        for seed in (7, 50296, 156515):
-            roster, _left = M.bot_draft(seed, cards, rosters, mates)
-            entry = M.Entry("T", roster, M.entry_rating(roster, rosters,
-                                                        M.COHESION_CAP))
-            team = X.MatchTeam(entry, 1, M.COHESION_CAP)
-            self.assertAlmostEqual(team.baseline(), entry.entry, places=6)
-
-
-class MapStoryTests(unittest.TestCase):
-    def test_the_losing_side_can_still_hold_the_mvp(self):
-        """「载物尽力了，队友带不动」必须讲得出来——旧口径永远讲不出。"""
-        strong = _team([_fake("ACE", 99, 99)] + [_fake("m%d" % i, 40, 99)
-                                                 for i in range(4)])
-        weak = _team([_fake("w%d" % i, 45, 99) for i in range(5)])
-        rng = random.Random(1)
-        seen = 0
-        for _ in range(400):
-            m = X.play_map(strong, weak, rng, 0.0)
-            if not m.winner_a and m.mvp[1]:
-                seen += 1
-        self.assertGreater(seen, 0)
-
-    def test_mvp_reads_performance_and_life_game_reads_deviation(self):
-        rng = random.Random(2)
-        a, b = _team(LADDER), _team(STAR_CARRY)
-        for _ in range(300):
-            m = X.play_map(a, b, rng, 0.0)
-            # MVP 是全场有效火力最高的那个，不是偏离最大的那个。
-            self.assertGreaterEqual(m.mvp[0].eff, m.life[0].eff)
-            self.assertGreaterEqual(m.life[0].delta, m.under[0].delta)
-            for t in m.da + m.db:
-                # 归因必须逐项加得回 delta，否则展示出来的解释是假的。
-                self.assertAlmostEqual(
-                    t.team + t.solo + t.exp_gain + t.lead_gain + t.capped,
-                    t.delta, places=9)
-
+from blinddraft import proto_match_v2 as V2
 
 
 class MatchV2Tests(unittest.TestCase):
@@ -156,7 +28,6 @@ class MatchV2Tests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from blinddraft import proto_match_v2 as V2
         cls.V = V2
 
     def test_stability_distribution_matches_the_frozen_spec(self):
@@ -243,6 +114,98 @@ class MatchV2Tests(unittest.TestCase):
                  for c in base]
         self.assertAlmostEqual(V.Team("a", base).entry(),
                                V.Team("b", moved).entry(), places=9)
+
+    # ---- 下面四条是从退役的 v1 翻译过来的，口径换成 v2 ----
+
+    def test_star_weight_is_fixed_by_the_card_not_by_todays_roll(self):
+        """§4.2：椅子在开赛前定死，当天手热不改变队内定位。
+
+        v1 那版的 bug 是按**当图掷骰结果**重排 .35/.25/.133，一次高 Roll 能
+        既涨分又从后排跳到主枪位。v2 的 `Team.weights` 在构造时按卡面火力排定。
+        """
+        V = self.V
+        ladder = [V._fake("F%d" % f, f, 60) for f in (96, 75, 68, 62, 55)]
+        self.assertEqual(V.Team("t", ladder).weights,
+                         [.35, .25, .40 / 3, .40 / 3, .40 / 3])
+        # 顺序打乱后权重必须跟着人走，而不是跟着 roster 下标走
+        shuffled = [ladder[3], ladder[0], ladder[4], ladder[2], ladder[1]]
+        self.assertEqual(V.Team("t", shuffled).weights,
+                         [.40 / 3, .35, .40 / 3, .40 / 3, .25])
+
+    def test_per_player_attribution_adds_back_to_delta(self):
+        """展示出来的解释必须是真的：逐项相加要精确等于 delta，无残差。
+
+        v1 拆成「全队状态 + 个人状态 + 指挥挽回 + 经验挽回 + 软顶」；v2 只剩
+        三项——§11 退役了 Team Shared Form，Leadership 也不再逐人挽回。
+        """
+        V = self.V
+        a, b = V._probe("A", 80, 50), V._probe("B", 74, 90)
+        rng = random.Random(6)
+        for _ in range(200):
+            m = V.play_map(a, b, rng, 1.2)          # 有压力才走得到 choke 那一项
+            for t in list(m.da) + list(m.db):
+                self.assertAlmostEqual(t.form + t.choke + t.capped, t.delta,
+                                       places=9)
+
+    def test_the_losing_side_can_still_hold_the_mvp(self):
+        """「核心尽力了，队友带不动」必须讲得出来——v1 的旧口径永远讲不出。"""
+        V = self.V
+        strong = V.Team("S", [V._fake("ACE", 99, 99)] +
+                        [V._fake("m%d" % i, 40, 99) for i in range(4)])
+        weak = V.Team("W", [V._fake("w%d" % i, 45, 99) for i in range(5)])
+        rng = random.Random(1)
+        seen = sum(1 for _ in range(400)
+                   if (lambda m: not m.winner_a and m.mvp[1])(
+                       V.play_map(strong, weak, rng, 0.0)))
+        self.assertGreater(seen, 0)
+
+    def test_life_game_and_underperform_belong_to_the_volatile_ones(self):
+        """MVP 归明星，爆种和崩盘归低稳定的人——两个故事各归各的，且都要有。"""
+        V = self.V
+        roster = [V._fake("F96", 96, 87), V._fake("F75", 75, 62),
+                  V._fake("F68", 68, 57), V._fake("F62", 62, 50),
+                  V._fake("F55", 55, 46)]
+        team = V.Team("LADDER", roster)
+        rng = random.Random(4)
+        n = 8000
+        mvp, life, under = (collections.Counter() for _ in range(3))
+        for _ in range(n):
+            _s, d = team.play_map(rng, 0.0)
+            mvp[max(d, key=lambda t: t.eff).card["nickname"]] += 1
+            hi = max(d, key=lambda t: t.delta)
+            if hi.delta >= V.LIFE_GAME_AT:
+                life[hi.card["nickname"]] += 1
+            lo = min(d, key=lambda t: t.delta)
+            if lo.delta <= V.UNDERPERFORM_AT:
+                under[lo.card["nickname"]] += 1
+        self.assertEqual(max(mvp, key=mvp.get), "F96")
+        self.assertEqual(max(life, key=life.get), "F55")
+        self.assertGreater(life["F55"], life["F96"])
+        self.assertGreater(under["F55"], under["F96"])
+        self.assertGreater(under["F55"], 0)
+
+    def test_strength_has_no_source_beyond_entry_and_tactical(self):
+        """v1 的老不变量「不 Roll 时强度 == Entry」在 v2 里的样子。
+
+        v2 把战术执行（Leadership）从 Entry 里拿掉了（§4.1），所以它不再是
+        恒等式，而是 entry() + tactical。两头都要钉：把当图发挥按住（delta=0）
+        必须正好回到这个数；真掷一次，强度也只能是「逐人有效火力按权重加权
+        + 战术执行 + 结构」，不许有第四个来源偷偷加分。
+        """
+        V = self.V
+        rng = random.Random(12)
+        for spec in V.FIXTURES:
+            team = V.roster_team(spec)
+            flat = sum(w * c["firepower"]
+                       for w, c in zip(team.weights, team.roster))
+            self.assertAlmostEqual(flat + team.tactical + team.structure,
+                                   team.entry() + team.tactical, places=9)
+            for _ in range(50):
+                strength, rolls = team.play_map(rng, 0.0)
+                self.assertAlmostEqual(
+                    strength,
+                    sum(t.weight * t.eff for t in rolls)
+                    + team.tactical + team.structure, places=9)
 
 
 class MajorShellTests(unittest.TestCase):

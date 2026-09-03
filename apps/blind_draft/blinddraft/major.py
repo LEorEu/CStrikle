@@ -370,79 +370,6 @@ def load_rosters_cached():
     return _ROSTERS[0]
 
 
-# ------------------------------------------------------------------ 玩家插入
-
-class Shove(object):
-    """玩家挤进来之后,谁被挤到了哪儿。"""
-
-    def __init__(self, dropped=None, demoted=()):
-        self.dropped = dropped          # 掉到第 33、失去席位的那支
-        self.demoted = list(demoted)    # [(队, 原 Stage, 现 Stage)]
-
-
-def insert_player(field, player):
-    """§3.1:玩家按 Entry Rating 插进去,**下面全体顺延一位**。
-
-    设计稿那一节自己是矛盾的(一边说踢掉「原本在 #12 的队」,一边把它画在
-    #13)。正确的是顺延:一届 Major 就是 32 个席位,你占一个,下面每支退一位,
-    第 33 位掉出去。
-
-    顺延的叙事也更好。踢人只有一句话,顺延有三句,而且全在关键位置上——
-    跨过第 8 名的那支要多打一个瑞士轮,跨过第 16 名的那支得从 Stage 1 爬,
-    第 32 名直接失去席位。**你的加入让三支队各降一级**,这是名额守恒本来
-    就该产生的级联。
-
-    玩家排到第 33(比全场最弱还弱)时 rank=33,那就是 Failed to qualify。
-    """
-    rank = sum(1 for e in field if e.entry > player.entry) + 1
-    if rank > FIELD_SIZE:
-        return FIELD_SIZE + 1, Shove(), list(field)
-    new = field[:rank - 1] + [player] + field[rank - 1:]
-    shove = Shove(dropped=new[FIELD_SIZE])
-    for edge in (8, 16):
-        if rank <= edge:
-            # 原本第 edge 名的那支现在是第 edge+1 名,掉了一个 Stage
-            shove.demoted.append((new[edge], stage_of(edge), stage_of(edge + 1)))
-    return rank, shove, new[:FIELD_SIZE]
-
-
-def stage_of(rank):
-    """§3.2"""
-    if rank <= 8:
-        return 3
-    if rank <= 16:
-        return 2
-    if rank <= FIELD_SIZE:
-        return 1
-    return 0                                    # 未能晋级
-
-
-# ------------------------------------------------------------------ 种子与首轮
-
-def stage_seeds(field, stage):
-    """§8:某个 Stage 开赛时手上已知的种子。
-
-    Stage 1 是完整的 16 支(全场第 17~32);Stage 2 / 3 开赛前只知道 8 支直邀
-    (种子 1~8),另外 8 个位置要等上一个 Stage 打完才填得上——这一步还没有
-    比赛引擎,所以那 8 个位置是空的,这正是下一步要补的东西。
-    """
-    if stage == 1:
-        return field[16:32], []
-    if stage == 2:
-        return field[8:16], [None] * 8
-    if stage == 3:
-        return field[0:8], [None] * 8
-    return [], []
-
-
-def round1(direct, advancers):
-    """§9:Seed i 打 Seed i+8。advancers 里的 None 表示待定。"""
-    top = list(direct)
-    bottom = list(advancers) if advancers else []
-    if not bottom:                              # Stage 1:16 支一起排种子
-        top, bottom = direct[:8], direct[8:]
-    return [(i + 1, top[i], i + 9, bottom[i]) for i in range(8)]
-
 
 # ------------------------------------------------------------------ 一个陪跑的玩家
 
@@ -504,54 +431,30 @@ def bot_draft(seed, cards, rosters, mates):
 
 # ------------------------------------------------------------------ 输出
 
-def name_of(entry):
-    if entry is None:
-        return "(待上一 Stage 决出)"
-    return ("*** " + entry.name + " ***") if entry.is_player else entry.name
 
+def print_field(field, event, cohesion_cap):
+    """列出这届赛场的 32 支队。**只排 Entry，不判 Stage。**
 
-def print_field(field, player_rank, shove, event, cohesion_cap):
+    Stage 归属是赛事外壳的事，由区域 VRS 名额决定（v0.3 §1.2），住在
+    proto_match_v2 里。这里如果按 Entry 顺位画 Stage 分割线，就是在复述
+    v1 那条已经退役的规则——所以只在 current 赛场上把真实的 VRS Stage
+    当成一列印出来，major_pool 赛场没有这个字段，那一列就留空。
+    """
     print("=" * 70)
-    print("%s  —  Projected Seeding(模拟种子,不是历史真实 VRS)" % event)
+    print("%s  —  Entry Rating 顺位(不是历史真实 VRS,也不决定 Stage)" % event)
     print("Entry Rating = 基础分 + 磨合度,磨合度 = min(裸默契, %.1f)" % cohesion_cap)
     print("=" * 70)
-    last = None
     show_event = len({getattr(e, "event", None) for e in field}) > 1
     for i, e in enumerate(field, 1):
-        stage = stage_of(i)
-        if stage != last:
-            print("  ---- Stage %d ----" % stage)
-            last = stage
-        mark = ">>>" if e.is_player else "   "
+        stage = getattr(e, "regional_stage", None)
         tail = ("   [%s]" % e.event) if show_event and getattr(e, "event", None) else ""
-        print("%s %2d  %-22s  %5.1f   基础 %5.1f  磨合 %4.1f (裸默契 %4.1f)%s"
-              % (mark, i, e.name, e.entry, e.rating["base"],
-                 e.rating["cohesion"], e.rating["chem_raw"], tail))
+        print("    %2d  %-22s  %5.1f   基础 %5.1f  磨合 %4.1f (裸默契 %4.1f)  %s%s"
+              % (i, e.name, e.entry, e.rating["base"], e.rating["cohesion"],
+                 e.rating["chem_raw"],
+                 ("Stage %d" % stage) if stage else "", tail))
     print()
-    if player_rank > FIELD_SIZE:
-        print("RUN END — Failed to qualify(第 %d,连最后一个席位都没挤进去)"
-              % player_rank)
-        return
-    print("你以 Projected Seed #%d 拿到席位,起始位置 Stage %d。"
-          % (player_rank, stage_of(player_rank)))
-    for team, was, now in shove.demoted:
-        print("   你把 %s 从 Stage %d 挤到了 Stage %d,他们要多打一个瑞士轮。"
-              % (team.name, was, now))
-    if shove.dropped is not None:
-        print("   %s 掉到第 33 位,失去了这届 Major 的席位。" % shove.dropped.name)
+    print("玩家怎么插进来、每个 Stage 怎么打：python -m blinddraft.proto_match_v2 --field")
 
-
-def print_round1(field, stage):
-    direct, adv = stage_seeds(field, stage)
-    print()
-    print("-" * 70)
-    print("Stage %d 首轮对阵" % stage)
-    print("-" * 70)
-    if stage in (2, 3):
-        print("(直邀 8 支是种子 1-8;种子 9-16 由 Stage %d 晋级填入)" % (stage - 1))
-    for a, ea, b, eb in round1(direct, adv):
-        print("  Seed %2d  %-22s  vs  Seed %2d  %s"
-              % (a, name_of(ea), b, name_of(eb)))
 
 
 def main():
@@ -559,9 +462,7 @@ def main():
     ap.add_argument("--event", default=None,
                     help="只用这一届的 32 队,绕过 major_field.json")
     ap.add_argument("--seed", type=int, default=None,
-                    help="给一个种子就顺便抽一支玩家队插进去")
-    ap.add_argument("--field-seed", type=int, default=None,
-                    help="赛场随机种子(默认同 --seed)")
+                    help="赛场随机种子")
     ap.add_argument("--cap", type=float, default=None,
                     help="覆盖配置里的 cohesion_cap")
     ap.add_argument("--events", action="store_true", help="列出可用的 Major")
@@ -592,31 +493,10 @@ def main():
         if missing:
             print("在 Major 名单里但卡库没有: %s" % dict(list(missing.items())[:5]))
     else:
-        rng = random.Random(args.field_seed if args.field_seed is not None
-                            else args.seed)
-        field = make_field(rng, cfg, rosters, args.cap)
+        field = make_field(random.Random(args.seed), cfg, rosters, args.cap)
         label = field_label(cfg, field)
 
-    rank, shove = FIELD_SIZE + 1, Shove()
-    if args.seed is not None:
-        cards = P.load_cards()
-        mates = P.mate_index(rosters)
-        roster, left = bot_draft(args.seed, cards, rosters, mates)
-        if len(roster) < P.SLOTS:
-            print("这局没凑齐 5 个人,换一个 --seed")
-            return
-        me = Entry("YOUR TEAM", roster, entry_rating(roster, rosters, args.cap),
-                   is_player=True)
-        print("你的五个人(seed %d,剩 $%d):" % (args.seed, left))
-        for c in roster:
-            print("   %-7s %-14s %-12s G%d" % (c["position"], c["nickname"],
-                                               c["country"], c["grade"]))
-        print()
-        rank, shove, field = insert_player(field, me)
-
-    print_field(field, rank, shove, label, args.cap)
-    if 1 <= stage_of(rank) <= 3:
-        print_round1(field, stage_of(rank))
+    print_field(field, label, args.cap)
 
 
 if __name__ == "__main__":

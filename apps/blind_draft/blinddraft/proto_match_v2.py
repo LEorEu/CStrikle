@@ -3,7 +3,7 @@
 
 落地的是设计稿 `比赛引擎_v0.3.md`。它要求
 这一版做成独立原型而不是就地改 v1，所以这个文件**不碰** `match.py`，也不被它
-import；只有 `--compare` 会临时借 v1 的 `win_prob` 画对照。§15 的 Pipeline：
+import。v1 已退役删除，`--compare` 画的那条历史曲线只剩一个常量。§15 的 Pipeline：
 
                      Firepower
                          │
@@ -123,6 +123,8 @@ TEAM_RHO = 0.0
 #   +2 只是小优 56.7% / +5 明显优势但远非必胜 67.0%
 #   +10 强 Favorite 但 BO1 仍有 18.8% 爆冷 / +20 极难翻但不机械 100%
 # 旧的 WIN_SCALE=13 明确不迁移——那会让 +10 只剩 68%，选手层被宏观随机淹没。
+# 留一个常量只为 --compare 画那条历史曲线，引擎里没有任何地方读它。
+V1_WIN_SCALE = 13.0
 MAP_SCALE = 6.0
 
 # §8 压力只扭曲已经掷出来的那个结果，不掷第二个骰子，也不做队伍级罚分。
@@ -374,6 +376,7 @@ class MatchResult(object):
         self.a_maps = sum(1 for m in maps if m.winner_a)
         self.b_maps = len(maps) - self.a_maps
         self.winner = a if self.a_maps > self.b_maps else b
+        self.loser = b if self.winner is a else a
 
 
 def play_match(a, b, rng, bo, pressure, scale=None):
@@ -390,19 +393,42 @@ def play_match(a, b, rng, bo, pressure, scale=None):
 
 
 # ------------------------------------------------------------------ 取数
-
-def field_teams(seed=1):
-    """借 major 的赛场构成，但 Entry 一律用 v2 口径重算。"""
-    cfg = M.load_config()
-    cap = float(cfg.get("cohesion_cap", M.COHESION_CAP))
-    rosters = P.load_rosters()
-    return [Team(e.name, e.roster, min(e.rating["chem_raw"], cap))
-            for e in M.make_field(random.Random(seed), cfg, rosters, cap)]
+#
+# 赛场只有一个来源：下面的 `major_field`（区域 VRS 名额）。曾经这里还有一个
+# `field_teams`，走 `major.make_field`，于是 --lab / --demo 和 /play 拿的是两个
+# 不同的赛场。今天两者恰好一致（field_source=current 时 make_field 也绕回
+# build_pool_field），所以谁都没发现；但把配置翻成 major_pool，验收就会在历史
+# 阵容上跑，而玩家仍然面对 VRS 名额那 32 支——不报错，只是量的不是同一个游戏。
+# 已删除，全部走 major_field。
 
 
 def named_team(label, nicknames, cards=None):
     cards = cards or {c["nickname"]: c for c in P.load_cards()}
     return Team(label, [cards[n] for n in nicknames], 0.0, is_player=True)
+
+
+def roster_cards(spec):
+    """"nick,nick,..." 或 FIXTURES 的名字 -> 五张卡。认昵称也认 page，不分大小写。
+
+    从 v1 的 `pick_roster` 搬过来。有它才能拿任意一支真实阵容对着引擎跑，
+    不然能上场的只有写死的 FIXTURES 那三支。
+    """
+    names = FIXTURES.get(spec)
+    index = {}
+    for c in P.load_cards():
+        index.setdefault(c["page"].casefold(), c)
+        index.setdefault(c["nickname"].casefold(), c)
+    want = list(names) if names else [w.strip() for w in spec.split(",") if w.strip()]
+    bad = [w for w in want if w.casefold() not in index]
+    if bad:
+        raise KeyError("卡库里没有：%s" % "、".join(bad))
+    if len(want) != P.SLOTS:
+        raise ValueError("要正好 %d 个人，给了 %d 个" % (P.SLOTS, len(want)))
+    return [index[w.casefold()] for w in want]
+
+
+def roster_team(spec, label=None):
+    return Team(label or spec, roster_cards(spec), 0.0, is_player=True)
 
 
 # ------------------------------------------------------------------ 固定测试阵容
@@ -437,12 +463,89 @@ def win_rate(a, b, bo, pressure, runs, seed=1, scale=None):
                for _ in range(runs)) / runs
 
 
+def _entry_probe(label, target, stab=70):
+    """造一支 entry() 正好等于 target 的探针队。
+
+    entry() 对火力是斜率 1 的线性函数（权重和为 1），所以一次修正就精确。
+    """
+    t = _probe(label, 70.0, stab)
+    return _probe(label, 70.0 + (target - t.entry()), stab)
+
+
+def duel(high, low, runs=20000, stab=70, seed=20260902):
+    """两个 Entry 之间的胜率锚。从 v1 的 --duel 搬过来，口径换成 v2。
+
+    §13.3：MAP_SCALE 只控制 Residual 那一层，胜率**只能实测**。所以每次动
+    MAP_SCALE / SIGMA_SCALE / 任何队伍层 modifier 之后，都要重新跑这个数，
+    不能从系数上算。
+    """
+    a, b = _entry_probe("HI", high, stab), _entry_probe("LO", low, stab)
+    print("Entry %.1f vs %.1f（纯火力口径，稳定同为 %d，各 %d 次）"
+          % (a.entry(), b.entry(), stab, runs))
+    out = {}
+    for bo in (1, 3):
+        out[bo] = win_rate(a, b, bo, 0.0, runs, seed)
+        print("  BO%d  强队胜率 %.1f%%" % (bo, 100.0 * out[bo]))
+    print("  MAP_SCALE=%.1f  SIGMA_SCALE=%.2f" % (MAP_SCALE, SIGMA_SCALE))
+    return out
+
+
+def stats(runs=200, seed=20260828):
+    """整届分布：强队是不是更容易晋级但不是必进？BO1 是不是更容易爆冷？
+
+    从 v1 的 --stats 搬过来（设计稿 v0.1 §35 的 Q1/Q2）。两处口径变了：
+
+      - v1 按 Projected Seed #1~32 排，那是 Entry 分层的世界；v2 的 Stage 由
+        区域 VRS 名额定，所以这里按 Entry 排但**把 Stage 一起印出来**，
+        两把尺子的错位在这张表上是看得见的，不是被排序抹平的。
+      - v1 的实力差用 baseline()（含 L/E/S）；v2 用 entry()（纯火力）。
+    """
+    field, asof = major_field(1)
+    rng = random.Random(seed)
+    playoffs = collections.Counter()
+    gap = collections.defaultdict(lambda: [0, 0])       # (bo, 档) -> [场次, 强队赢]
+    for _ in range(runs):
+        stages, logs = run_major(field, rng)
+        for t in stages[3][1]:
+            playoffs[t.name] += 1
+        for stage in (1, 2, 3):
+            for _rnd, results in logs[stage]:
+                for r in results:
+                    ea, eb = r.a.entry(), r.b.entry()
+                    strong = r.a if ea >= eb else r.b
+                    key = (r.bo, min(int(abs(ea - eb) // 5) * 5, 20))
+                    gap[key][0] += 1
+                    gap[key][1] += 1 if r.winner is strong else 0
+
+    print("=" * 74)
+    print("整届分布  快照 %s  %d 届  MAP_SCALE=%.1f" % (asof or "?", runs, MAP_SCALE))
+    print("=" * 74)
+    print()
+    print("[Q1] 进 Playoffs 的概率（Stage 归属由区域 VRS 名额定，不是 Entry）")
+    print("  %-22s %5s %5s %6s %9s" % ("队", "Stage", "VRS", "Entry", "Playoffs"))
+    for t in sorted(field, key=lambda t: -t.entry()):
+        print("  %-22s %5d %5s %6.1f %8.1f%%"
+              % (t.name, t.stage, t.vrs or "-", t.entry(),
+                 100.0 * playoffs[t.name] / runs))
+    print()
+    print("[Q2] 强的一方赢了多少（实力差按 Entry 分档）")
+    print("        实力差     BO1 强队胜率        BO3 强队胜率")
+    for g in (0, 5, 10, 15, 20):
+        row = []
+        for bo in (1, 3):
+            n, w = gap[(bo, g)]
+            row.append("%5.1f%% (n=%5d)" % (100.0 * w / n, n) if n
+                       else "      -        ")
+        lab_ = "%2d~%-2d" % (g, g + 5) if g < 20 else " 20+ "
+        print("        %s      %s  %s" % (lab_, row[0], row[1]))
+
+
 # ------------------------------------------------------------------ lab
 
 def lab(runs=4000):
     """1.txt 结尾列的六项验收，一次跑完。"""
     cards = {c["nickname"]: c for c in P.load_cards()}
-    field = {t.name: t for t in field_teams(1)}
+    field = {t.name: t for t in major_field(1)[0]}
     top5 = sorted(field.values(), key=lambda t: -t.entry())[:5]
     mid = min(field.values(), key=lambda t: abs(t.entry() - 80.0))
 
@@ -516,7 +619,9 @@ def compare(runs=4000):
     这是这一版最容易翻车的地方——删掉胜负骰会让胜负高度确定，弱队再也没有
     「今天状态好就偷一张图」的空间。改任何分布系数都先看这张表。
     """
-    from . import match as V1                # 只在对比时用，引擎本身不依赖 v1
+    # v1 退役了，但它那条参照曲线是个纯公式（§27 的 logistic，WIN_SCALE=13），
+    # 抄一行常量比为了画对照留着整个 v1 引擎便宜。这是历史刻度，不参与任何计算。
+    v1_logistic = lambda gap: 1.0 / (1.0 + math.exp(-gap / V1_WIN_SCALE))  # noqa: E731
     print("=" * 74)
     print("§9 代价核对 — 同样的实力差，两版给出的胜率")
     print("=" * 74)
@@ -524,7 +629,7 @@ def compare(runs=4000):
     for gap in (2, 5, 10, 20):
         a, b = _probe("A", 70 + gap, 65), _probe("B", 70, 65)
         print("  %-8s %11.1f%% %11.1f%% %11.1f%%"
-              % ("+%d" % gap, 100 * V1.win_prob(gap, 0),
+              % ("+%d" % gap, 100 * v1_logistic(gap),
                  100 * win_rate(a, b, 1, 0.0, runs, 23),
                  100 * win_rate(a, b, 3, 0.0, runs, 23)))
     print()
@@ -572,10 +677,10 @@ def show_map(m, indent="    "):
     return "\n".join(out)
 
 
-def demo(name="donk carry", seed=5):
-    cards = {c["nickname"]: c for c in P.load_cards()}
-    me = named_team(name, FIXTURES[name], cards)
-    opp = min(field_teams(1), key=lambda t: abs(t.entry() - me.entry()))
+def demo(name="donk carry", seed=5, label=None):
+    me = roster_team(name, label)
+    name = me.name
+    opp = min(major_field(1)[0], key=lambda t: abs(t.entry() - me.entry()))
     rng = random.Random(seed)
     for bo, tag in ((1, "swiss"), (3, "decider")):
         r = play_match(me, opp, rng, bo, PRESSURE[tag])
@@ -947,28 +1052,39 @@ def main():
     ap.add_argument("--tune", action="store_true",
                     help="扫 SIGMA_SCALE / TEAM_RHO，看爆冷能不能撑住")
     ap.add_argument("--demo", default=None, metavar="阵容",
-                    help="打一场看逐人账本，名字见 FIXTURES")
+                    help="打一场看逐人账本；FIXTURES 的名字或 \"nick,nick,...\"")
     ap.add_argument("--major", default=None, metavar="阵容",
-                    help="跑完整一届 Road to Major，名字见 FIXTURES")
+                    help="跑完整一届 Road to Major；同上，也认 page")
     ap.add_argument("--field", action="store_true",
                     help="只看这一届 32 支队的 VRS 名额与层内种子")
     ap.add_argument("--audit", action="store_true",
                     help="列出 VRS 排名和 Entry 差得远的队，人工分辨原因")
+    ap.add_argument("--stats", action="store_true",
+                    help="整届分布：进 Playoffs 的概率、按实力差的强队胜率")
+    ap.add_argument("--duel", nargs=2, type=float, metavar=("HIGH", "LOW"),
+                    help="两个 Entry 之间的胜率锚（实测，不是算出来的）")
+    ap.add_argument("--duel-runs", type=int, default=20000)
+    ap.add_argument("--label", default=None, help="--demo / --major 的队名")
     ap.add_argument("--runs", type=int, default=4000)
     ap.add_argument("--seed", type=int, default=5)
     args = ap.parse_args()
     if args.audit:
         audit()
+    elif args.duel:
+        duel(args.duel[0], args.duel[1], args.duel_runs)
+    elif args.stats:
+        stats(args.runs if args.runs != 4000 else 200)
     elif args.field:
         show_field(args.seed)
     elif args.major:
-        show_run(player_run(FIXTURES[args.major], seed=args.seed))
+        show_run(player_run(pages=[c["page"] for c in roster_cards(args.major)],
+                            seed=args.seed))
     elif args.tune:
         tune(args.runs)
     elif args.compare:
         compare(args.runs)
     elif args.demo:
-        demo(args.demo, args.seed)
+        demo(args.demo, args.seed, args.label)
     else:
         lab(args.runs)
 
@@ -1070,7 +1186,7 @@ def run_stage(teams, rng):
             bo, pressure = format_of(a.record)
             r = play_match(a, b, rng, bo, pressure)
             r.winner.w += 1
-            (b if r.winner is a else a).l += 1
+            r.loser.l += 1
             a.opponents.append(b)
             b.opponents.append(a)
             results.append(r)
