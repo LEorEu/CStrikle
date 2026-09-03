@@ -840,7 +840,7 @@ function renderRun(){
     </div></section>`;
   if (!run.qualified) return `<section class="panel"><div class="panel-hd">
       <h2 class="disp">RUN END</h2><p>未取得 Major 席位</p></div>
-    <div class="panel-bd"><div class="run-summary"><b class="record num">#${run.projected_seed}</b>
+    <div class="panel-bd"><div class="run-summary"><b class="record num">—</b>
       <span>你的 Entry ${run.entry}，低于本届第 32 名。</span></div></div></section>`;
 
   const legs = run.legs.map(leg=>{
@@ -852,9 +852,8 @@ function renderRun(){
     const sign = v => (v>0?'+':'')+v.toFixed(1);
     // 一行 = 一个人这张图的完整账本。delta 逐项拆得开，玩家不用自己推公式。
     const row = r => {
-      const w = r.why, why = [`全队 ${sign(w.team_form)}`, `个人 ${sign(w.own_form)}`];
-      if(w.leadership_saved) why.push(`指挥挽回 ${sign(w.leadership_saved)}`);
-      if(w.experience_saved) why.push(`经验挽回 ${sign(w.experience_saved)}`);
+      const w = r.why, why = [`状态 ${sign(w.form)}`];
+      if(w.pressure) why.push(`压力 ${sign(w.pressure)}`);
       if(w.soft_capped) why.push(`软顶 ${sign(w.soft_capped)}`);
       const cls = r.delta>0?'up':(r.delta<0?'down':'');
       return `<tr><td>${esc(r.nickname)}</td><td class="w">${esc(r.position)}</td>
@@ -863,9 +862,11 @@ function renderRun(){
         <td class="num ${cls}">${sign(r.delta)}</td>
         <td class="why">${why.join('，')}</td></tr>`;
     };
-    const sheet = (m,label,rows,fire,gain,name) => `<tr class="side"><td colspan="6">
-        ${label}${name?' '+esc(name):''} · 火力聚合 ${fire} ×.40 = ${(fire*0.4).toFixed(1)} 分队伍强度
-        · 指挥挽回 ${sign(gain)} 分</td></tr>` + rows.map(row).join('');
+    const sheet = (m,label,rows,fire,tac,struct,choke,name) => `<tr class="side"><td colspan="6">
+        ${label}${name?' '+esc(name):''} · 火力聚合 ${fire}
+        · 战术执行 ${sign(tac)} · 结构 ${sign(struct)}
+        ${choke?` · 压力共丢 ${choke.toFixed(1)} 火力`:''}</td></tr>`
+      + rows.map(row).join('');
     const maps = leg.maps.map(m=>`<details class="mapline"><summary>
       Map ${m.number} · 强度 <b class="num">${m.player_strength}</b> :
       <b class="num">${m.opponent_strength}</b> · MVP ${who(m.mvp)}
@@ -876,15 +877,22 @@ function renderRun(){
       </summary><table class="sheet">
       <thead><tr><th>选手</th><th>位置</th><th>权重</th><th>火力</th>
         <th>变化</th><th>因为什么</th></tr></thead><tbody>
-      ${sheet(m,'你',m.players,m.player_fire,m.leadership_gain,'')}
-      ${sheet(m,'对手',m.opponents,m.opponent_fire,m.opponent_leadership_gain,leg.opponent.name)}
+      ${sheet(m,'你',m.players,m.player_fire,m.player_tactical,
+              m.player_structure,m.player_choke,'')}
+      ${sheet(m,'对手',m.opponents,m.opponent_fire,m.opponent_tactical,
+              m.opponent_structure,m.opponent_choke,leg.opponent.name)}
+      <tr class="side"><td colspan="6">表现差 ${sign(m.player_strength-m.opponent_strength)}
+        · Map Residual ${sign(m.residual)}（未建模的地图 / 经济 / timing）
+        → Margin ${sign(m.margin)}，${m.player_won?'你赢':'对手赢'}
+        ${(m.player_strength>m.opponent_strength)!==m.player_won
+          ? ' —— 表现更好的一方输了，这张图是被未建模因素翻掉的' : ''}</td></tr>
       </tbody></table></details>`).join('');
     return `<article class="run-leg ${leg.won?'win':'loss'}">
       <h3>${esc(leg.label)}</h3>
       <div><b>${esc(leg.opponent.name)}</b> · Entry ${leg.opponent.entry}
-        · 赛前胜率 ${(100*leg.pre_match_win_probability).toFixed(0)}%</div>
-      ${leg.pressure?`<small class="hint">压力罚分 你 ${leg.player_pressure_penalty}
-        / 对手 ${leg.opponent_pressure_penalty}</small>`:''}
+        · VRS ${leg.opponent.vrs||'-'} · 本届 Stage ${leg.opponent.stage}</div>
+      ${leg.pressure?`<small class="hint">压力 ${leg.pressure.toFixed(1)}
+        —— 只放大负面发挥，经验高的人扛得住</small>`:''}
       <div class="run-score"><b class="${leg.won?'win':'loss'}">${leg.won?'WIN':'LOSS'}</b>
         <b class="num">${leg.player_maps}:${leg.opponent_maps}</b></div>
       <div class="maps">${maps}</div></article>`;
@@ -892,8 +900,9 @@ function renderRun(){
   const stageLine=(run.stages||[]).map(s=>`Stage ${s.stage} ${s.wins}-${s.losses}
     ${s.advanced?'晋级':'淘汰'}`).join(' · ');
   const outcome=run.reached_playoffs?'进入 Playoffs':'Run 结束';
-  return `<section class="panel"><div class="panel-hd"><h2 class="disp">M2 Major Run</h2>
-      <p>Projected Seed #${run.projected_seed} · Stage ${run.stage} · Entry ${run.entry}</p></div>
+  return `<section class="panel"><div class="panel-hd"><h2 class="disp">Road to Major</h2>
+      <p>Stage ${run.stage} 进场 · Entry ${run.entry}（纯火力口径，全场第 ${run.entry_rank}）
+      · 真实队的 Stage 由区域 VRS 名额决定</p></div>
     <div class="panel-bd"><div class="run-summary"><b class="record num">${run.wins}-${run.losses}</b>
       <span><b>${outcome}</b> · ${stageLine}</span></div>
       <div class="run-grid">${legs}</div>

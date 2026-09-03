@@ -1,0 +1,475 @@
+FUT 的这种情况本身其实不是 bug
+
+比如：
+
+FUT VRS #4
+我们 Entry 59.8，第22
+
+只要 FUT 的 Entry 数据本身没有算错，这种现象应该允许存在。
+
+因为这两个东西本来就不是一把尺：
+
+VRS 回答的是：
+
+这支现实队伍在过去一段时间通过赛事成绩、积分和排名，挣到了什么邀请位置。
+
+Entry 回答的是：
+
+按我们现在这五个人的 Current Profile，这队今天纸面上到底有多能打。
+
+所以完全可能：
+
+VRS 很高
+Current Entry 很低
+
+比如：
+
+之前打得很好；
+最近换人；
+最近状态暴跌；
+排名积分还没掉下来。
+
+反过来也可以：
+
+VRS 很低
+Current Entry 很高
+
+比如一支刚换出超级阵容、最近突然起飞的队。
+
+因此 v1 真正的 bug 是把 VRS 分好的 Stage 算出来以后扔掉，又拿 Entry 重新切 1–8 / 9–16 / 17–32。
+
+这个确实必须修。
+
+v2 现在：
+
+VRS 决定现实队伍获得哪个 Stage 的邀请，Entry 决定它真正比赛时有多强。
+
+这是对的。
+
+甚至 FUT 这种：
+
+靠 VRS 直进 Stage 3，结果进来被狠狠干
+
+反而挺有现实味。
+
+但“玩家队怎么办”才是真正没完全解决的问题
+
+现在 v2：
+
+真实队伍靠 VRS 分 Stage；
+
+玩家没有 VRS，所以拿 Entry 全场排名去判断 Stage。
+
+这个比最初“逐层挤”好很多。
+
+你反馈里的例子已经把逐层挤为什么错证明得很漂亮：
+
+Stage 2 最弱 BIG Entry 61.5
+Stage 1 最强 Astralis Entry 81.4
+
+说明 Stage 本身就不是实力档位。
+
+所以不能说：
+
+“你比 Stage2 最弱的强，所以你就该进 Stage2。”
+
+这相当于把：
+
+邀请资格
+
+误当成：
+
+战力门槛。
+
+现在用全场 Entry rank 至少让：
+
+79.9 → Stage 2
+62.3 → Stage 1
+
+有了明显区分。
+
+但它依然只是一个临时游戏规则。
+
+因为里面仍然存在：
+
+Real Team:
+VRS → Stage
+
+Player:
+Entry → Stage
+
+两套判据。
+
+我觉得长期应该增加第三个概念
+
+不是：
+
+用 Entry 替代 VRS。
+
+而是：
+
+Projected VRS / Qualification Rating
+
+也就是：
+
+VRS
+≠
+Entry
+≠
+Projected Qualification
+
+分别回答三个问题：
+
+VRS
+现实世界已经挣到什么位置
+
+Entry
+今天这五个人实际多强
+
+Projected Qualification
+如果从 Snapshot 到邀请截止日继续打下去，
+最终大概会挣到什么邀请位置
+
+这样整个架构一下就顺了。
+
+对现实队伍
+
+已经有：
+
+Current VRS
+
+于是：
+
+Current VRS
++
+未来变动预测
++
+当前实力 Entry 作为“未来成绩能力”的参考
+=
+Projected VRS
+
+这里 Entry 只是影响未来涨跌。
+
+它绝不直接覆盖 VRS。
+
+所以 FUT：
+
+Current VRS #4
+Entry 较低
+
+可能最后预测成：
+
+#6 / #8
+
+但不会凭空从 #4 掉到 #22。
+
+而 Astralis：
+
+VRS较低
+Entry很高
+
+可能在截止日前：
+
+向上爬几位。
+
+这其实正好就是我们之前定义过的：
+
+Candidate Pool
+→ Lightweight VRS Projection
+→ Invitation Cutoff
+→ Major Field
+
+现在终于知道这层到底应该解决什么了。
+
+玩家队则特别适合走这层
+
+玩家没有 Current VRS。
+
+所以别再假装他有。
+
+直接：
+
+Draft Team
+↓
+Entry
+↓
+Synthetic / Projected VRS
+↓
+Stage Assignment
+
+叙事就是：
+
+我们假定你的梦之队在邀请截止日前已经参加了一段资格竞争，系统根据阵容实力预测它最后能挣到什么 VRS 位置。
+
+这比：
+
+“因为你 Entry 全场第12，所以系统直接判你是Stage2”
+
+自然得多。
+
+虽然底层第一版可能仍然近似使用 Entry percentile，但语义层已经正确了。
+
+第一版甚至不用把它搞复杂
+
+我不会现在搞：
+
+0.73 * VRS + 0.27 * Entry + stochastic...
+
+这种看似科学的公式。
+
+可以先做一个很朴素的：
+
+Real teams
+projected_vrs_rank
+=
+current_vrs_rank
++ bounded movement predicted from Entry
+
+例如只允许截止日前移动：
+
+±若干名。
+
+越接近 cutoff：
+
+可移动区间越小。
+
+离 cutoff 越远：
+
+区间可以更大。
+
+Player
+
+没有历史 VRS，所以：
+
+用 Entry 在 Candidate Pool 中的 percentile 映射为一个 Synthetic VRS percentile。
+
+例如欧洲池30多队：
+
+Entry percentile ≈ Top 20%
+→ Synthetic VRS 大概落到区域前若干
+
+Entry percentile ≈ Top 50%
+→ 中部
+
+Entry很差
+→ Major cutoff 外
+
+然后再按照：
+
+EU20 / AM8 / AS4
+
+以及各 Stage 席位去分配。
+
+第一版甚至可以保持确定性。
+
+后面真觉得 qualification 太死，再加小 Projection RNG。
+
+但这里有一个很重要的游戏性选择
+
+现实意义上：
+
+一支今天突然组建的 donk + ZywOo + m0NESY 队，没有历史 VRS，也不可能凭“看起来很强”直接拿 Stage3 邀请。
+
+如果完全真实：
+
+玩家应该从零积分开始。
+
+那会非常折磨：
+
+你花15块组出宇宙队，结果游戏说“抱歉没积分，从资格赛最底层开始”。
+
+不符合 Blind Draft 的爽点。
+
+所以我认为我们可以明确承认：
+
+Player Projected VRS 是游戏抽象。
+
+我们假定这支队在 Major 前已经存在并打完了一段未展开模拟的资格周期。
+
+这比硬装成真实 VRS 更好。
+
+至于“要不要直接用 Entry 做我们自己的 VRS”
+
+我不建议。
+
+虽然这样最统一：
+
+所有队按 Entry 排
+→ 前32进Major
+→ 前8 Stage3
+...
+
+但代价太大。
+
+因为这等于把真实 VRS：
+
+彻底降级成装饰字段。
+
+FUT、Legacy 这些现实里已经挣到的位置全部被抹掉。
+
+而且 Entry 本身也不是完美真值。
+
+尤其 AI Current 四维还在建设期。
+
+今天某个角色数据、5E覆盖、Leadership估算变一下：
+
+一支现实 #4 队伍可能突然掉到 Stage1。
+
+这会让整个“真实 Major 外壳”失去意义。
+
+所以这个我会明确：
+
+别做。
+
+另外我觉得 v2 现在“VRS定Stage、Entry排层内Seed”可以先用，但也值得标个 TODO
+
+因为如果追求真实 Major 语义：
+
+Seed 理论上也更应该来自 Global VRS，而不是 Entry。
+
+不过这里我反而不急着改。
+
+因为游戏层面使用：
+
+VRS → 你有没有资格直接进这个 Stage
+
+Entry → 你在这个 Stage 里目前看起来有多强
+
+有一个挺漂亮的效果：
+
+FUT：
+
+靠现实履历拿到 Stage3 资格；
+
+但因为当前 Entry 很低，Stage3 内部被排到靠后的位置。
+
+这其实比：
+
+VRS #4，所以进Stage3还一定Seed极高
+
+更符合我们这个“Snapshot + Current Match”游戏。
+
+所以这块我会说：
+
+可以先定。
+
+不是现实规则100%复刻，但游戏逻辑自洽。
+
+我现在最想让你们加一个 Audit，而不是继续改规则
+
+既然你已经测出来：
+
+VRS 与 Entry 秩相关只有 0.63
+
+那就把所有大偏差列出来。
+
+比如输出：
+
+Team	VRS Rank	Entry Rank	Δ Rank	Entry	Stats Coverage	Role Gap
+FUT	4	22	+18	59.8	...	...
+Astralis	...	...	-...	81.4	...	...
+
+重点人工看：
+
+abs(VRS rank - Entry rank) >= 10 或 15
+
+这些队。
+
+然后只回答一个问题：
+
+这个偏差是“现实原因”还是“数据/模型原因”？
+
+如果：
+
+刚换阵容、近期爆发、排名滞后
+
+那很好：
+
+保留。
+
+如果：
+
+漏人、角色识别错、当前统计没覆盖、fallback太低、adjust错
+
+那：
+
+修 Entry。
+
+千万不要因为：
+
+“FUT VRS #4，所以 Entry 也必须高。”
+
+强行把两条曲线拟到一起。
+
+那又会把系统做串。
+
+所以我对当前反馈逐条的判断
+
+“v2 用 VRS 定真实队 Stage”
+→ 这个可以定。
+
+“Entry 只排 Stage 内种子”
+→ 目前可以定，后续再决定要不要混 Global VRS。
+
+“玩家用全场 Entry rank 决定 Stage”
+→ 作为 v0.x 临时规则可用，而且明显优于逐层挤；但最终应该升级成 Synthetic / Projected VRS。
+
+“全部真实队也改用 Entry 模拟 VRS”
+→ 这个别做。
+
+“62.3普通队 Stage1，79.9 donk carry Stage2”
+→ 现在的结果至少观感合理。
+
+“弱队 Playoffs 0%”
+→ 这个单点完全不值得修。你们已经验证不是逻辑 bug，而且 Stage1→Stage2 两次 Swiss 本来就应该把垫底队大量筛掉。
+
+“Pressure 拆成 0 / 0.8 / 1.0 / 1.2”
+→ 这个比旧三档更合理，可以定。
+
+“跨Stage必须fork对象”
+→ 纯实现bug，修得对，而且 regression 必须永久留。
+
+我现在会把整个资格层画成：
+
+               REAL TEAM
+                   │
+              Current VRS
+                   │
+                   ├──── Current Entry
+                   │         │
+                   ▼         │
+             VRS Projection ◀┘
+                   │
+                   ▼
+            Projected VRS
+                   │
+          Region Cutoff / Stage
+                   │
+                   ▼
+                MAJOR
+
+
+              PLAYER TEAM
+                   │
+                 Entry
+                   │
+                   ▼
+       Synthetic VRS Projection
+                   │
+          Region Cutoff / Stage
+                   │
+                   ▼
+                MAJOR
+
+进了 Major 以后：
+
+VRS彻底退居资格/历史层
+
+Entry + Match Engine
+→ 决定你今天到底打得怎么样
+
+我觉得这样以后 FUT 这种“排名高、当前战力低”的现象就不再是尴尬，而会成为游戏里很自然的一件事：
+
+他们凭过去成绩拿到了好位置，但进Major以后到底配不配得上这个位置，要在服务器里证明。
+
+这反而挺有味道。

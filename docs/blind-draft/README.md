@@ -26,6 +26,7 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 | 10 | [火力解耦_v0.1.md](火力解耦_v0.1.md) | 用 5E 实测把 Firepower 从 Grade 的模板里解放出来 | 要改火力这一维时 |
 | 11 | [FribergCS2_Draft_四维重构工作指南_v0.1.md](FribergCS2_Draft_四维重构工作指南_v0.1.md) | v7 重构的执行口径 | 动四维之前 |
 | — | [1.txt](1.txt) | 比赛引擎两轮复盘的原始讨论，v0.3 就是从这里收敛出来的 | 考古某条口径为什么这么定 |
+| — | [2.txt](2.txt) | 第三轮复盘：VRS 与 Entry 是两把尺、Projected VRS 的方向、以及「加审计而不是继续改规则」 | 想知道资格层为什么这么设计 |
 | — | [major赛制.txt](major赛制.txt) | 真实 Major 赛制资料 | 核对赛事外壳 |
 | — | [原始讨论_ChatGPT.md](原始讨论_ChatGPT.md) | 整个模式的原始素材，从看线上站点开始聊起 | 考古 |
 
@@ -45,7 +46,7 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 | `blinddraft.major` | 入场层：生成赛场 → 玩家插队 → 定 Stage → 首轮对阵 | — |
 | `blinddraft.match` | 比赛引擎：瑞士轮、BO1/BO3、Form Roll、三 Stage 串联 | — |
 | `blinddraft.ai_teams` | AI 对手：队伍快照 + 当前角色 + 逐维当前化 | — |
-| `blinddraft.proto_match_v2` | **Match Engine v2 原型**：实现设计稿 v0.3，四维各干一件事、一图 11 个随机数（10 Player + 1 Map Residual），并按区域 VRS 名额跑完整的 Road to Major。与 v1 并存，`--lab / --tune / --compare / --demo / --field / --major` | — |
+| `blinddraft.proto_match_v2` | **Match Engine v2 原型**：实现设计稿 v0.3，四维各干一件事、一图 11 个随机数（10 Player + 1 Map Residual），并按区域 VRS 名额跑完整的 Road to Major。与 v1 并存，`--lab / --tune / --compare / --demo / --field / --major / --audit` | — |
 | `bdtools.fetch_rankings` | 队伍快照（阵容+位置+HLTV/VRS 排名）、5E 选手照片与队标 | `team_snapshot.json`、`5e_images.json`、`img/` |
 | `bdtools.fetch_5e_stats` | 5eplay 当前个人竞技数据 | `5e_player_stats.json` |
 | `bdtools.export_web` | 把卡和常量注进网页模板 | `.cache/proto_draft_web.html` |
@@ -76,8 +77,10 @@ uvicorn bdserver.main:app --host 127.0.0.1 --port 8621
 本地工具，不上线。地址栏支持两个快捷入口：卡牌页 `#<page>` 直接定位到那张卡
 （选中时会写回地址栏，可以把链接发给别人）；AI 页 `#all` 一次展开候选池全部 45 支队。
 
-玩家体验入口是 `http://127.0.0.1:8621/play`：选满五人后按 Projected Seed
-进入真实三段 Swiss Run。
+玩家体验入口是 `http://127.0.0.1:8621/play`：选满五人后进入真实三段 Swiss Run。
+**这一页已经切到 Match Engine v2**（`blinddraft.proto_match_v2`，设计稿 v0.3）——
+Entry 是纯火力口径、Stage 由区域 VRS 名额决定、没有「赛前胜率」这一项
+（胜率只能实测，不能解析算）。
 
 左边 648 张卡可搜可筛，右边把选中那张摊开成
 **模板 → 履历修正 → 抖动 → 人工覆盖 → 最终值**，附带背后的证据

@@ -56,6 +56,7 @@ import；只有 `--compare` 会临时借 v1 的 `win_prob` 画对照。§15 的 
 **冻结** Stability 分布：以后爆冷不够只调 MAP_SCALE，不要再动个人波动。
 """
 import argparse
+import collections
 import math
 import random
 import statistics as st
@@ -680,6 +681,9 @@ def player_run(nicknames=None, pages=None, seed=1, cfg=None):
                      "stability")} for c in roster],
         "stage": stage,
         "qualified": stage > 0,
+        # v2 没有「全场种子」——Stage 归属由 VRS 名额定，这里给的是玩家 Entry
+        # 在 32 支正赛队里的位次，只作参考。
+        "entry_rank": sum(1 for t in field if t.entry() > me.entry()) + 1,
         "demoted": [{"team": t.name, "from_stage": a, "to_stage": b}
                     for t, a, b in shove.demoted],
         "dropped": shove.dropped.name if shove.dropped else None,
@@ -731,12 +735,23 @@ def _leg_row(r, me, stage, rnd):
         life, life_a = m.life
         under, under_a = m.under
         side = lambda flag: ("player" if flag == mine_is_a else "opponent")
+        me_t, opp_t = (m.a, m.b) if mine_is_a else (m.b, m.a)
         maps.append({
             "number": i,
             "player_strength": round(sa, 1), "opponent_strength": round(sb, 1),
             "player_won": bool(won),
             "residual": round(m.residual if mine_is_a else -m.residual, 1),
             "margin": round(m.margin if mine_is_a else -m.margin, 1),
+            # 队伍层的三笔账，网页要摊开给玩家看
+            "player_fire": round(sum(t.weight * t.eff for t in da), 1),
+            "opponent_fire": round(sum(t.weight * t.eff for t in db), 1),
+            "player_tactical": round(me_t.tactical, 2),
+            "opponent_tactical": round(opp_t.tactical, 2),
+            "player_structure": round(me_t.structure, 1),
+            "opponent_structure": round(opp_t.structure, 1),
+            # 压力在 v2 是逐人的：这里汇总本图因压力多丢了多少火力
+            "player_choke": round(sum(t.choke for t in da), 1),
+            "opponent_choke": round(sum(t.choke for t in db), 1),
             "mvp": _roll_json(mvp, side(mvp_a)),
             "life_game": (_roll_json(life, side(life_a))
                           if life.delta >= LIFE_GAME_AT else None),
@@ -844,6 +859,86 @@ def show_field(seed=1):
         for i, t in enumerate(tier, 1):
             print("  种子 %-3d %-18s Entry %6.1f  VRS %-4s HLTV %s"
                   % (i, t.name, t.entry(), t.vrs or "-", t.hltv or "-"))
+def _spearman(xs, ys):
+    n = len(xs)
+    rx = {v: i for i, v in enumerate(sorted(xs))}
+    ry = {v: i for i, v in enumerate(sorted(ys))}
+    d2 = sum((rx[a] - ry[b]) ** 2 for a, b in zip(xs, ys))
+    return 1 - 6 * d2 / (n * (n * n - 1))
+
+
+def _evidence(team):
+    """五个人的当前火力各自站在什么证据上。"""
+    tally = collections.Counter()
+    for c in team.roster:
+        src = (c.get("_sources") or {}).get("firepower") or {}
+        conf = src.get("confidence")
+        if c.get("_nocard"):
+            tally["卡库外"] += 1
+        elif conf == "strong":                 # >=80 图，直接读当前火力标尺
+            tally["强"] += 1
+        elif conf == "supporting":             # 30~79 图，向生涯先验收缩
+            tally["中"] += 1
+        elif (src.get("source") or "") == "igl_career_prior":
+            tally["IGL"] += 1                  # 指挥本来就不走当前 rating
+        else:
+            tally["弱/回退"] += 1
+    return tally
+
+
+def audit(threshold=10):
+    """§13 之外的另一件事：VRS 排名和我们的 Entry 差得远的队，逐支列出来。
+
+    这不是要把两条曲线拟到一起——VRS 回答「现实里已经挣到什么位置」，Entry
+    回答「今天这五个人有多能打」，两者本来就允许背离：刚换阵容、近期状态暴跌、
+    积分还没掉下来，都会让一支队 VRS 高而 Entry 低。FUT 这种「靠履历直进
+    Stage 3，进来被狠狠干」反而有现实味。
+
+    这张表只回答一个问题：**这个偏差是现实原因，还是数据/模型原因？**
+
+      现实原因（保留）：刚换人、近期爆发、排名滞后
+      数据原因（要修 Entry）：漏人、角色识别错、当前统计没覆盖、fallback 太低
+
+    所以每行都带上火力证据的构成。一支队如果五个人里三四个都踩在
+    `career_age_fallback` 上，那它的 Entry 低多半是我们没数据，不是它真的弱。
+    """
+    field, asof = major_field()
+    ranked = sorted(field, key=lambda t: -t.entry())
+    erank = {t.name: i for i, t in enumerate(ranked, 1)}
+    have_vrs = [t for t in field if t.vrs]
+    vrank = {t.name: i for i, t in
+             enumerate(sorted(have_vrs, key=lambda t: t.vrs), 1)}
+
+    print("=" * 78)
+    print("VRS × Entry 偏差审计   快照 %s" % (asof or "?"))
+    print("=" * 78)
+    rho = _spearman([t.vrs for t in have_vrs],
+                    [-t.entry() for t in have_vrs])
+    print("秩相关 ρ = %.3f（v1 的 Entry 口径是 0.631；拿掉 L/E/S 静态权重后升上来的）"
+          % rho)
+    print("两把尺子本来就允许背离，这里只挑 |Δ| >= %d 的人工过一遍。" % threshold)
+    print()
+    print("  %-18s %5s %6s %6s %8s  %s"
+          % ("队", "VRS位", "Entry位", "Δ", "Entry", "五人火力证据"))
+    rows = []
+    for t in have_vrs:
+        d = vrank[t.name] - erank[t.name]
+        if abs(d) >= threshold:
+            rows.append((abs(d), d, t))
+    for _, d, t in sorted(rows, reverse=True, key=lambda r: r[0]):
+        ev = _evidence(t)
+        desc = " ".join("%s%d" % (k, v) for k, v in
+                        sorted(ev.items(), key=lambda kv: -kv[1]))
+        flag = ""
+        if ev["弱/回退"] + ev["卡库外"] >= 3:
+            flag = "  <- 多数人没有当前证据，先查数据再谈实力"
+        print("  %-18s %5d %6d %+6d %8.1f  %s%s"
+              % (t.name, vrank[t.name], erank[t.name], d, t.entry(), desc, flag))
+    if not rows:
+        print("  （没有超过阈值的）")
+    print()
+    print("Δ 为正 = VRS 比我们的 Entry 更看好它；为负 = 我们比 VRS 更看好它。")
+    print("不要为了让两列对齐去改单个选手的四维——那会把系统做串（§『当前明确不做』）。")
 
 def main():
     ap = argparse.ArgumentParser(description="Match Engine v2 原型")
@@ -857,10 +952,14 @@ def main():
                     help="跑完整一届 Road to Major，名字见 FIXTURES")
     ap.add_argument("--field", action="store_true",
                     help="只看这一届 32 支队的 VRS 名额与层内种子")
+    ap.add_argument("--audit", action="store_true",
+                    help="列出 VRS 排名和 Entry 差得远的队，人工分辨原因")
     ap.add_argument("--runs", type=int, default=4000)
     ap.add_argument("--seed", type=int, default=5)
     args = ap.parse_args()
-    if args.field:
+    if args.audit:
+        audit()
+    elif args.field:
         show_field(args.seed)
     elif args.major:
         show_run(player_run(FIXTURES[args.major], seed=args.seed))
