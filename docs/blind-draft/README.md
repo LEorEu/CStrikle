@@ -116,9 +116,13 @@ Firepower；其余维度保留带置信度的生涯先验。在有证据的地�
 | 现况 | AI 实际使用的逐维当前卡（含来源与置信度） | `blinddraft/ai_teams.py` |
 | 5E 实测 | rating / ADR / KAST / K-D / KPR / DPR / HS%，近 12 个月 | `bdtools/fetch_5e_stats.py` |
 
-5E 当前数据只接管 Firepower：Strong 证据直接读人工锚定的标尺，Supporting
-证据向生涯先验收缩；IGL 和无可靠数据者回退生涯先验。Leadership / Experience
-继续走生涯侧证据，Stability 在取得逐图方差前保留低置信先验。卡库外真人也能
+5E 当前数据接管 Firepower：Strong（≥80 图）直接读人工锚定的标尺，
+Supporting（10~79 图）向生涯先验收缩；IGL 和无可靠数据者回退生涯先验。
+Leadership / Experience 继续走生涯侧证据。**Stability 只被一条当前证据影响：
+近一年 S 级出场量**——打得少本身就是兑现率低的证据，按图数分段扣分
+（≥80 图不扣、30 图 −6、10 图 −14、地板 25）。KAST 仍然不许用来生成它。
+`--audit-cards` 专门审这一层：正赛 160 席里现在 11 人（7%）没有任何当前火力
+证据，改门槛之前是 37 人。卡库外真人也能
 生成 AI 专属当前卡，但玩家卡一栏保持空白，不会因此进入抽卡库。
 
 队一级还摆了个对照：我们算出来的 entry 顺位 vs HLTV 世界排名，附秩相关 ρ
@@ -163,6 +167,8 @@ python -m blinddraft.proto_match_v2 --lab                   # 六项验收
 python -m blinddraft.proto_match_v2 --tune                  # MAP_SCALE 扫描
 python -m blinddraft.proto_match_v2 --compare               # 和 v1 那条历史曲线对比
 python -m blinddraft.proto_match_v2 --audit                 # VRS × Entry 偏差审计
+python -m blinddraft.proto_match_v2 --audit-cards           # 谁的四维是猜的：证据覆盖，逐队逐人
+python -m blinddraft.proto_match_v2 --audit-cards --thin-only  # 只要薄数据/无数据两张名单
 python -m blinddraft.proto_match_v2 --stats --runs 200      # 整届分布：Playoffs 率、按分差的强队胜率
 python -m blinddraft.proto_match_v2 --duel 80 70            # 两个 Entry 之间的胜率锚（实测）
 python -m blinddraft.proto_match_v2 --major "s1mple,electroNic,Magisk,mzinho,Senzu" --label BC.GAME

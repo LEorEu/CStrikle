@@ -124,6 +124,44 @@ MAX_FILLER = 1          # 一支队最多补几个；补 2 个以上的队请在
 # Supporting 样本向先验收缩的强度。这个数来自 firepower.py 对逐图噪声的估计；
 # 这里不是重新拟合一把尺子，只把同一份当前证据投影到 AI 当前卡。
 SHRINK_MAPS = 31.0
+
+# §P1 样本量 -> 火力门槛 / Stability
+#
+# 旧门槛是 30 图，低于它整个人回退「生涯先验 + 年龄衰减」。实测这一刀切掉了
+# 正赛 160 席里的 32 人，BIG / HOTU / magic / FlyQuest 四支队各有 3~4 名首发
+# 卡在 21~27 图，于是它们的 Entry 低不是因为弱，是因为我们没数据。
+#
+# 但 S 级 9 张图就是打满三个 BO3，10 张图约四场比赛。样本确实会失真，可是把
+# rating 整个丢掉、退回三年前的生涯先验，失真只会更大。所以门槛降到 10 图，
+# 10~79 图之间照旧按 SHRINK_MAPS 向先验收缩——图越少，越靠先验。
+FIRE_MIN_MAPS = 10
+
+# 真正被「近一年 S 级出场少」说明的不是火力，是**兑现率**：他打不进高级别
+# 赛事本身就是一条关于稳定性的证据。所以样本量单独接到 Stability 上，扣分
+# 分段线性。这是这条线上唯一一处当前证据能碰 Stability 的地方——KAST 仍然
+# 不许用来生成它（聚合 KAST 不是逐图方差）。
+STAB_BY_MAPS = ((80, 0.0), (30, -6.0), (10, -14.0), (1, -18.0))
+STAB_FLOOR = 25             # 扣到底也要留一条地板，别让分布跑出 §6.3 的形状
+
+
+def stability_by_maps(maps):
+    """近一年 S 级出场量 -> Stability 扣分。没有 5E 行时返回 0。
+
+    没有行和「有行但只打了 3 张图」是两回事：前者我们是**真不知道**（可能
+    根本不在 5E 体系里），不该因为查不到就判他不稳；后者是查到了、他就是没
+    怎么打。所以扣分只发给有行的人。
+    """
+    maps = int(maps or 0)
+    if maps <= 0:
+        return 0.0
+    if maps >= STAB_BY_MAPS[0][0]:
+        return 0.0
+    if maps <= STAB_BY_MAPS[-1][0]:
+        return STAB_BY_MAPS[-1][1]
+    for (m0, v0), (m1, v1) in zip(STAB_BY_MAPS, STAB_BY_MAPS[1:]):
+        if m1 <= maps <= m0:
+            return v0 + (v1 - v0) * (m0 - maps) / float(m0 - m1)
+    return 0.0
 # 当前赛场的职业首发火力下限。和 firepower.py 的世界定义一致；年龄回退不能
 # 把 karrigan/FalleN 这类仍在一线首发的 IGL 算到 20–40。
 CURRENT_FIRE_FLOOR = 50
@@ -270,8 +308,8 @@ def _performance_firepower(card, row, scale):
     fn, lo, hi = scale
     rating = _num(row.get("rating"))
     maps = int(_num(row.get("map_count")) or 0)
-    if rating is None or not (lo <= rating <= hi) or maps < 30:
-        out["why"] = ("当前证据不在标尺内或不足 30 图"
+    if rating is None or not (lo <= rating <= hi) or maps < FIRE_MIN_MAPS:
+        out["why"] = ("当前证据不在标尺内或不足 %d 图" % FIRE_MIN_MAPS
                       if rating is not None else "当前数据没有 rating")
         out.update(rating=rating, maps=maps)
         return out
@@ -288,6 +326,34 @@ def _performance_firepower(card, row, scale):
     out.update(value=max(1, min(99, value)), source=source, confidence=confidence,
                why=why, rating=rating, maps=maps, target=target)
     return out
+
+
+def _sample_stability(c, row, notes):
+    """按近一年 S 级出场量下调 Stability，就地改 c，返回来源说明。
+
+    只有出场量这一条当前证据能碰 Stability。rating / KAST 都不行——前者说的是
+    火力，后者是聚合值、不是逐图方差（§三个世界必须分开）。
+    """
+    base = {"source": "career_prior", "confidence": "low",
+            "why": "现有聚合 KAST 不能代表逐图方差"}
+    maps = int(_num((row or {}).get("map_count")) or 0)
+    if not maps:
+        return base
+    drop = stability_by_maps(maps)
+    base.update(maps=maps)
+    if drop >= -0.05:
+        base["why"] = "%d 图 S 级出场，样本充足，稳定值不因出场量下调" % maps
+        return base
+    was = c["stability"]
+    c["stability"] = max(STAB_FLOOR, int(round(was + drop)))
+    if c["stability"] != was:
+        notes.append("近一年仅 %d 张 S 级图，稳定 %d→%d"
+                     % (maps, was, c["stability"]))
+    base.update(source="career_prior_thin_sample", confidence="low",
+                why="近一年仅 %d 张 S 级图：出场少本身就是兑现率低的证据，"
+                    "生涯先验 %d 扣 %.0f 分" % (maps, was, -drop),
+                penalty=round(drop, 1))
+    return base
 
 
 def settle(card, stat=None, scale=None, caller=None):
@@ -339,6 +405,8 @@ def settle(card, stat=None, scale=None, caller=None):
         c["firepower"] = perf["value"]
         notes.append("当前火力 %d→%d：%s" % (was, c["firepower"], perf["why"]))
 
+    stab = _sample_stability(c, stat, notes)
+
     c["_notes"] = notes
     c["_filler"] = False
     c["_sources"] = {
@@ -347,8 +415,7 @@ def settle(card, stat=None, scale=None, caller=None):
                                     else "career_evidence_current_role"),
                        "confidence": "medium"},
         "experience": {"source": "career_evidence", "confidence": "high"},
-        "stability": {"source": "career_prior", "confidence": "low",
-                      "why": "现有聚合 KAST 不能代表逐图方差"},
+        "stability": stab,
     }
     c["overall"] = round(P.overall(c), 1)
     return c
@@ -374,12 +441,19 @@ def make_current_player(row, team, age, stat, scale):
     c["firepower"] = perf["value"]
     if perf["source"].startswith("current_performance"):
         c["_notes"].append("当前火力 %d：%s" % (c["firepower"], perf["why"]))
+    # 卡库外真人的 Stability 本来就是角色模板，出场量这条证据同样适用——而且
+    # 对他们更有话说：既没进过玩家卡库（没打过 Major），近一年 S 级又打得少。
+    stab = _sample_stability(c, stat, c["_notes"])
+    if stab.get("source") == "career_prior":
+        stab = {"source": "role_template_g1", "confidence": "low"}
+    else:
+        stab["source"] = "role_template_g1_thin_sample"
     c["_sources"] = {
         "firepower": perf,
         "leadership": {"source": ("caller_template_g1" if is_caller
                                     else "role_template_g1"), "confidence": "low"},
         "experience": {"source": "unknown_career_g1", "confidence": "low"},
-        "stability": {"source": "role_template_g1", "confidence": "low"},
+        "stability": stab,
     }
     c["overall"] = round(P.overall(c), 1)
     return c

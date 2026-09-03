@@ -236,6 +236,78 @@ class ViewTests(unittest.TestCase):
                                     p["photo"])
 
 
+class SampleSizeStabilityTests(unittest.TestCase):
+    """§P1：近一年 S 级出场量是唯一能碰 Stability 的当前证据。
+
+    这一组锁的是那条扣分曲线本身，以及三条边界——它们各自代表一个判断，
+    改了就等于改了「打得少说明什么」这个结论，不该悄悄漂。
+    """
+
+    def test_the_penalty_curve_hits_its_anchors(self):
+        for maps, want in A.STAB_BY_MAPS:
+            self.assertAlmostEqual(A.stability_by_maps(maps), want, places=6)
+
+    def test_a_full_season_is_never_penalised(self):
+        """样本够就是够，不能因为「比别人少一点」继续扣。"""
+        for maps in (80, 90, 128, 185):
+            self.assertEqual(A.stability_by_maps(maps), 0.0)
+
+    def test_the_curve_only_ever_goes_down_as_maps_drop(self):
+        last = 0.0
+        for maps in range(200, 0, -1):
+            got = A.stability_by_maps(maps)
+            self.assertLessEqual(got, last + 1e-9)
+            last = got
+
+    def test_no_5e_row_is_not_the_same_as_a_thin_one(self):
+        """查不到 ≠ 查到了但打得少。前者我们是真不知道，不该判他不稳。"""
+        self.assertEqual(A.stability_by_maps(0), 0.0)
+        self.assertEqual(A.stability_by_maps(None), 0.0)
+        self.assertLess(A.stability_by_maps(1), 0.0)
+
+    def test_only_sample_size_touches_stability_never_kast(self):
+        """KAST 是聚合值，不是逐图方差——它不许生成 Stability（§三个世界）。"""
+        card = {"firepower": 70, "leadership": 20, "experience": 50,
+                "stability": 60, "position": "RIFLER"}
+        notes = []
+        src = A._sample_stability(dict(card), {"kast": 99.9, "rating": 1.4}, notes)
+        self.assertEqual(src["source"], "career_prior")
+        self.assertNotIn("penalty", src)
+
+    def test_the_field_penalises_thin_samples_and_leaves_full_ones_alone(self):
+        thin = full = 0
+        for t in self.__class__.field:
+            for p in t["roster"]:
+                src = p["_sources"]["stability"]
+                maps = src.get("maps") or 0
+                if maps >= A.STAB_BY_MAPS[0][0]:
+                    full += 1
+                    self.assertNotIn("penalty", src)
+                elif maps and maps < 30:
+                    thin += 1
+                    self.assertLess(src["penalty"], 0.0)
+        self.assertGreater(thin, 0)
+        self.assertGreater(full, 0)
+
+    def test_firepower_uses_evidence_down_to_the_documented_floor(self):
+        """门槛是 10 图。10 图以上必须用上 rating，以下才准回退。"""
+        self.assertEqual(A.FIRE_MIN_MAPS, 10)
+        for t in self.__class__.field:
+            for p in t["roster"]:
+                src = p["_sources"]["firepower"]
+                maps = src.get("maps") or 0
+                if maps >= A.FIRE_MIN_MAPS and p["position"] != "IGL":
+                    self.assertTrue(
+                        src["source"].startswith("current_performance"),
+                        "%s 有 %d 图却回退了：%s"
+                        % (p["nickname"], maps, src.get("why")))
+
+    @classmethod
+    def setUpClass(cls):
+        pool, _asof = A.build_pool_field(M.load_config())
+        cls.field = [t for t in pool if t.get("stage")]
+
+
 class SpearmanTests(unittest.TestCase):
     def test_known_values(self):
         self.assertEqual(ai._spearman([(1, 1), (2, 2), (3, 3), (4, 4)]), 1.0)
