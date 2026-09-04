@@ -159,6 +159,8 @@ export interface RunResult {
   stage: number;
   qualified: boolean;
   entry_rank: number;
+  /** 32 支正赛队的 entry 平均。位次说「排第几」，它说「差多少」 */
+  entry_field_avg: number;
   demoted: { team: string; from_stage: number; to_stage: number }[];
   dropped: string | null;
   outcome: "not_qualified" | "eliminated" | "playoffs";

@@ -93,7 +93,8 @@ export default function App() {
     if (run && phase !== "draft" && phase !== "intro")
       items.unshift({
         label: "球队",
-        text: `${teamName} 队伍强度 ${run.entry.toFixed(1)} · 全场 Entry 第 ${run.entry_rank} · 从 Stage ${run.stage} 打起`,
+        // 揭晓那一屏还没有队名,只有五张刚翻开的牌
+        text: `${phase === "reveal" ? "" : teamName + " "}队伍强度 ${run.entry.toFixed(1)} · 全场 Entry 第 ${run.entry_rank} · 从 Stage ${run.stage} 打起`,
       });
     if (run && phase === "final")
       items.unshift({
@@ -109,11 +110,11 @@ export default function App() {
           ::after,同样 z-0)和 Frame(z-10,网格画在它自己的背景上)都盖在它
           上面。只有 intro 有——进了选人页,背景就该让位给牌面。 */}
       {phase === "intro" && <div aria-hidden className="bc-hero pointer-events-none fixed inset-0 z-0" />}
-      {/* 队名在盲选期还不存在——它是揭晓之后、组队那一刻才该由玩家自己起的东西 */}
+      {/* 队名要到组队那一刻才存在——盲选和揭晓这两屏你还没有一支队,只有五张牌 */}
       <TopBar
         phase={phase}
         seed={phase === "intro" ? undefined : seed}
-        subtitle={phase === "intro" || phase === "draft" ? undefined : teamName}
+        subtitle={phase === "build" || phase === "tournament" || phase === "final" ? teamName : undefined}
       />
       <Frame>
         {error && (

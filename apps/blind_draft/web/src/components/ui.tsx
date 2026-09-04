@@ -139,13 +139,19 @@ export const TAG_COLOR: Record<ValueTag, string> = {
   OVERPAY: "#ff2d3b",
 };
 
+/**
+ * 「抄底 / 标价合理 / 买贵」。念的是 `TAG_LABEL`,不是 `ValueTag` 那个枚举名。
+ *
+ * 原来这里印的是 STEAL / FAIR / OVERPAY,而同一张卡底下那行写的是中文——同一
+ * 件事在一张卡上说了两遍,还是两种语言。
+ */
 export function ValueTagBadge({ tag }: { tag: ValueTag }) {
   return (
     <span
-      className="skew-tag inline-block px-3 py-1 font-display text-sm font-black uppercase tracking-[0.25em] text-bc-bg"
+      className="skew-tag inline-block px-3 py-1 font-display text-sm font-black tracking-[0.15em] text-bc-bg"
       style={{ background: TAG_COLOR[tag] }}
     >
-      {tag}
+      {TAG_LABEL[tag]}
     </span>
   );
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { LowerThird } from "../components/Broadcast";
 import {
   BlankFace,
+  BlindCardFace,
   Button,
   GradePips,
   POS_COLOR,
@@ -10,7 +10,6 @@ import {
   PriceBadge,
   StatBar,
   TAG_COLOR,
-  TAG_LABEL,
   ValueTagBadge,
   valueTag,
 } from "../components/ui";
@@ -40,22 +39,49 @@ export function Reveal({ draft, run, onContinue }: Props) {
   const spent = draft.spent;
   const gap = pairs.reduce((s, p) => s + (p.card.grade - p.blind.price), 0);
 
+  // 纸面火力强不强,两个后端给的数一起说:方向看跟全场平均比,「明显」看位次
+  // 落在 32 队的哪一档。只用平均要自己定一个「差多少算明显」的门槛,只用位次
+  // 又答不了差多少——两个都在手上,就都用上。
+  const avg = run.entry_field_avg;
+  const above = run.entry >= avg;
+  const marked = above ? run.entry_rank <= 8 : run.entry_rank > 24;
+  const fireWord = above ? (marked ? "明显高于" : "高于") : marked ? "明显低于" : "低于";
+  const fireArrow = above ? (marked ? "↑↑" : "↑") : marked ? "↓↓" : "↓";
+
+  // 缺哪个位置是后端算的(`missing`),这里只把它翻译成一句话
+  const noIGL = draft.missing.includes("IGL");
+  const noAWP = draft.missing.includes("AWPER");
+  const squad = noIGL && noAWP ? "缺 IGL 和 AWP" : noIGL ? "缺少 IGL" : noAWP ? "缺少 AWP" : "角色完整";
+
+  const done = Math.min(revealed, run.roster.length);
+
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <LowerThird
-          kicker="Reveal Segment"
-          title="Your Roster"
-          sub={`已揭晓 ${Math.min(revealed, run.roster.length)} / ${run.roster.length}`}
-        />
+      {/* 页头跟选人屏同一个做法:居中、只放当下真正在动的那个数。
+          原来这里是「Reveal Segment / Your Roster」两行英文——顶栏导航已经在
+          「揭晓」上亮着了,标题再说一遍没有新信息;真正在变的只有翻到第几张。
+          底下五个格子一人一格,和选人屏那七个交易日是同一套语言。 */}
+      <div className="flex flex-col items-center gap-4 pb-1 pt-8">
+        <div className="animate-rise border-y border-bc-line bg-bc-panel/70 px-10 py-3.5 text-center backdrop-blur">
+          <div className="font-display text-3xl font-black leading-none">
+            {allDone ? (
+              "五个人全翻开了"
+            ) : (
+              <>
+                已揭晓 <span className="text-bc-accent">{done}</span>
+                <span className="text-bc-muted"> / {run.roster.length}</span>
+              </>
+            )}
+          </div>
+          <div className="mt-2 text-sm text-bc-muted">
+            {allDone ? "这就是 $" + spent + " 买到的阵容" : "盲选期你只看得见标价、位置和一条线索"}
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
-          {!allDone && <Button onClick={() => setRevealed((r) => r + 1)}>Reveal Next ▶</Button>}
-          {!allDone && (
-            <Button variant="ghost" onClick={() => setRevealed(run.roster.length)}>
-              Reveal All
-            </Button>
-          )}
-          {allDone && <Button onClick={onContinue}>Team Build ▶</Button>}
+          {run.roster.map((c, i) => (
+            <span key={c.page} className={cn("h-1.5 w-12 transition-colors", i < done ? "bg-bc-accent" : "bg-bc-line")} />
+          ))}
         </div>
       </div>
 
@@ -67,27 +93,71 @@ export function Reveal({ draft, run, onContinue }: Props) {
 
       {allDone && (
         <Panel className="animate-rise p-4">
+          {/* 四格答四个问题:钱花了多少、买贵还是买对了、这五把枪硬不硬、
+              这支队缺不缺零件。每一格都是「一个数 + 一句话凭什么这么说」。 */}
           <div className="grid gap-4 md:grid-cols-4">
-            <Stat label="Total Spent" value={`$${spent}`} />
-            <Stat label="档位 − 标价" value={`${gap >= 0 ? "+" : ""}${gap}`} tone={gap > 0 ? "good" : gap < 0 ? "bad" : undefined} />
-            <Stat label="队伍强度 Entry" value={run.entry.toFixed(1)} tone="good" />
-            <Stat label="全场 Entry 位次" value={`#${run.entry_rank} / 32`} />
-          </div>
-          <div className="mt-3 border-t border-bc-line pt-3 text-xs text-bc-muted">
-            Entry 是<span className="text-bc-text">纯火力口径</span>（Carry 权重 + 磨合 + 无狙罚），
-            和比赛真正读的是同一个数 —— 页面显示的就是引擎打的。
+            <Stat label="剩余预算" value={`$${draft.left}`} sub={`$${draft.budget} 里花掉了 $${spent}`} />
+            <Stat
+              label="估值差"
+              value={`${gap > 0 ? "+" : ""}${gap}`}
+              mark={gap > 0 ? "抄底" : gap < 0 ? "买贵" : "打平"}
+              tone={gap > 0 ? "good" : gap < 0 ? "bad" : undefined}
+              sub="五个人的档位合计 − 标价合计"
+            />
+            <Stat
+              label="纸面火力"
+              value={run.entry.toFixed(1)}
+              mark={fireArrow}
+              tone={above ? "good" : "bad"}
+              // 平均值和位次本身不写出来:它们是这句话的算法,不是这句话的内容。
+              // 「明显高于平均」已经是玩家要的那个答案,再报两个数只是让人多读一遍。
+              sub={`${fireWord}本届参赛队平均`}
+            />
+            <Stat
+              label="阵容状态"
+              value={squad}
+              tone={draft.missing.length ? "bad" : "good"}
+              sub={`IGL ${noIGL ? "—" : "✓"} · AWP ${noAWP ? "—" : "✓"}`}
+            />
           </div>
         </Panel>
       )}
+
+      {/* 按钮跟着牌走,放在最下面:这一屏的动作是「再翻一张」,眼睛在牌上,手
+          就该在牌下面。翻完之后同一个位置换成下一屏的入口。 */}
+      <div className="flex items-center justify-center gap-3">
+        {!allDone && (
+          <>
+            <Button variant="ghost" onClick={() => setRevealed(run.roster.length)}>
+              揭晓全部
+            </Button>
+            <Button onClick={() => setRevealed((r) => r + 1)}>揭晓下一个 ▶</Button>
+          </>
+        )}
+        {allDone && <Button onClick={onContinue}>进入阵容构筑 ▶</Button>}
+      </div>
     </div>
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
+/** 一格:标题、一个大数、旁边一个记号、下面一句凭什么。 */
+function Stat({ label, value, mark, sub, tone }: {
+  label: string;
+  value: string;
+  /** 大数旁边那个小记号:抄底 / ↑↑ 之类 */
+  mark?: string;
+  sub?: string;
+  tone?: "good" | "bad";
+}) {
+  const toned = tone === "good" ? "text-bc-green" : tone === "bad" ? "text-bc-live" : undefined;
   return (
     <div className="border-l-2 border-bc-line pl-3">
       <div className="font-display text-[10px] font-bold uppercase tracking-[0.35em] text-bc-muted">{label}</div>
-      <div className={cn("font-display text-3xl font-black", tone === "good" && "text-bc-green", tone === "bad" && "text-bc-live")}>{value}</div>
+      <div className="flex items-baseline gap-2">
+        <span className={cn("font-display text-3xl font-black leading-tight", toned)}>{value}</span>
+        {mark && <span className={cn("font-display text-base font-black", toned ?? "text-bc-muted")}>{mark}</span>}
+      </div>
+      {sub && <div className="mt-1 text-xs leading-snug text-bc-muted">{sub}</div>}
     </div>
   );
 }
@@ -123,20 +193,10 @@ export function PlayerFace({ card, size = "md" }: { card: RosterCard; size?: "sm
 function RevealCard({ card, blind, revealed }: { card: RosterCard; blind: BoardCard; revealed: boolean }) {
   const tag = valueTag(card.grade, blind.price);
 
-  if (!revealed) {
-    return (
-      <div className="flex flex-col overflow-hidden border border-bc-line bg-bc-panel">
-        <div className="flex items-center justify-between bg-bc-panel2 px-3 py-2">
-          <PriceBadge price={blind.price} />
-          <PosTag pos={blind.position} />
-        </div>
-        <div className="flex aspect-[4/5] items-end justify-center overflow-hidden bg-gradient-to-b from-bc-panel2 to-bc-bg">
-          <BlankFace className="h-[86%] text-bc-line/70" />
-        </div>
-        <div className="border-t border-bc-line px-3 py-2 text-sm text-bc-muted">{blind.clue}</div>
-      </div>
-    );
-  }
+  // 还没翻的那张就是选人屏上那张牌,一模一样的牌面(`BlindCardFace`)。这里
+  // 曾经另画了一份更简单的——价格和角色并排压在顶栏、底下只剩一行线索——于是
+  // 「翻面」看起来像换了一张卡,而不是同一张牌翻过来。
+  if (!revealed) return <BlindCardFace card={blind} />;
 
   // 球探区间给对了没有:真值落在区间里的哪一段
   const truth = (card as unknown as Record<string, number>)[blind.scout.attr];
@@ -192,8 +252,9 @@ function RevealCard({ card, blind, revealed }: { card: RosterCard; blind: BoardC
           </div>
           <div className="mt-1 flex justify-between font-mono text-[11px] text-bc-muted">
             <span>真值 {truth}</span>
+            {/* 「抄底 / 买贵」印在卡顶那个色块上,这里只留它凭什么这么说 */}
             <span style={{ color: TAG_COLOR[tag] }}>
-              {TAG_LABEL[tag]} · G{card.grade} / ${blind.price}
+              档位 G{card.grade} / 标价 ${blind.price}
             </span>
           </div>
         </div>

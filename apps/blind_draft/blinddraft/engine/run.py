@@ -41,6 +41,9 @@ def player_run(nicknames=None, pages=None, seed=1, cfg=None):
         # v2 没有「全场种子」——Stage 归属由 VRS 名额定，这里给的是玩家 Entry
         # 在 32 支正赛队里的位次，只作参考。
         "entry_rank": sum(1 for t in field if t.entry() > me.entry()) + 1,
+        # 位次说的是「排第几」,平均说的是「差多少」。光有位次答不了「第 9 算
+        # 强还是算一般」——32 支正赛队本来就都不弱,前后差多少要看这个数。
+        "entry_field_avg": round(sum(t.entry() for t in field) / len(field), 1),
         "demoted": [{"team": t.name, "from_stage": a, "to_stage": b}
                     for t, a, b in shove.demoted],
         "dropped": shove.dropped.name if shove.dropped else None,
