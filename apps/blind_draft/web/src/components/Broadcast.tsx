@@ -17,16 +17,19 @@ export function TopBar({ phase, budget, subtitle, right }: { phase: Phase; budge
   const showBudget = phase === "draft";
   const showLive = phase === "tournament";
 
+  // 底色走竖向渐变:上亮下暗,像一条被顶光打到的实体横条。之前是横向的
+  // (from-panel via-panel2 to-panel),中间比两端亮一档,而版面上没有任何东西
+  // 解释那个居中的亮团——它既不跟居中的导航对齐,也不跟别的面板一致。
   return (
-    <header className="relative z-20 border-b border-bc-line bg-gradient-to-r from-bc-panel via-bc-panel2 to-bc-panel">
+    <header className="relative z-20 border-b border-bc-line bg-gradient-to-b from-bc-panel2 to-bc-panel">
       <div className="relative mx-auto flex max-w-[1500px] items-center gap-4 px-4 py-2">
         <div className="flex items-center gap-3">
           <span className="h-9 w-1 bg-bc-accent" />
           <div className="leading-none">
             <div className="font-display text-lg font-black uppercase tracking-wider">
-              ROAD TO <span className="text-bc-accent">MAJOR</span>
+              Blind <span className="text-bc-accent">Draft</span>
             </div>
-            <div className="font-display text-[10px] font-semibold uppercase tracking-[0.35em] text-bc-muted">Blind Draft Broadcast</div>
+            <div className="font-display text-[10px] font-semibold uppercase tracking-[0.35em] text-bc-muted">Road to Major</div>
           </div>
         </div>
 
@@ -102,7 +105,7 @@ export function Ticker({ items }: { items: TickerItem[] }) {
         </div>
       </div>
       <div className="hidden shrink-0 items-center gap-3 border-l border-bc-line px-4 font-mono text-xs text-bc-muted sm:flex">
-        <span>FCS2.TV</span>
+        <span>BDCS2.TV</span>
         <span className="text-bc-accent">●</span>
         <span>{new Date().getFullYear()} SEASON</span>
       </div>

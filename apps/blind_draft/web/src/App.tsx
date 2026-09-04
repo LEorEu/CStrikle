@@ -105,6 +105,10 @@ export default function App() {
 
   return (
     <div className="bc-vignette min-h-screen">
+      {/* 首屏的选手剪影,垫在所有东西下面:z-0 且排在最前,所以暗角(本元素的
+          ::after,同样 z-0)和 Frame(z-10,网格画在它自己的背景上)都盖在它
+          上面。只有 intro 有——进了选人页,背景就该让位给牌面。 */}
+      {phase === "intro" && <div aria-hidden className="bc-hero pointer-events-none fixed inset-0 z-0" />}
       <TopBar phase={phase} budget={draft?.left ?? 15} subtitle={phase === "intro" ? undefined : teamName} />
       <Frame>
         {error && (

@@ -75,11 +75,15 @@ h1, h2, h3, table, .font-mono {
   line-height: 1.2;
 }
 
+/* 主网格 48px + 细网格 12px。只有一种间距的网格太规整，像坐标纸；叠一层更细
+   更淡的，疏密就出来了，也更像转播画面里那种技术底纹。 */
 .bc-grid {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px, 12px 12px, 12px 12px;
 }
 
 .bc-vignette::after {
@@ -87,8 +91,59 @@ h1, h2, h3, table, .font-mono {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.6) 100%);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E %3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E %3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' seed='5' stitchTiles='stitch'/%3E %3CfeColorMatrix type='luminanceToAlpha'/%3E %3CfeComponentTransfer%3E %3CfeFuncA type='linear' slope='0.5' intercept='-0.16'/%3E %3C/feComponentTransfer%3E %3C/filter%3E %3Crect width='200' height='200' fill='%23fff' filter='url(%23g)'/%3E %3C/svg%3E") repeat,
+    radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.6) 100%);
+  background-size: 200px 200px, auto;
   z-index: 0;
+}
+
+/* 首页最底下那层选手剪影。
+
+   这张图两队各站一边，中间 40-62% 是空的——空档正好落在版心中间，两侧剪影正好
+   落在版心之外原本纯黑的地方。所以它只需要垫在最底下：网格、暗角、中间那束金
+   光全都压在它上面，一个都不用挪。
+
+   模糊和压暗下得很重，是因为它不是主角。清晰的人脸摆在标题背后会抢读者的眼
+   睛，而这一层要的只是「黑边里有东西」。糊到看得出是人、认不出是谁，正好。 */
+.bc-hero {
+  background-image: url("/img/bg/cs2-bg.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* 宽视口下 cover 要纵向裁掉一截。偏上取：图的下四分之一本来就没东西（最底
+     那 5% 亮度只有 19，还被滚动条盖着），而顶上是最高那个人的头。 */
+  background-position: 50% 30%;
+  filter: blur(8px) brightness(0.42) saturate(0.8);
+  /* blur 会把边缘往里吸出一圈透明,所以先放大再糊,别让四边露出亮边 */
+  transform: scale(1.08);
+}
+
+/* 主视觉做旧。一层横向拉长的分形噪声当遮罩，把字面啃掉一点，像刷在水泥墙上
+   又被蹭花的漆。噪声是 SVG 现算的，不落资源文件，也就没有分辨率上限——120px
+   的标题和 88px 的标题用的是同一张，缩放不会糊。 */
+.bc-worn {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='w' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035 0.12' numOctaves='4' seed='17' stitchTiles='stitch'/%3E%3CfeColorMatrix type='luminanceToAlpha'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='5' intercept='-0.78'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='900' height='900' fill='%23000' filter='url(%23w)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='w' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035 0.12' numOctaves='4' seed='17' stitchTiles='stitch'/%3E%3CfeColorMatrix type='luminanceToAlpha'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='5' intercept='-0.78'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='900' height='900' fill='%23000' filter='url(%23w)'/%3E%3C/svg%3E");
+  -webkit-mask-size: 900px 900px;
+  mask-size: 900px 900px;
+}
+
+/* 页面颗粒。纯色大平面在暗色页面上会显得太干净、太数字化，铺一层极淡的噪声
+   就有了"这是拍出来的画面"的质感。叠在暗角上面、内容下面（见 .bc-vignette
+   ::after 的两层背景），透明度低到单看几乎看不见，撤掉才发现画面发死。 */
+
+/* 顶上打下来的那束光。不是一个居中的光斑，是有方向的：光源在画面上沿之外，
+   往下铺成一道锥形，最后在下方落成一滩。三层分别是光源、光柱、地面的反光。 */
+.bc-spot {
+  background-image:
+    radial-gradient(ellipse 56% 30% at 50% -8%,
+      rgba(255, 197, 61, 0.22), rgba(255, 176, 32, 0.09) 44%, transparent 76%),
+    radial-gradient(ellipse 20% 58% at 50% 6%,
+      rgba(255, 190, 60, 0.13), rgba(255, 176, 32, 0.05) 44%, transparent 78%),
+    radial-gradient(ellipse 44% 52% at 50% 56%,
+      rgba(255, 184, 56, 0.07), rgba(255, 176, 32, 0.025) 46%, transparent 80%),
+    radial-gradient(ellipse 30% 9% at 50% 90%,
+      rgba(255, 196, 78, 0.08), transparent 74%);
 }
 
 .skew-tag {
