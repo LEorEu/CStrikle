@@ -177,10 +177,13 @@ export function Button({
   variant?: "primary" | "ghost" | "danger";
   className?: string;
 }) {
+  // hover 只在能按的时候挂上去。以前是无条件挂 hover 再用一句
+  // `hover:bg-bc-accent` 把 primary 的 hover 压回来——ghost 按钮禁用后一悬停
+  // 就被那句刷成黄色实心,看着像它其实可以按。
   const styles = {
-    primary: "bg-bc-accent text-bc-bg hover:bg-yellow-300",
-    ghost: "border border-bc-line bg-transparent text-bc-text hover:border-bc-accent hover:text-bc-accent",
-    danger: "bg-bc-live text-white hover:bg-red-500",
+    primary: cn("bg-bc-accent text-bc-bg", !disabled && "hover:bg-yellow-300"),
+    ghost: cn("border border-bc-line bg-transparent text-bc-text", !disabled && "hover:border-bc-accent hover:text-bc-accent"),
+    danger: cn("bg-bc-live text-white", !disabled && "hover:bg-red-500"),
   };
   return (
     <button
@@ -189,7 +192,7 @@ export function Button({
       className={cn(
         "cut-corner px-6 py-2.5 font-display text-base font-extrabold uppercase tracking-[0.2em] transition-all",
         styles[variant],
-        disabled && "cursor-not-allowed opacity-30 hover:bg-bc-accent",
+        disabled && "cursor-not-allowed opacity-30",
         className,
       )}
     >

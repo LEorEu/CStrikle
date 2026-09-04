@@ -38,9 +38,15 @@ export interface Blueprint {
   tag: string;
   note: string;
   done: boolean;
+  /**
+   * 进度本身，**每一条都有**。`note` 是同一件事的一句话说法，只拿去当 tooltip
+   * ——两个都由后端给，前端不从 note 里抠数字。
+   */
+  have: number;
+  want: number;
 }
 
-/** `POST /api/draft` 的返回:一局盲选在某一个市场日的全部可见状态。 */
+/** `POST /api/draft` 的返回:一局盲选在某一个交易日的全部可见状态。 */
 export interface DraftState {
   seed: number;
   actions: number[];

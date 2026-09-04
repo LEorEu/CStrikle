@@ -20,7 +20,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return res.json();
 }
 
-/** 放掉这个市场日。动作序列里用 -1 表示。 */
+/** 跳过这个交易日。动作序列里用 -1 表示。 */
 export const PASS = -1;
 
 /**

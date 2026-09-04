@@ -102,7 +102,7 @@ export function Intro({ seed, busy, onStart }: { seed: number; busy: boolean; on
             <span className="text-bc-accent">Draft</span>
           </h1>
           <p className="mt-5 max-w-2xl text-xl leading-[1.7] text-bc-muted">
-            $15 预算，7 轮市场日，签下 5 名真实职业选手。
+            $15 预算，7 个交易日，签下 5 名真实职业选手。
             <br />
             每张匿名卡只公开价格、角色、国籍、一项球探报告和一条身份线索。
             <br />

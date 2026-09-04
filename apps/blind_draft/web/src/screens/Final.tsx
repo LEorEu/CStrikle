@@ -103,7 +103,7 @@ export function Final({ draft, run, teamName, onRestart }: Props) {
               <Row k="战绩" v={`${run.wins}-${run.losses}`} />
               <Row k="选手花费" v={`$${draft.spent}`} />
               <Row k="剩余预算" v={`$${draft.left}`} />
-              <Row k="放掉的市场日" v={draft.passed.length ? draft.passed.join(", ") : "无"} />
+              <Row k="跳过的交易日" v={draft.passed.length ? draft.passed.join(", ") : "无"} />
               <Row k="seed" v={String(run.seed)} />
             </div>
           </Panel>

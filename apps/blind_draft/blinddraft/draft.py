@@ -516,7 +516,8 @@ def play(dealer, open_mode):
         bp = blueprints(picked, slots_left)
         if bp:
             print("   可以去追:  " + "   ".join(
-                "[%s] %s%s" % (t, note, " ✓" if done else "") for t, note, done in bp))
+                "[%s] %s%s" % (b["tag"], b["note"], " ✓" if b["done"] else "")
+                for b in bp))
 
         for i, c in enumerate(board, 1):
             print(f"  {i}) {face(c, open_mode)}")
@@ -605,18 +606,32 @@ def blueprints(picked, slots_left):
     如果连「看得见」都不能让人产生想追的欲望,加分也救不了它。加回报和
     SCOUTING FOCUS(主动把方向盘拨一下)都要等这一步的结果。
 
-    返回 [(标签, 进度说明, 是否已达成)],已达成的排前面,已经不可能的不返回。
+    返回 [{tag, note, done, have, want}],已达成的排前面,已经不可能的不返回。
+
+    `have`/`want` 是进度本身,`note` 是同一件事的一句话说法。两个都给,是因为
+    显示的地方不止一处:命令行念的是句子,网页上「DOUBLE AWP 0/2」比「还差 2
+    个狙」窄得多也快得多。让前端从 note 里抠数字则是把一句中文当成了数据格式。
+
+    **每一条都必须给得出 have/want。**曾经有两条给不出(「同国三人」和
+    MONEYBALL),于是网页上一列 `n/m` 里夹着两句中文,长短对不齐、语言也对不齐。
+    这两条其实都数得出来:一个是「任选一国凑满 3 个」,当时手上一个人都没有,
+    所以是 0/3;另一个是「五个人全买 $1-2」,数的就是已经签了几个。给不出计数
+    的东西不该混进这张清单——它是一列进度,不是一堆提示。
     """
     out = []
     pos = collections.Counter(c["position"] for c in picked)
     ctry = collections.Counter(c["country"] for c in picked)
     prices = [c["price"] for c in picked]
 
+    def row(tag, note, done, have, want):
+        out.append({"tag": tag, "note": note, "done": done,
+                    "have": have, "want": want})
+
     def add(tag, have, want, unit, dead=False):
         if dead or have + slots_left < want:
             return
-        out.append((tag, "已达成" if have >= want else f"还差 {want - have} {unit}",
-                    have >= want))
+        row(tag, "已达成" if have >= want else f"还差 {want - have} {unit}",
+            have >= want, have, want)
 
     add("DOUBLE AWP", min(pos["AWPER"], 2), 2, "个狙")
     if pos["AWPER"] >= 2:
@@ -626,12 +641,15 @@ def blueprints(picked, slots_left):
         top_c, n_c = ctry.most_common(1)[0]
         add(f"{top_c.upper()} CORE", n_c, 3, f"个 {top_c} 人")
     elif slots_left >= 3:
-        out.append(("同国三人", "任选一国凑满 3 个", False))
+        # 一个人都还没签,所以还不知道会是哪一国。签下第一个人之后这一条就变成
+        # 上面那个具体的「SWEDEN CORE」,标签和计数都接得上。
+        row("COUNTRY CORE", "任选一国凑满 3 个", False, 0, 3)
     if not any(x > 2 for x in prices):
-        out.append(("MONEYBALL", "已达成" if len(picked) == SLOTS
-                    else "接着只买 $1-2 的牌", len(picked) == SLOTS))
+        row("MONEYBALL", "已达成" if len(picked) == SLOTS
+            else "接着只买 $1-2 的牌", len(picked) == SLOTS,
+            len(picked), SLOTS)
     add("GALACTICOS", sum(1 for x in prices if x == 5), 2, "张 $5")
-    out.sort(key=lambda t: (not t[2],))
+    out.sort(key=lambda b: (not b["done"],))
     return out[:5]
 
 

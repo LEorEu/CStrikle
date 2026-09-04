@@ -12,9 +12,15 @@ const PHASES: { id: Phase; cn: string }[] = [
   { id: "final", cn: "复盘" },
 ];
 
-export function TopBar({ phase, budget, subtitle, right }: { phase: Phase; budget: number; subtitle?: string; right?: ReactNode }) {
-  // 预算只在选人时是活的信息(每签一个人就变);比赛真正开打之前也没什么可 LIVE 的。
-  const showBudget = phase === "draft";
+export function TopBar({ phase, seed, subtitle, right }: { phase: Phase; seed?: number; subtitle?: string; right?: ReactNode }) {
+  // 比赛真正开打之前没什么可 LIVE 的。
+  //
+  // 预算曾经也挂在这条栏上。挪走了:剩多少钱是选人时每一步都要看的数,而顶栏
+  // 是「这是什么节目、走到第几屏」,一个每秒钟都可能变的数字待在那儿,眼睛得
+  // 在版面对角线上来回跑。它现在跟「第几个交易日」并排站在选人屏正中间。
+  //
+  // 那个位置改放局号:一整局都不变,但一整局都想得起来在哪儿看——它是重开同一
+  // 局的唯一入口(首页那个输入框填的就是它)。首页不用显示,那儿本来就有输入框。
   const showLive = phase === "tournament";
 
   // 底色走竖向渐变:上亮下暗,像一条被顶光打到的实体横条。之前是横向的
@@ -59,13 +65,10 @@ export function TopBar({ phase, budget, subtitle, right }: { phase: Phase; budge
         <div className="ml-auto flex items-center gap-4">
           {subtitle && <div className="hidden font-display text-sm font-semibold uppercase tracking-[0.25em] text-bc-muted lg:block">{subtitle}</div>}
           {right}
-          {showBudget && (
-            <div className="flex items-center gap-2 border border-bc-line bg-bc-bg px-3 py-1">
-              <span className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-bc-muted">Budget</span>
-              <span className="font-display text-2xl font-black leading-none text-bc-accent">
-                <span className="text-sm opacity-70">$</span>
-                {budget}
-              </span>
+          {seed !== undefined && (
+            <div className="hidden items-center gap-2 font-mono text-xs text-bc-muted sm:flex">
+              <span className="tracking-[0.2em]">局号</span>
+              <span className="text-bc-text">{seed}</span>
             </div>
           )}
           {showLive && <LiveDot />}

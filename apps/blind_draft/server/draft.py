@@ -165,8 +165,8 @@ def build_draft(seed: int = 1, actions=()) -> dict:
         "missing": [p for p in ("IGL", "AWPER") if p not in have],
         "board": [_face(c, i, flags) for i, c in enumerate(board or ())],
         "owned": [_face(c, i, flags) for i, c in enumerate(picked)],
-        "blueprints": [{"tag": tag, "note": note, "done": ok}
-                       for tag, note, ok in P.blueprints(picked, slots_left)],
+        # 引擎给的就是 {tag, note, done, have, want},原样转发
+        "blueprints": P.blueprints(picked, slots_left),
         "done": done,
     }
     if done and len(picked) == P.SLOTS:

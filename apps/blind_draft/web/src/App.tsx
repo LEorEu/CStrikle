@@ -88,7 +88,7 @@ export default function App() {
     if (draft && phase === "draft")
       items.unshift({
         label: "本局",
-        text: `${teamName} 第 ${draft.turn}/${draft.turns} 个市场日 · 剩余 $${draft.left} · 还要签 ${draft.slots_left} 人`,
+        text: `第 ${draft.turn}/${draft.turns} 个交易日 · 剩余 $${draft.left} · 还要签 ${draft.slots_left} 人`,
       });
     if (run && phase !== "draft" && phase !== "intro")
       items.unshift({
@@ -109,7 +109,12 @@ export default function App() {
           ::after,同样 z-0)和 Frame(z-10,网格画在它自己的背景上)都盖在它
           上面。只有 intro 有——进了选人页,背景就该让位给牌面。 */}
       {phase === "intro" && <div aria-hidden className="bc-hero pointer-events-none fixed inset-0 z-0" />}
-      <TopBar phase={phase} budget={draft?.left ?? 15} subtitle={phase === "intro" ? undefined : teamName} />
+      {/* 队名在盲选期还不存在——它是揭晓之后、组队那一刻才该由玩家自己起的东西 */}
+      <TopBar
+        phase={phase}
+        seed={phase === "intro" ? undefined : seed}
+        subtitle={phase === "intro" || phase === "draft" ? undefined : teamName}
+      />
       <Frame>
         {error && (
           <div className="mb-4 border border-bc-live bg-bc-live/10 px-4 py-3">
@@ -126,7 +131,6 @@ export default function App() {
           <Draft
             state={draft}
             busy={busy}
-            teamName={teamName}
             onSign={(i) => act(i)}
             onPass={() => act(PASS)}
             onUndo={actions.length ? undo : undefined}
