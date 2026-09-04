@@ -450,7 +450,7 @@ class Dealer:
 
     def board(self, left, slots_left, owned):
         """五张牌,标价都落在买得起的区间;缺的位置提权,最后才硬保底。"""
-        max_price = max(1, min(5, left - (slots_left - 1)))
+        max_price = max_spend(left, slots_left)
         have = collections.Counter(c["position"] for c in owned)
         need = {p for p in ("AWPER", "IGL") if not have[p]}
         full = {p for p, q in POSITION_QUOTA.items() if have[p] >= q}
@@ -472,6 +472,22 @@ def affordable(price, left, slots_left):
     return price <= left - (slots_left - 1)
 
 
+def max_spend(left, slots_left):
+    """这一轮最多能花多少:后面每个空位至少留 $1。"""
+    return max(1, min(5, left - (slots_left - 1)))
+
+
+def can_pass(turn, slots_left):
+    """还能不能放掉这个市场日:剩下的市场日要比还没签的人多。
+
+    发牌上限和这一条都被三处读:命令行的 `play()`、`bdserver.draft` 的回放,
+    以及网页。写成函数是因为它们必须**同时**改——`TURNS` 或 `SLOTS` 一动,
+    抄在别处的那个表达式不会跟着变,而症状是「某一局莫名其妙不让跳过了」,
+    不会报错。
+    """
+    return TURNS - turn + 1 > slots_left
+
+
 # ----------------------------------------------------------------- 一局
 
 def play(dealer, open_mode):
@@ -482,12 +498,12 @@ def play(dealer, open_mode):
         if slots_left == 0:
             break
         turns_left = TURNS - turn + 1
-        can_pass = turns_left > slots_left
+        may_pass = can_pass(turn, slots_left)
 
         board = dealer.board(left, slots_left, picked)
         boards.append(board)
         print(f"\n-- 第 {turn}/{TURNS} 个市场日    预算 ${left}    还要签 {slots_left} 人"
-              f"    {'可以放掉 %d 个市场日' % (turns_left - slots_left) if can_pass else '接下来每天都必须签人'} --")
+              f"    {'可以放掉 %d 个市场日' % (turns_left - slots_left) if may_pass else '接下来每天都必须签人'} --")
         if picked:
             print("   已有:", "  ".join(f"${c['price']} {c['position']}({c['country']})"
                                         for c in picked))
@@ -504,14 +520,14 @@ def play(dealer, open_mode):
 
         for i, c in enumerate(board, 1):
             print(f"  {i}) {face(c, open_mode)}")
-        if can_pass:
+        if may_pass:
             print("  s) 放掉这个市场日,换一批新牌")
 
         while True:
             raw = input("选哪张? (编号 / s 跳过,加 ? 表示这轮你犹豫过,如 3?) > ").strip()
             hes = raw.endswith("?")
             raw = raw.rstrip("?").strip().lower()
-            if raw == "s" and can_pass:
+            if raw == "s" and may_pass:
                 passed.append(turn); card = None; break
             if raw.isdigit() and 1 <= int(raw) <= len(board):
                 card = board[int(raw) - 1]; break

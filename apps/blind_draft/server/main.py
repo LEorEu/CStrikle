@@ -43,6 +43,7 @@ from bdtools import export_web as WEB
 
 from . import ai as AI
 from . import anchor as AN
+from . import draft as DRAFT
 from . import run as RUN
 
 STATIC = Path(__file__).resolve().parents[1] / "static"
@@ -195,6 +196,13 @@ class RunBody(BaseModel):
     seed: int = 1
 
 
+class DraftBody(BaseModel):
+    #: 一局盲选就是「一个 seed + 一串动作」,没有服务端会话——见 bdserver/draft.py。
+    seed: int = 1
+    #: 每个市场日做的事:0..4 签板面第几张,-1 放掉这一天。
+    actions: list[int] = []
+
+
 def _clean(body: OverrideBody) -> dict:
     ov = {}
     if body.grade is not None:
@@ -266,6 +274,15 @@ def api_anchor_put(key: str, body: AnchorBody,
 def api_ai():
     """AI 对手赛场。只读——理由写在 `bdserver/ai.py` 的模块注释里。"""
     return AI.build_view()
+
+
+@app.post("/api/draft")
+def api_draft(body: DraftBody):
+    """盲选的唯一权威入口:发牌、报价、球探区间全在 Python,前端只渲染。"""
+    try:
+        return DRAFT.build_draft(body.seed, body.actions)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
 
 
 @app.post("/api/run")
