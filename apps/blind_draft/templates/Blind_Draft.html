@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blind Draft</title>
+<style>
+:root{--bg:#0f1115;--fg:#e8e6e1;--dim:#8b8f98;--line:#262a33;--card:#171a21;
+  --up:#4cd77a;--down:#ff6b6b;--warn:#f2c94c;--acc:#7aa2ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
+.dim{color:var(--dim)} .up{color:var(--up)} .down{color:var(--down)} .warn{color:var(--warn)}
+h1,h2,h3{margin:0 0 6px;font-weight:700} h1{font-size:26px} h2{font-size:20px} h3{font-size:16px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.btn{background:#1f242e;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--acc)} .btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--acc);color:#0b0d12;border-color:var(--acc);font-weight:700}
+/* 主按钮里的副文案：--dim 在这块亮蓝底上读不出来，压暗而不是提亮 */
+.btn.primary .sub{color:#1d2c4a;font-weight:400}
+.status{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;margin-bottom:16px;
+  display:grid;grid-template-columns:1fr 1fr 2fr;gap:14px;align-items:center}
+.status b.big{font-size:22px}
+.cap{font-size:12px;color:var(--warn);grid-column:1/-1}
+.slots{display:flex;gap:6px;flex-wrap:wrap}
+.slot{border:1px dashed var(--line);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--dim)}
+.slot.filled{border-style:solid;color:var(--fg)}
+.pips span{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid var(--dim);margin-right:4px}
+.pips .used{background:var(--dim)} .pips .passed{background:var(--down);border-color:var(--down)} .pips .now{border-color:var(--acc);border-width:2px}
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:720px){.board{grid-template-columns:repeat(2,1fr)}.status{grid-template-columns:1fr 1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:left;color:var(--fg);cursor:pointer;
+  display:flex;flex-direction:column;gap:6px;min-height:150px;position:relative}
+.card:hover{border-color:var(--acc)} .card:disabled{opacity:.35;cursor:not-allowed}
+.card .price{font-size:26px;font-weight:800} .card .pos{font-size:12px;color:var(--dim);letter-spacing:.08em}
+.card .scout{font-size:12px;color:var(--dim)} .card .scout b{color:var(--fg);font-size:15px}
+.card .clue{margin-top:auto;font-size:13px} .card .clue em{font-style:normal;color:var(--acc)}
+.card .kbd{position:absolute;right:8px;top:8px;font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.chip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--dim)}
+.chip.hit{border-color:var(--up);color:var(--up)} .chip.blind{border-color:var(--acc);color:var(--acc)}
+.actions{display:flex;gap:10px;align-items:center;margin:16px 0;flex-wrap:wrap}
+.hint{font-size:12px;color:var(--dim)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.reveal{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:720px){.reveal{grid-template-columns:1fr 1fr}}
+.rc{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px}
+.rc .was{color:var(--dim);font-size:12px} .rc .who{font-size:17px;font-weight:700;margin:4px 0}
+.tag{font-size:11px;border-radius:4px;padding:1px 6px;display:inline-block}
+.tag.steal{background:#163a25;color:var(--up)} .tag.over{background:#3a1a1a;color:var(--down)} .tag.fair{background:#20242c;color:var(--dim)}
+.verdict-list{list-style:none;padding:0;margin:10px 0}
+.verdict-list li{padding:6px 0;border-top:1px solid var(--line)}
+.verdict-list li.good{color:var(--up)} .verdict-list li.bad{color:var(--down)} .verdict-list li.warn{color:var(--warn)}
+.leg{border-left:4px solid var(--line);padding:10px 14px;margin-bottom:14px}
+.leg.win{border-color:var(--up)} .leg.loss{border-color:var(--down)} .leg.pause{border-color:var(--warn);background:#1c1a12}
+.leg .res{font-size:22px;font-weight:800;margin:4px 0}
+.map{margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:8px}
+.map.win{border-color:#1f4d31} .map.loss{border-color:#4d2222}
+.map .mh{font-size:13px;color:var(--dim);margin-bottom:6px} .map .mh b{color:var(--fg)}
+.story{margin:0;padding-left:18px} .story li{margin:3px 0}
+.verdict{margin:8px 0 0;font-weight:600}
+details summary{cursor:pointer;color:var(--dim);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+th,td{padding:4px 6px;text-align:left;border-bottom:1px solid var(--line)} th{color:var(--dim);font-weight:500}
+tr.sep td{background:#12151b;color:var(--dim);padding-top:10px}
+.awards{list-style:none;padding:0;margin:10px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:720px){.awards{grid-template-columns:1fr}}
+.awards li{border:1px solid var(--line);border-radius:10px;padding:10px}
+.awards b{display:block;font-size:11px;letter-spacing:.1em;color:var(--dim);margin-bottom:4px}
+.record{font-size:34px;font-weight:800}
+.exp span{display:inline-block;margin:2px 8px 2px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">FribergCS2</p>
+      <h1>Blind Draft</h1>
+      <p class="dim" id="tagline">$15 盲选五个职业哥，只给你看位置、一条线索和一份球探报告。签满五人，看他们能不能打进 Major Playoffs。</p>
+    </div>
+    <div class="num dim" style="white-space:nowrap">seed <span id="seedout">–</span>
+      <button class="btn" id="newrun" style="margin-left:8px">新开一局</button></div>
+  </header>
+  <section class="status" id="status"></section>
+  <div id="stage"></div>
+</div>
+
+<script>
+const D = /*__DATA__*/;
+const CARDS = D.cards; CARDS.forEach((c,i)=>c.i=i);
+const BUDGET=D.budget, SLOTS=D.slots, TURNS=D.turns;
+const ENG=D.engine;            /* 比赛引擎的系数，由 Python 注入，见 export_web */
+const SCOUT_W=D.scoutWidth, SCOUT_P=D.scoutPos;
+const POS={R:"RIFLER",A:"AWPER",I:"IGL"};
+const GRADES=[5,4,3,2,1];
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const fmt=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(1);
+const n1=v=>(+v).toFixed(1);   /* Entry 一律一位小数：JSON 里的 81.0 会印成 "81" */
+const el=id=>document.getElementById(id);
+
+const PAIR=new Map(), MATES=new Map();
+for (const [i,j,n,team,same] of D.pairs){
+  PAIR.set(i*1000+j,[n,team,same]);
+  if(!MATES.has(i)) MATES.set(i,new Set()); if(!MATES.has(j)) MATES.set(j,new Set());
+  MATES.get(i).add(j); MATES.get(j).add(i);
+}
+
+/* ================= 发牌（原样，玩法机制） ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function scoutRange(v,rng){
+  const w=SCOUT_W[0]+Math.floor(rng()*(SCOUT_W[1]-SCOUT_W[0]+1));
+  let lo=Math.round(v-w*(SCOUT_P[0]+rng()*(SCOUT_P[1]-SCOUT_P[0]))); lo=Math.max(1,lo);
+  let hi=lo+w; if(hi>99){hi=99;lo=Math.max(1,99-w);} return [lo,hi];
+}
+function drawWeight(c){let w=1;if(!c.t){w*=D.freeW[c.g];if((c.a||99)<=24)w=(w+1)/2;}if((c.a||0)>=30)w*=D.vetW[c.g];return w;}
+function weightedPick(cand,ws,rng){let tot=0;for(const w of ws)tot+=w;let x=rng()*tot;
+  for(let i=0;i<cand.length;i++){x-=ws[i];if(x<=0)return cand[i];}return cand[cand.length-1];}
+function priceDist(g){const out={};for(const [d,w] of D.marketRoll){const p=Math.max(1,Math.min(5,g+d));out[p]=(out[p]||0)+w;}return out;}
+function draw(maxPrice,need,want,full,forcePos){
+  const cand=[],w=[];
+  for(const g of GRADES){
+    const dist=priceDist(g); let afford=0; for(const p in dist) if(+p<=maxPrice) afford+=dist[p];
+    if(afford<=0) continue;
+    for(const c of S.pool[g]){
+      if(forcePos&&POS[c.p]!==forcePos) continue;
+      cand.push(c);
+      w.push(drawWeight(c)*D.gradeW[g]*afford*(need.has(POS[c.p])?D.needBoost:1)
+        *(full.has(POS[c.p])?D.fullPenalty:1)*(want.has(c.i)?D.mateBoost:1));
+    }
+  }
+  if(!cand.length) return null;
+  const pick=weightedPick(cand,w,S.rng); S.pool[pick.g].splice(S.pool[pick.g].indexOf(pick),1);
+  const dist=priceDist(pick.g), prices=[], pw=[];
+  for(const p in dist) if(+p<=maxPrice){prices.push(+p);pw.push(dist[p]);}
+  return Object.assign({},pick,{price:weightedPick(prices,pw,S.rng),scout:scoutRange(pick.sv,S.rng)});
+}
+const slotsLeft=()=>SLOTS-S.picked.length;
+const turnsLeft=()=>TURNS-S.turn+1;
+const canPass=()=>turnsLeft()>slotsLeft();
+/* 本轮最多能花多少：后面每人至少留 $1 */
+const maxSpend=()=>Math.max(1,Math.min(5,S.left-(slotsLeft()-1)));
+function nextBoard(){
+  const sl=slotsLeft(), maxPrice=maxSpend(), have={};
+  for(const c of S.picked) have[POS[c.p]]=(have[POS[c.p]]||0)+1;
+  const need=new Set(["AWPER","IGL"].filter(p=>!have[p]));
+  const full=new Set(Object.keys(D.quota).filter(p=>(have[p]||0)>=D.quota[p]));
+  const want=new Set(); for(const c of S.picked) for(const m of (MATES.get(c.i)||[])) want.add(m);
+  const board=[];
+  for(let i=0;i<5;i++){
+    let force=null;
+    if(need.size&&sl<=2&&i===4&&!board.some(c=>need.has(POS[c.p]))) force=[...need].sort()[0];
+    const c=draw(maxPrice,need,want,full,force); if(c) board.push(c);
+  }
+  S.turn++; S.boards.push(board); S.board=board;
+}
+function blueprints(picked,left){
+  const out=[],pos={},ctry={};
+  for(const c of picked){pos[POS[c.p]]=(pos[POS[c.p]]||0)+1;ctry[c.c]=(ctry[c.c]||0)+1;}
+  const n=p=>pos[p]||0;
+  const add=(tag,have,want,unit)=>{if(have+left<want)return;out.push({tag,note:have>=want?"已达成":`还差 ${want-have} ${unit}`,done:have>=want});};
+  add("DOUBLE AWP",Math.min(n("AWPER"),2),2,"个狙");
+  add("TWO CALLERS",n("IGL"),2,"个指挥");
+  const cs=Object.keys(ctry);
+  if(cs.length){let top=cs[0];for(const k of cs)if(ctry[k]>ctry[top])top=k;add(top.toUpperCase()+" CORE",ctry[top],3,`个 ${top} 人`);}
+  if(!picked.some(c=>c.price>2)) out.push({tag:"MONEYBALL",note:picked.length===SLOTS?"已达成":"接着只买 $1-2",done:picked.length===SLOTS});
+  add("GALACTICOS",picked.filter(c=>c.price===5).length,2,"张 $5");
+  out.sort((a,b)=>(a.done?0:1)-(b.done?0:1)); return out.slice(0,5);
+}
+
+/* ================= 阵容判断（不打总分，只说能在比赛里兑现的事） ================= */
+const gap=c=>c.g-c.price;
+const gapTag=c=>gap(c)>0?`<span class="tag steal">抄底 +${gap(c)} 档</span>`
+  :gap(c)<0?`<span class="tag over">买贵 ${gap(c)} 档</span>`:`<span class="tag fair">标价合理</span>`;
+/* Entry 只有一个定义（proto_match_v2.entry_of §4.1）：火力聚合 + 无狙罚 + 磨合度。
+   这里的每个系数都由 export_web 从 Python 注入（ENG.*），JS 不许自己写死任何一个——
+   曾经 .35/.25/.40 和那条 −4 是两边各抄一遍的，引擎一改就静默错开。
+   磨合度也必须算进来：`/play` 的玩家队吃的是 player_cohesion()，不是 0。少这一项，
+   揭晓页写 78.3、Run 页写 81.8，同一个名字两个数。 */
+function chemistry(r){
+  let total=0;
+  for(let a=0;a<r.length;a++) for(let b=a+1;b<r.length;b++){
+    const lo=Math.min(r[a].i,r[b].i),hi=Math.max(r[a].i,r[b].i),hit=PAIR.get(lo*1000+hi);
+    if(hit) total+=2+(hit[0]>=5?1:0);
+  }
+  const byC={}; for(const c of r) byC[c.c]=(byC[c.c]||0)+1;
+  for(const n of Object.values(byC)) if(n>=2) total+=1.5*(n-1);
+  const ages=r.map(c=>c.a).filter(Boolean);
+  if(ages.length>=2){const sp=Math.max(...ages)-Math.min(...ages);
+    if(sp<=5) total+=2; else if(sp>=12) total-=2;}
+  const nI=r.filter(c=>c.p==="I").length; if(nI>=2) total-=3*(nI-1);
+  return total;
+}
+const cohesionOf=r=>Math.min(chemistry(r),ENG.cohesionCap);
+function fireAgg(r){const f=r.map(c=>c.f).sort((a,b)=>b-a);return f[0]*ENG.star[0]+f[1]*ENG.star[1]+mean(f.slice(2))*ENG.restWeight;}
+const noAwpOf=r=>r.some(c=>c.p==="A")?0:ENG.noAwp;
+function entryOf(r){return fireAgg(r)+noAwpOf(r)+cohesionOf(r);}
+function verdict(r){
+  const out=[], f=r.map(c=>c.f).sort((a,b)=>b-a), fire=entryOf(r), guns=f.filter(x=>x>=85).length;
+  out.push({k:fire>=84?"good":fire>=76?"":"bad",
+    t:`纸面火力 ${n1(fire)}`+(guns>=3?" —— 三把 85+ 的枪，火力是这队的底气"
+      :guns>=1?` —— ${guns} 把 85+ 的枪撑着，其余人要跟上`:" —— 没有一把 85+ 的枪，只能靠整体")});
+  const igls=r.filter(c=>c.p==="I");
+  if(!igls.length) out.push({k:"bad",t:"没有指挥 —— 每张图都拿不到战术执行分，对面有 IGL 时你先输一截"});
+  else if(igls.length>=2) out.push({k:"warn",t:`${igls.length} 个指挥 —— 只算最强那个（领导 ${Math.max(...igls.map(c=>c.l))}），${igls.length>2?"其余人":"另一个"}的领导力是浪费的`});
+  else out.push({k:igls[0].l>=85?"good":"",t:`指挥 ${igls[0].n}，领导力 ${igls[0].l}`+(igls[0].l>=85?" —— 顶级 IGL，每张图都在给全队加分":" —— 中规中矩")});
+  const chem=cohesionOf(r);
+  if(chem) out.push({k:chem>0?"good":"warn",
+    t:`磨合度 ${fmt(chem)}${chem>=ENG.cohesionCap?"（已封顶）":""} —— 已经算进上面那个数，每张图都跟着进比赛`});
+  if(!r.some(c=>c.p==="A")) out.push({k:"bad",t:`没有 AWP —— 纸面火力已扣 ${Math.abs(ENG.noAwp)}`});
+  const lowE=r.filter(c=>c.e<40);
+  if(lowE.length) out.push({k:"warn",t:`${lowE.length} 个人经验低于 40（${lowE.map(c=>c.n).join("、")}）—— 生死局他们更容易掉链子`});
+  else if(r.every(c=>c.e>=70)) out.push({k:"good",t:"五个人经验都在 70 以上 —— 高压局不慌"});
+  const lowS=r.filter(c=>c.s<50);
+  if(lowS.length>=2) out.push({k:"warn",t:`${lowS.length} 个人稳定性不到 50 —— 发挥起伏大，能爆种也能崩`});
+  return out;
+}
+/* 只用于 Trait 名字，不产生分数 */
+function rosterTraits(r){
+  const out=[],add=(k,tag,note)=>out.push({k,tag,note});
+  const nA=r.filter(c=>c.p==="A").length,nI=r.filter(c=>c.p==="I").length;
+  if(nA===2)add("aim","DOUBLE AWP","双狙");else if(nA>=3)add("aim","AWP OVERLOAD",`${nA} 个狙`);
+  if(nI>=2)add("aim","TWO CALLERS",`${nI} 个指挥`);
+  const byC={};for(const c of r)byC[c.c]=(byC[c.c]||0)+1;
+  let topC=null;for(const k in byC)if(!topC||byC[k]>byC[topC])topC=k;
+  if(byC[topC]>=3)add("aim",topC.toUpperCase()+" CORE",`${byC[topC]} 个 ${topC} 人`);
+  const pr=r.map(c=>c.price).sort((a,b)=>b-a);
+  if(pr[0]<=2)add("aim","MONEYBALL",`最贵只要 $${pr[0]}`);else if(pr[1]===5)add("aim","GALACTICOS","两张 $5");
+  const tog={},inv={};
+  for(let a=0;a<r.length;a++)for(let b=a+1;b<r.length;b++){
+    const lo=Math.min(r[a].i,r[b].i),hi=Math.max(r[a].i,r[b].i),hit=PAIR.get(lo*1000+hi);if(!hit)continue;
+    tog[hit[1]]=(tog[hit[1]]||0)+hit[2];(inv[hit[1]]=inv[hit[1]]||new Set()).add(r[a].n).add(r[b].n);
+  }
+  let topT=null;for(const k in tog)if(!topT||tog[k]>tog[topT])topT=k;
+  if(topT){ if(inv[topT].size>=3)add("blind",topT.toUpperCase()+" CORE",`${inv[topT].size} 人一起在 ${topT} 打过 Major`);
+    else add("blind","REUNION",`${topT} 的老队友重逢`);}
+  else if(Object.keys(byC).length===5)add("blind","INTERNATIONAL MIX","五国拼盘，互相没打过");
+  const champs=r.reduce((a,c)=>a+(c.ch||0),0); if(champs>=4)add("blind","MAJOR WINNERS",`队内 ${champs} 座 Major`);
+  const ages=r.map(c=>c.a).filter(Boolean);
+  if(ages.length>=2){const sp=Math.max(...ages)-Math.min(...ages);
+    if(sp<=5)add("blind","SAME GENERATION",`年龄差 ${sp} 岁`);else if(sp>=14)add("blind","GENERATION GAP",`年龄差 ${sp} 岁`);}
+  const st=r.filter(c=>gap(c)>0).length,du=r.filter(c=>gap(c)<0).length;
+  if(st>=2)add("blind","BARGAIN BIN",`${st} 张抄底`); if(du>=3)add("blind","FLEECED",`${du} 张买贵`);
+  return out;
+}
+const bio=c=>[c.c,c.t||"自由身 / 退役",c.a?`${c.a} 岁`:null,c.ch?`Major 冠军 ×${c.ch}`:null].filter(Boolean).join(" · ");
+
+/* ================= 状态 ================= */
+let S=null;
+function newRun(seed){
+  const rng=mulberry32(seed), pool={};
+  for(const g of GRADES) pool[g]=CARDS.filter(c=>c.g===g).slice();
+  /* runSeed 和 seed 分开：seed 决定发牌，runSeed 决定这一届 Major 的赛场和骰子。
+     「同一阵容重跑比赛」换的是后者——两个共用一个数时那个按钮只是把同一届重播一遍。 */
+  S={seed,runSeed:seed,rng,pool,boards:[],picked:[],left:BUDGET,turn:0,passed:[],board:null,screen:"draft",run:null};
+  nextBoard(); render();
+}
+function pick(c){ if(S.screen!=="draft")return; S.picked.push(c); S.left-=c.price;
+  if(S.picked.length===SLOTS){S.screen="reveal";render();return;} nextBoard(); render(); }
+function pass(){ if(S.screen!=="draft"||!canPass())return; S.passed.push(S.turn); nextBoard(); render(); }
+document.addEventListener("keydown",e=>{ if(!S||S.screen!=="draft")return;
+  if(e.key>="1"&&e.key<="5"){const c=S.board[+e.key-1]; if(c&&c.price<=maxSpend()) pick(c);}
+  if(e.key.toLowerCase()==="s") pass(); });
+
+/* ================= 屏 1：Draft ================= */
+function renderStatus(){
+  el("seedout").textContent=S.seed;
+  if(S.screen!=="draft"){ el("status").style.display="none"; return; }
+  el("status").style.display="";
+  const need=["IGL","AWPER"].filter(p=>!S.picked.some(c=>POS[c.p]===p));
+  el("status").innerHTML=`
+    <div><span class="eyebrow">预算</span><br><b class="num big">$${S.left}</b>
+      <span class="dim">/ 还要签 ${slotsLeft()} 人</span></div>
+    <div><span class="eyebrow">第 ${S.turn} / ${TURNS} 轮</span><br>
+      <span class="pips">${Array.from({length:TURNS},(_,i)=>{const t=i+1;
+        const cls=S.passed.includes(t)?"passed":t<S.turn?"used":t===S.turn?"now":"";return `<span class="${cls}"></span>`;}).join("")}</span>
+      <span class="dim">${canPass()?`还能跳过 ${turnsLeft()-slotsLeft()} 次`:"不能再跳过"}</span></div>
+    <div><span class="eyebrow">阵容</span><div class="slots">${Array.from({length:SLOTS},(_,i)=>{const c=S.picked[i];
+      return c?`<span class="slot filled"><b class="num">$${c.price}</b> ${POS[c.p]}</span>`:`<span class="slot">空位</span>`;}).join("")}</div></div>
+    <div class="cap">本轮最多花 <b class="num">$${maxSpend()}</b>（后面每人至少留 $1）${need.length?` · 还缺 ${need.join(" / ")}`:""}</div>`;
+}
+function renderBoard(){
+  const cap=maxSpend();
+  const cards=S.board.map((c,i)=>`<button class="card" data-i="${i}" ${c.price>cap?"disabled title='买了它后面的人就签不满了'":""}>
+      <span class="kbd">${i+1}</span>
+      <span class="price num">$${c.price}</span><span class="pos">${POS[c.p]}</span>
+      <span class="scout">${esc(c.sa)} <b class="num">${c.scout[0]}–${c.scout[1]}</b></span>
+      <span class="clue"><em>${esc(c.c)}</em><br>${esc(c.ic)}</span></button>`).join("");
+  const bp=blueprints(S.picked,slotsLeft());
+  return `${bp.length?`<div class="chips"><span class="dim" style="font-size:12px">可以去追：</span>${bp.map(b=>`<span class="chip ${b.done?"hit":""}">${b.tag} <small>${b.note}</small></span>`).join("")}</div>`:""}
+    <div class="board">${cards}</div>
+    <div class="actions">
+      <button class="btn" id="passbtn" ${canPass()?"":"disabled"}>跳过这批，换五张</button>
+      <span class="hint">键盘 1–5 选牌，S 跳过。标价是市场这局的报价，不是他的真实档位——便宜的可能是好货。</span>
+    </div>`;
+}
+
+/* ================= 屏 2：揭晓 ================= */
+function renderReveal(){
+  const r=S.picked, v=verdict(r), traits=rosterTraits(r);
+  const cards=r.map(c=>`<div class="rc">
+      <div class="was">$${c.price} ${POS[c.p]} · ${esc(c.ic)}</div>
+      <div class="who">${esc(c.n)}</div>
+      <div class="dim" style="font-size:12px">${esc(bio(c))}</div>
+      <div style="margin:6px 0">${gapTag(c)} <span class="tag fair">G${c.g}</span></div>
+      <div class="num dim" style="font-size:12px">火 ${c.f} · 领 ${c.l} · 经 ${c.e} · 稳 ${c.s}</div></div>`).join("");
+  return `<section class="panel"><h2>揭晓</h2><p class="dim">他们是谁，你买贵了还是抄到底了</p>
+    <div class="reveal">${cards}</div></section>
+    <section class="panel"><h2>这是支什么队</h2>
+      <ul class="verdict-list">${v.map(x=>`<li class="${x.k}">${esc(x.t)}</li>`).join("")}</ul>
+      ${traits.length?`<div class="chips">${traits.map(t=>`<span class="chip ${t.k}">${t.tag} <small>${esc(t.note)}</small></span>`).join("")}</div>`:""}
+      ${S.left?`<p class="hint">剩余 $${S.left} 没花 —— 正式版里这笔钱买构筑 Buff，现在还没做，不影响比赛。</p>`:""}
+      <div class="actions"><button class="btn primary" id="runbtn">开始 Road to Major</button>
+        <span class="hint">三段 Swiss，3 胜晋级 3 负回家。32 支队的 Stage 由区域 VRS 名额定，你按纸面火力插进去。</span></div>
+    </section>`;
+}
+
+/* ================= 屏 3：Run ================= */
+const MINE=()=>{const m=new Map();for(const c of S.picked){m.set(c.n,c);m.set(String(c.id),c);}return m;};
+const mineOf=(mine,row)=>mine.get(String(row.page))||mine.get(row.nickname);
+const isSide=(x,row,side)=>x&&x.side===side&&x.nickname===row.nickname;
+
+/* 一张图 → 最多三句主角行 + 一句结论。主角行按「意外程度」排：便宜的人打好、
+   贵的人崩、生死局 choke 排前；$5 打出 $5 的水平是预期内，排最后。 */
+function narrate(m,leg){
+  const mine=MINE(), P=leg.pressure||0, L=[];
+  for(const r of m.players){
+    const c=mineOf(mine,r); if(!c) continue;
+    const eff=Math.round(r.effective_firepower), w=r.why, tag=`$${c.price} ${esc(r.nickname)}`;
+    const mvp=isSide(m.mvp,r,"player");
+    if(P>0&&w.pressure<=-3) L.push([9,`${tag} 在高压局没顶住，比正常状态少了 ${Math.abs(w.pressure).toFixed(0)} 分（${r.base_firepower}→${eff}）`]);
+    else if(P>=1&&c.e>=80&&w.form<=-4&&w.pressure>-1) L.push([7,`${tag} 手感一般但没有崩 —— 经验 ${c.e} 的价值就在生死局`]);
+    else if(w.form>=12) L.push([8,`${tag} 打出了生涯级的一张图（${r.base_firepower}→${eff}）`]);
+    else if(mvp&&c.price<=2) L.push([8,`${tag} 是这张图的全场 MVP —— 你只花了 $${c.price}`]);
+    else if(w.form<=-12&&P===0) L.push([6,`${tag} 今天状态不在，只打了 ${eff}`]);
+    else if(mvp) L.push([3,`${tag} 兑现了身价，全场 MVP（${eff}）`]);
+  }
+  if(m.life_game&&m.life_game.side==="opponent")
+    L.push([5,`对面 ${esc(m.life_game.nickname)} 爆种（${m.life_game.base_firepower}→${Math.round(m.life_game.effective_firepower)}）`]);
+  const tacGap=(m.opponent_tactical||0)-(m.player_tactical||0);
+  if(!m.player_won&&tacGap>0&&Math.abs(m.margin)<=tacGap+1)
+    L.push([9,`差的这一点，可能就是没人指挥（对手战术执行多 ${tacGap.toFixed(1)} 分）`]);
+  L.sort((a,b)=>b[0]-a[0]);
+  const perf=m.player_strength-m.opponent_strength; let tail;
+  if(perf>0&&!m.player_won) tail="你们这张图打得其实更好，但关键局没拿下来";
+  else if(perf<0&&m.player_won) tail="打得不如对面，但关键局站到了你们这边";
+  else if(Math.abs(m.margin)<3) tail=m.player_won?"险胜，差距在细节":"惜败，差距在细节";
+  else if(m.margin<=-10) tail="被完全压制"; else if(m.margin>=10) tail="碾压";
+  else tail=m.player_won?"正常发挥拿下":"正常发挥，但对面更强";
+  return `<ul class="story">${L.slice(0,3).map(x=>`<li>${x[1]}</li>`).join("")||"<li>没有人特别出彩，也没人掉链子</li>"}</ul><p class="verdict">${tail}</p>`;
+}
+const sign=v=>(v>0?"+":"")+(+v).toFixed(1);
+function ledger(m,leg){
+  const row=r=>{const w=r.why,why=[`状态 ${sign(w.form)}`];if(w.pressure)why.push(`压力 ${sign(w.pressure)}`);if(w.soft_capped)why.push(`软顶 ${sign(w.soft_capped)}`);
+    return `<tr><td>${esc(r.nickname)}</td><td class="dim">${esc(r.position)}</td><td class="num dim">×${r.carry_weight.toFixed(2)}</td>
+      <td class="num">${r.base_firepower} → ${Math.round(r.effective_firepower)}</td><td class="num ${r.delta>0?"up":r.delta<0?"down":""}">${sign(r.delta)}</td><td class="dim">${why.join("，")}</td></tr>`;};
+  const side=(label,rows,fire,tac,struct)=>`<tr class="sep"><td colspan="6">${label} · 火力聚合 ${fire} · 战术执行 ${sign(tac)} · 结构 ${sign(struct)}</td></tr>`+rows.map(row).join("");
+  return `<table><thead><tr><th>选手</th><th>位置</th><th>权重</th><th>火力</th><th>变化</th><th>为什么</th></tr></thead><tbody>
+    ${side("你",m.players,m.player_fire,m.player_tactical,m.player_structure)}
+    ${side(esc(leg.opponent.name),m.opponents,m.opponent_fire,m.opponent_tactical,m.opponent_structure)}
+    <tr class="sep"><td colspan="6">表现差 ${sign(m.player_strength-m.opponent_strength)} · 地图残差 ${sign(m.residual)}（未建模的经济 / timing / 关键局）→ Margin ${sign(m.margin)}</td></tr></tbody></table>`;
+}
+function legHtml(leg){
+  const maps=leg.maps.map(m=>`<div class="map ${m.player_won?"win":"loss"}">
+      <div class="mh">Map ${m.number} · <b>${m.player_won?"赢":"输"}</b> · 表现 <span class="num">${m.player_strength} : ${m.opponent_strength}</span></div>
+      ${narrate(m,leg)}<details><summary>完整账本</summary>${ledger(m,leg)}</details></div>`).join("");
+  return `<article class="leg ${leg.won?"win":"loss"}"><h3>${esc(leg.label)}</h3>
+    <div class="dim">${esc(leg.opponent.name)} · 纸面火力 ${n1(leg.opponent.entry)}（你 ${n1(S.run.entry)}）· VRS ${leg.opponent.vrs||"-"}</div>
+    <div class="res ${leg.won?"up":"down"}">${leg.won?"WIN":"LOSS"} <span class="num">${leg.player_maps}:${leg.opponent_maps}</span></div>${maps}</article>`;
+}
+function renderRun(){
+  const run=S.run;
+  if(run.loading) return `<section class="panel"><p class="dim">正在跑整届 Major……</p></section>`;
+  if(run.error) return `<section class="panel"><p class="down">${esc(run.error)}</p><button class="btn" id="runbtn">重试</button></section>`;
+  if(!run.qualified) return `<section class="panel"><h2>没拿到 Major 席位</h2>
+    <p>你的纸面火力 ${n1(run.entry)}，比本届 32 支队都弱。</p>${finaleActions()}</section>`;
+  const shown=run.shown||0, parts=[], dem=run.demoted||[];
+  parts.push(`<section class="panel"><h2>Road to Major</h2>
+    <p class="dim">从 Stage ${run.stage} 进场 · 纸面火力 ${n1(run.entry)}，全场第 ${run.entry_rank} / 32 · 赛场 #${run.seed}
+      ${dem.length?` · 你的加入把 ${dem.map(d=>esc(d.team)).join("、")} ${dem.length>1?"各":""}挤下一级`:""}</p></section>`);
+  for(let i=0;i<shown&&i<run.legs.length;i++) parts.push(legHtml(run.legs[i]));
+  const next=run.legs[shown];
+  if(!next){ parts.push(finaleHtml(run)); return parts.join(""); }
+  if(next.pressure>=1.2&&!run.pausing){
+    const exp=S.picked.slice().sort((a,b)=>b.e-a.e).map(c=>`<span class="${c.e<40?"down":c.e>=75?"up":""}">${esc(c.n)} <b class="num">${c.e}</b></span>`).join("");
+    parts.push(`<article class="leg pause"><h3>${esc(next.label)}</h3>
+      <div>对手 <b>${esc(next.opponent.name)}</b> · 输了就出局 · 压力 ${next.pressure.toFixed(1)}</div>
+      <p class="exp">你五个人的经验：${exp}</p>
+      <p class="hint">压力只放大负面发挥。经验低的人这一场更容易掉链子。</p>
+      <button class="btn primary" id="nextleg">打</button></article>`);
+  } else {
+    parts.push(`<div class="actions"><button class="btn primary" id="nextleg">下一场：${esc(next.opponent.name)}
+      <span class="sub">（${next.bo===1?"BO1":"BO3"}，对手纸面火力 ${n1(next.opponent.entry)}）</span></button></div>`);
+  }
+  return parts.join("");
+}
+async function startRun(){
+  S.screen="run"; S.run={loading:true}; render();
+  try{
+    const res=await fetch("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({pages:S.picked.map(c=>c.id),seed:S.runSeed})});
+    const data=await res.json(); if(!res.ok) throw new Error(data.detail||`HTTP ${res.status}`);
+    data.shown=0; S.run=data;
+  }catch(e){ S.run={error:`Run 无法启动：${e.message}。请通过 bdserver 的 /play 打开页面。`}; }
+  render();
+}
+
+/* ================= 屏 4：结局 ================= */
+function seasonStats(run){
+  const mine=MINE(), acc=new Map();
+  for(const leg of run.legs) for(const m of leg.maps) for(const r of m.players){
+    const c=mineOf(mine,r); if(!c) continue;
+    const a=acc.get(c)||{c,eff:0,delta:0,n:0,mvp:0,life:0,under:0};
+    a.eff+=r.effective_firepower; a.delta+=r.delta; a.n++;
+    if(isSide(m.mvp,r,"player"))a.mvp++; if(isSide(m.life_game,r,"player"))a.life++; if(isSide(m.underperform,r,"player"))a.under++;
+    acc.set(c,a);
+  }
+  return [...acc.values()];
+}
+function finaleHtml(run){
+  const st=seasonStats(run), r=S.picked;
+  const val=a=>a.mvp*3+a.life*2+a.delta/a.n;
+  const steal=st.filter(a=>a.c.price<=3&&val(a)>0).sort((a,b)=>val(b)/b.c.price-val(a)/a.c.price)[0];
+  const over=st.filter(a=>a.c.price>=4).sort((a,b)=>a.delta/a.n-b.delta/b.n)[0];
+  let miss=null,dodge=null;
+  for(const b of S.boards) for(const c of b){ if(r.includes(c))continue;
+    if(!miss||gap(c)>gap(miss))miss=c; if(!dodge||gap(c)<gap(dodge))dodge=c; }
+  const li=(k,v)=>v?`<li><b>${k}</b>${v}</li>`:"";
+  const table=st.sort((a,b)=>b.eff/b.n-a.eff/a.n).map(a=>`<tr><td class="num">$${a.c.price}</td><td>${esc(a.c.n)}</td><td class="dim">${POS[a.c.p]}</td>
+    <td class="num">${a.c.f} → ${(a.eff/a.n).toFixed(1)}</td><td class="num ${a.delta>0?"up":a.delta<0?"down":""}">${sign(a.delta/a.n)}</td>
+    <td class="num">${a.mvp}</td><td class="num">${a.life}</td><td class="num">${a.under}</td></tr>`).join("");
+  return `<section class="panel"><span class="eyebrow">RUN #${S.seed}</span>
+    <h2>${run.reached_playoffs?"进入 Playoffs":"止步 Stage "+(run.stages.length?run.stages[run.stages.length-1].stage:run.stage)}</h2>
+    <div class="record num">${run.wins}-${run.losses}</div>
+    <p class="dim">${run.stages.map(s=>`Stage ${s.stage} ${s.wins}-${s.losses} ${s.advanced?"晋级":"淘汰"}`).join(" · ")}</p>
+    <ul class="awards">
+      ${li("BIGGEST STEAL",steal&&`$${steal.c.price} ${esc(steal.c.n)} —— ${steal.mvp} 次 MVP，平均比卡面 ${sign(steal.delta/steal.n)}`)}
+      ${li("BIGGEST OVERPAY",over&&over.delta/over.n<-2&&`$${over.c.price} ${esc(over.c.n)} —— 平均比卡面 ${sign(over.delta/over.n)}，${over.under} 次 UNDERPERFORM`)}
+      ${li("BIGGEST MISS",miss&&gap(miss)>0&&`$${miss.price} 的 ${esc(miss.n)}（其实是 G${miss.g}），你没买`)}
+      ${li("BULLET DODGED",dodge&&gap(dodge)<0&&`$${dodge.price} 的 ${esc(dodge.n)}（其实是 G${dodge.g}），你没上当`)}
+    </ul>
+    <h3>你的五个人这一届</h3>
+    <table><thead><tr><th>价</th><th>选手</th><th>位置</th><th>卡面 → 平均</th><th>偏离</th><th>MVP</th><th>LIFE</th><th>崩</th></tr></thead><tbody>${table}</tbody></table>
+    ${finaleActions()}</section>
+    ${debriefHtml()}`;
+}
+function finaleActions(){
+  return `<div class="actions"><button class="btn primary" id="again">再来一局</button>
+    <button class="btn" id="replay">同样的牌重打</button><button class="btn" id="rerun">同一阵容重跑比赛</button></div>`;
+}
+function debriefHtml(){
+  const r=S.picked;
+  const all=S.boards.map((b,bi)=>{
+    const p=b.find(c=>r.includes(c)), passed=S.passed.includes(bi+1);
+    const head=`<tr class="sep"><td colspan="6">第 ${bi+1} 轮 · ${passed?'<span class="down">你跳过了</span>':p?`你签下 <b>${esc(p.n)}</b>（$${p.price}）`:"—"}</td></tr>`;
+    return head+b.map(c=>{const g=gap(c),mine=r.includes(c);
+      const mark=mine?'<span class="up">✓ 你的</span>':g>0?`<span class="up">💎 错过的抄底 +${g}</span>`:g<0?`<span class="dim">标价虚高 ${g}</span>`:"";
+      return `<tr><td class="num">$${c.price}</td><td>${POS[c.p]}</td><td class="dim">${esc(c.sa)} ${c.scout[0]}–${c.scout[1]} · ${esc(c.c)} · ${esc(c.ic)}</td>
+        <td>${esc(c.n)} <span class="tag fair">G${c.g}</span></td><td class="num dim">${c.f}/${c.l}/${c.e}/${c.s}</td><td>${mark}</td></tr>`;}).join("");
+  }).join("");
+  return `<section class="panel"><details><summary>完整复盘：${S.boards.length} 轮全部 ${S.boards.reduce((n,b)=>n+b.length,0)} 张牌翻开</summary>
+    <table><thead><tr><th>价</th><th>位置</th><th>当时卡面</th><th>其实是</th><th>火/领/经/稳</th><th></th></tr></thead><tbody>${all}</tbody></table>
+  </details></section>`;
+}
+
+/* ================= 主渲染 ================= */
+function render(){
+  renderStatus();
+  const stage=el("stage");
+  if(S.screen==="draft") stage.innerHTML=renderBoard();
+  else if(S.screen==="reveal") stage.innerHTML=renderReveal();
+  else stage.innerHTML=renderRun();
+  document.querySelectorAll(".card").forEach(b=>b.onclick=()=>pick(S.board[+b.dataset.i]));
+  const on=(id,fn)=>{const e=el(id);if(e)e.onclick=fn;};
+  on("passbtn",pass);
+  on("runbtn",startRun);
+  on("nextleg",()=>{const run=S.run,next=run.legs[run.shown||0];
+    if(next&&next.pressure>=1.2&&!run.pausing) run.pausing=true; else {run.shown=(run.shown||0)+1;run.pausing=false;}
+    render(); window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});});
+  on("again",()=>newRun((Math.random()*1e9)|0));
+  on("replay",()=>newRun(S.seed));
+  on("rerun",()=>{S.runSeed=(Math.random()*1e9)|0;startRun();});
+}
+el("newrun").onclick=()=>newRun((Math.random()*1e9)|0);
+newRun((Math.random()*1e9)|0);
+</script>
+</body>
+</html>

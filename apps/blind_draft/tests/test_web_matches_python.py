@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-"""网页算的阵容分必须和 Python 逐分一致。
+"""网页算的 Entry 必须和 `/api/run` 返回的那个数逐分一致。
 
-选人页在浏览器里算分（散场那页要枚举成千上万种替代阵容，来回请求服务端不
-现实），所以 `templates/draft_web.html` 里有一份 JS 实现。以前它和
-`draft.score()` 是**两边各抄一遍公式**——`.35/.25/.40`、无狙 −4 都写死在 JS
-里，引擎一改就静默错开，而且错开的正好是「你本可以选谁」那个数。
+选人页在浏览器里就要给出「这是支什么队」，而同一支队的 Entry 会在下一屏由
+Python 再算一遍（`run.entry`）。两处各写一份公式，就会出现同一个名字两个数
+——实测过一次：揭晓页写「纸面火力 78.3」，Run 页写「你 81.8」，差的 3.5 正
+好是玩家队的磨合度，页面上没有任何东西解释这 3.5 是什么。
 
-现在系数全部由 `export_web` 从 `proto_match_v2` 注入（`D.engine`），这个测试
-再把两边跑同一批阵容对齐到小数点后 9 位。没装 node 就跳过。
+所以系数全部由 `export_web` 从 `proto_match_v2` 注入（`D.engine`），JS 里的
+`entryOf()` 和 Python 的 `entry_of(roster, player_cohesion(roster))` 是同一
+条式子的两次书写，这个测试把它们对齐到小数点后 9 位。没装 node 就跳过。
 """
 import io
 import json
@@ -20,6 +21,7 @@ import tempfile
 import unittest
 
 from blinddraft import draft as P
+from blinddraft import proto_match_v2 as V2
 from bdtools.export_web import render_html
 
 NODE = shutil.which("node")
@@ -28,24 +30,18 @@ NODE = shutil.which("node")
 # 不能开 DOTALL，否则 `.` 会一路吃到文件末尾。
 WANT = ((r"^const D = .*$", False),
         (r"^const CARDS = .*$", False),
-        (r"^const BUDGET = .*$", False),
-        (r"^const RATE = .*$", False),
-        (r"^const ENG = .*$", False),
-        (r"^const PAIR = new Map.*?^\}$", True),
-        (r"^const mean = .*$", False),
+        (r"^const ENG=.*$", False),
+        (r"^const PAIR=new Map.*?^\}$", True),
+        (r"^const mean=.*$", False),
         (r"^function chemistry\(r\)\{.*?^\}$", True),
-        (r"^function carryWeights\(n\)\{.*?^\}$", True),
-        (r"^function tactical\(r\)\{.*?^\}$", True),
-        (r"^function sigma\(stab.*?^\}$", True),
-        (r"^function score\(r, money\)\{.*?^\}$", True))
+        (r"^const cohesionOf=.*$", False),
+        (r"^function fireAgg\(r\)\{.*$", False),
+        (r"^const noAwpOf=.*$", False),
+        (r"^function entryOf\(r\)\{.*$", False))
 
-FIELDS = ("total", "fire", "chem", "cohesion", "tactical",
-          "swing_down", "swing_up")
-JS_FIELDS = ("total", "fire", "chem", "cohesion", "tactical",
-             "swingDown", "swingUp")
-
-# 随机抽 40 支阵容里只有约 1.4% 的裸默契会超过封顶，靠运气覆盖不到——而这
-# 正好是两边最容易错开的一处（一边按 9 显示、一边按 4 打）。所以钉死几支。
+# 随机抽的阵容里只有约 1.4% 的裸默契会超过封顶，靠运气覆盖不到——而封顶正好
+# 是两边最容易错开的一处（一边按 9 显示、一边按 4 打）。所以钉死几支。
+# 写的是 page（卡的主键），不是 nickname——两者大小写可以不一样（Sh1ro / sh1ro）。
 CAPPED = (["Sh1ro", "ImoRR", "Magixx", "DemQQ", "Woxic"],          # 裸默契 9.0
           ["GuardiaN", "ZehN", "NBK-", "Daps", "KioShiMa"],        # 6.5
           ["JW", "Spiidi", "Desi", "Rallen", "Olofmeister"])       # 6.5
@@ -56,16 +52,15 @@ HARNESS = """
 const fs = require("fs");
 const byPage = new Map(CARDS.map(c => [String(c.id), c]));
 const cases = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
-console.log(JSON.stringify(cases.map(([pages, money]) => {
-  const s = score(pages.map(p => byPage.get(String(p))), money);
-  return [s.total, s.fire, s.chem, s.cohesion, s.tactical,
-          s.swingDown, s.swingUp];
+console.log(JSON.stringify(cases.map(pages => {
+  const r = pages.map(p => byPage.get(String(p)));
+  return [entryOf(r), fireAgg(r), cohesionOf(r), chemistry(r)];
 })));
 """
 
 
 @unittest.skipUnless(NODE, "没装 node，跳过网页与 Python 的对齐检查")
-class WebScoreMatchesPython(unittest.TestCase):
+class WebEntryMatchesPython(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.html = render_html()[0]
@@ -83,10 +78,9 @@ class WebScoreMatchesPython(unittest.TestCase):
     def test_the_two_implementations_agree_to_nine_places(self):
         rng = random.Random(20260904)
         by_page = {c["page"]: c for c in self.cards}
-        cases = [(list(pages), money)
-                 for pages in CAPPED for money in (0, 4)]
-        cases += [([c["page"] for c in rng.sample(self.cards, P.SLOTS)],
-                   rng.randint(0, 6)) for _ in range(40)]
+        cases = [list(team) for team in CAPPED]
+        cases += [[c["page"] for c in rng.sample(self.cards, P.SLOTS)]
+                  for _ in range(40)]
 
         with tempfile.TemporaryDirectory() as tmp:
             js_path = os.path.join(tmp, "bundle.js")
@@ -99,23 +93,32 @@ class WebScoreMatchesPython(unittest.TestCase):
                                  text=True, encoding="utf-8")
         self.assertEqual(res.returncode, 0, res.stderr)
 
-        for (pages, money), row in zip(cases, json.loads(res.stdout)):
+        cap = P.cohesion_cap()
+        for pages, (js_entry, js_fire, js_coh, js_chem) in zip(
+                cases, json.loads(res.stdout)):
             roster = [by_page[p] for p in pages]
-            s = P.score(roster, self.rosters, money)
-            if pages in [list(x) for x in CAPPED]:
-                self.assertTrue(s["capped"], "这几支本该触发封顶")
-            for key, jkey, got in zip(FIELDS, JS_FIELDS, row):
-                self.assertAlmostEqual(
-                    s[key], got, places=9,
-                    msg="%s / %s 对不上：Python %.6f，JS %.6f；阵容 %s，余钱 %d"
-                        % (key, jkey, s[key], got,
-                           "、".join(c["nickname"] for c in roster), money))
+            who = "、".join(c["nickname"] for c in roster)
+            coh = V2.player_cohesion(roster)
+            entry = V2.entry_of(roster, coh)
+            if pages in [list(team) for team in CAPPED]:
+                self.assertGreater(js_chem, cap, "%s 这支本该触发封顶" % who)
+            self.assertAlmostEqual(
+                coh, js_coh, places=9,
+                msg="磨合度对不上：Python %.6f，JS %.6f；阵容 %s" % (coh, js_coh, who))
+            self.assertAlmostEqual(
+                entry, js_entry, places=9,
+                msg="Entry 对不上：Python %.6f，JS %.6f；阵容 %s"
+                    % (entry, js_entry, who))
+            # 火力聚合单拎出来对一次：Entry 相等但两项互相抵消的情况骗不过去
+            self.assertAlmostEqual(
+                V2.entry_of(roster) - (V2.NO_AWP_PENALTY if not any(
+                    c["position"] == "AWPER" for c in roster) else 0.0),
+                js_fire, places=9, msg="火力聚合对不上；阵容 %s" % who)
 
     def test_the_engine_constants_are_injected_not_hardcoded(self):
         """JS 里不许再出现写死的引擎系数——那正是以前会错开的原因。"""
-        from blinddraft import proto_match_v2 as V2
         body = self._js_bundle()
-        for banned in ("*.35", "*.25", "base -= 4", "fire*.40"):
+        for banned in ("*.35", "*.25", "-=4", "v-=4", "*.40"):
             self.assertNotIn(banned, body, "JS 又把引擎系数写死了：%s" % banned)
         d = json.loads(re.search(r"^const D = (\{.*\});$", self.html, re.M).group(1))
         eng = d["engine"]
@@ -124,6 +127,7 @@ class WebScoreMatchesPython(unittest.TestCase):
         self.assertEqual(eng["noAwp"], V2.NO_AWP_PENALTY)
         self.assertEqual(eng["noIgl"], V2.NO_IGL_TACTICAL)
         self.assertEqual(eng["clamp"], V2.TACTICAL_CLAMP)
+        self.assertEqual(eng["cohesionCap"], P.cohesion_cap())
 
 
 if __name__ == "__main__":

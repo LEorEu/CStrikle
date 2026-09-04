@@ -4,7 +4,7 @@
     python -m bdtools.export_web
     python -m bdtools.export_web 输出.html
 
-模板是 apps/blind_draft/templates/draft_web.html(里面有 /*__DATA__*/ 占位符)。数据取自
+模板是 apps/blind_draft/templates/Blind_Draft.html(里面有 /*__DATA__*/ 占位符)。数据取自
 blinddraft/draft.py 读到的**已提交的 v6 卡(不再做任何加工)**,所以网页版和命令行版算出来的分逐分
 一致;改了 blinddraft/draft.py 的公式,重新跑一次这个脚本即可。
 
@@ -21,7 +21,7 @@ from playerdb.paths import ROOT
 from blinddraft import draft as P
 from blinddraft import proto_match_v2 as V2
 
-TEMPLATE = Path(__file__).resolve().parents[1] / "templates" / "draft_web.html"
+TEMPLATE = Path(__file__).resolve().parents[1] / "templates" / "Blind_Draft.html"
 DEFAULT_OUT = ROOT / ".cache" / "proto_draft_web.html"
 
 

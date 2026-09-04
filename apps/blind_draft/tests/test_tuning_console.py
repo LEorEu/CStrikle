@@ -119,7 +119,7 @@ class ApiSmokeTests(unittest.TestCase):
         client = TestClient(A.app)
         page = client.get("/play")
         self.assertEqual(page.status_code, 200)
-        self.assertIn("开始 Run", page.text)
+        self.assertIn("开始 Road to Major", page.text)
         cards = C.generate()[0]
         # 用最强的五张确保能取得席位；阵容合法性在 Match 内通过软惩罚表达。
         picked = sorted(cards, key=lambda c: -c["overall"])[:5]
