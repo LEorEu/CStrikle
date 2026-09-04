@@ -1,17 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Barlow Condensed", "Oswald", Impact, sans-serif;
-  --font-body: "Barlow", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* 拉丁字形走窄体赛事字，CJK 落到思源黑体——同一个 class 里中英各得其所。
+     不给中文硬套电竞字体：那种字重和字距在小字号上可读性反而更差。 */
+  --font-display: "Barlow Condensed", "Oswald", "Noto Sans SC", Impact, sans-serif;
+  --font-body: "Barlow", "Noto Sans SC", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Noto Sans SC", ui-monospace, monospace;
 
   --color-bc-bg: #07090d;
   --color-bc-panel: #0f141b;
   --color-bc-panel2: #161d27;
   --color-bc-line: #263241;
   --color-bc-text: #e6ebf2;
-  --color-bc-muted: #8593a6;
-  --color-bc-accent: #ffb400;
+  --color-bc-muted: #9caabd;
+  --color-bc-accent: #ffc53d;
   --color-bc-live: #ff2d3b;
   --color-bc-home: #2fa8ff;
   --color-bc-away: #ff8a2a;
@@ -62,8 +64,15 @@ body {
   background: var(--color-bc-bg);
   color: var(--color-bc-text);
   font-family: var(--font-body);
+  /* 中文正文比拉丁更吃行距，1.65 是长句读起来不挤的下限 */
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+/* 标题、表头、数字这些是排版元素，不跟正文的行距走 */
+h1, h2, h3, table, .font-mono {
+  line-height: 1.2;
 }
 
 .bc-grid {
@@ -98,3 +107,6 @@ body {
 
 .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: #263241; border-radius: 3px; }
+
+/* 滚动条那行提示：标签和正文之间的分隔 */
+.tick-sep { color: var(--color-bc-line); }

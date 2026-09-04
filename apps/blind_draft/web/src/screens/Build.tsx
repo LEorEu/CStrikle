@@ -74,7 +74,7 @@ export function Build({ draft, run, teamName, onContinue }: Props) {
               </div>
               <div className="space-y-2">
                 <StatBar label="FIRE" value={avg(run, "firepower")} color="#ff8a2a" />
-                <StatBar label="LEAD" value={avg(run, "leadership")} color="#ffb400" />
+                <StatBar label="LEAD" value={avg(run, "leadership")} color="#ffc53d" />
                 <StatBar label="EXP" value={avg(run, "experience")} color="#2fa8ff" />
                 <StatBar label="STAB" value={avg(run, "stability")} color="#2fe08a" />
                 <div className="pt-1 text-[11px] text-bc-muted">

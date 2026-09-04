@@ -3,7 +3,7 @@ import { cn } from "../utils/cn";
 import type { Position } from "../api/types";
 
 export const POS_COLOR: Record<Position, string> = {
-  IGL: "#ffb400",
+  IGL: "#ffc53d",
   AWPER: "#2fa8ff",
   RIFLER: "#8593a6",
 };
@@ -37,7 +37,7 @@ export function Panel({ children, className, title, right }: { children: ReactNo
   );
 }
 
-export function Tag({ children, color = "#ffb400", className, dark }: { children: ReactNode; color?: string; className?: string; dark?: boolean }) {
+export function Tag({ children, color = "#ffc53d", className, dark }: { children: ReactNode; color?: string; className?: string; dark?: boolean }) {
   return (
     <span
       className={cn("skew-tag inline-block px-2.5 py-0.5 font-display text-xs font-extrabold uppercase tracking-widest", className)}
@@ -83,7 +83,7 @@ export function ValueTagBadge({ tag }: { tag: ValueTag }) {
   );
 }
 
-export function StatBar({ label, value, color = "#ffb400", compact }: { label: string; value: number; color?: string; compact?: boolean }) {
+export function StatBar({ label, value, color = "#ffc53d", compact }: { label: string; value: number; color?: string; compact?: boolean }) {
   return (
     <div className={cn("flex items-center gap-2", compact ? "text-[11px]" : "text-xs")}>
       <div className={cn("font-display font-bold uppercase tracking-widest text-bc-muted", compact ? "w-8" : "w-24")}>{label}</div>

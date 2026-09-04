@@ -198,7 +198,7 @@ function BlindCard({ card, active, onClick, delay }: { card: BoardCard; active: 
       className={cn(
         "group relative flex animate-rise flex-col overflow-hidden border text-left transition-all",
         active
-          ? "-translate-y-1 border-bc-accent shadow-[0_0_0_2px_#ffb400,0_20px_60px_-20px_rgba(255,180,0,0.5)]"
+          ? "-translate-y-1 border-bc-accent shadow-[0_0_0_2px_#ffc53d,0_20px_60px_-20px_rgba(255,180,0,0.5)]"
           : "border-bc-line hover:-translate-y-0.5 hover:border-bc-muted",
       )}
     >

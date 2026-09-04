@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PASS, fetchDraft, fetchRun } from "./api/client";
 import type { DraftState, RunResult } from "./api/types";
-import { Frame, Ticker, TopBar, type Phase } from "./components/Broadcast";
+import { Frame, Ticker, TopBar, type Phase, type TickerItem } from "./components/Broadcast";
 import { Build } from "./screens/Build";
 import { Draft } from "./screens/Draft";
 import { Final } from "./screens/Final";
@@ -11,13 +11,13 @@ import { Tournament } from "./screens/Tournament";
 
 const TEAM_NAMES = ["Blind Faith", "Paper Tigers", "Draft Dodgers", "Fog of War", "Mystery Machine", "No Scouting", "Budget Kings"];
 
-const TICKER_BASE = [
-  "Blind Draft 赛季开启：$15 预算，7 个市场日，签 5 人",
-  "分析师：卡面只给一维球探区间，其余全靠线索认人",
-  "规则提醒：预算要给后面每个空位留 $1，买不起的牌不会发到你面前",
-  "赛制：32 队三段瑞士轮，Stage 归属由区域 VRS 名额决定",
-  "解说席：Stability 决定的是波动，不是另一种 Firepower",
-  "提示：同一个 seed 和命令行 python -m blinddraft.draft --seed N 是同一局",
+const TICKER_BASE: TickerItem[] = [
+  { label: "赛事快讯", text: "BO3 不会给强队额外加成，但更多地图通常会让实力更稳定地兑现" },
+  { label: "球探提示", text: "球探报告只提供区间——它能缩小范围，但不会直接告诉你答案" },
+  { label: "赛场观察", text: "高经验选手不会平白变得更强，但在生死局里更不容易失常" },
+  { label: "经理提示", text: "一套火力很强的阵容，也可能因为缺少指挥而付出代价" },
+  { label: "规则说明", text: "预算要给后面每个空位留 $1，所以买不起的牌不会发到你面前" },
+  { label: "赛制说明", text: "32 队三阶段瑞士轮，Stage 归属由区域 VRS 名额决定" },
 ];
 
 /**
@@ -83,14 +83,23 @@ export default function App() {
   const act = (a: number) => load(seed, [...actions, a]);
   const undo = () => load(seed, actions.slice(0, -1));
 
-  const ticker = useMemo(() => {
+  const ticker = useMemo<TickerItem[]>(() => {
     const items = [...TICKER_BASE];
     if (draft && phase === "draft")
-      items.unshift(`${teamName} 第 ${draft.turn}/${draft.turns} 个市场日 · 剩余 $${draft.left} · 还要签 ${draft.slots_left} 人`);
+      items.unshift({
+        label: "本局",
+        text: `${teamName} 第 ${draft.turn}/${draft.turns} 个市场日 · 剩余 $${draft.left} · 还要签 ${draft.slots_left} 人`,
+      });
     if (run && phase !== "draft" && phase !== "intro")
-      items.unshift(`${teamName} 队伍强度 ${run.entry.toFixed(1)} · 全场 Entry 第 ${run.entry_rank} · Stage ${run.stage}`);
+      items.unshift({
+        label: "球队",
+        text: `${teamName} 队伍强度 ${run.entry.toFixed(1)} · 全场 Entry 第 ${run.entry_rank} · 从 Stage ${run.stage} 打起`,
+      });
     if (run && phase === "final")
-      items.unshift(`${teamName} 最终 ${run.wins}-${run.losses}：${run.reached_playoffs ? "进入 Playoffs" : "止步瑞士轮"}`);
+      items.unshift({
+        label: "战报",
+        text: `${teamName} 最终 ${run.wins}-${run.losses}：${run.reached_playoffs ? "进入 Playoffs" : "止步瑞士轮"}`,
+      });
     return items;
   }, [phase, teamName, draft, run]);
 

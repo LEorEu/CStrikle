@@ -161,7 +161,7 @@ function RevealCard({ card, blind, revealed }: { card: RosterCard; blind: BoardC
 
         <div className="mt-3 space-y-1.5">
           <StatBar label="FIRE" value={card.firepower} color="#ff8a2a" compact />
-          <StatBar label="LEAD" value={card.leadership} color="#ffb400" compact />
+          <StatBar label="LEAD" value={card.leadership} color="#ffc53d" compact />
           <StatBar label="EXP" value={card.experience} color="#2fa8ff" compact />
           <StatBar label="STAB" value={card.stability} color="#2fe08a" compact />
         </div>
