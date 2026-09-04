@@ -6,7 +6,7 @@
 一条硬验收：F50 和 F96 的 MVP 率差不多，就判引擎坏了。
 
 这个文件曾经分 v1 / v2 两组，同一条不变量各写一遍。v1（`blinddraft.match`）
-已退役删除，所以现在只有一套断言，全部对着 `proto_match_v2`。原来 v1 独有的
+已退役删除，所以现在只有一套断言，全部对着 `engine`。原来 v1 独有的
 四条（Carry 权重由卡面定死、逐项归因加得回 delta、输的一方也能拿 MVP、
 不 Roll 时的强度等于 Entry）都翻译成了 v2 的口径，见 `MatchV2Tests`。
 """
@@ -16,7 +16,7 @@ import random
 import unittest
 
 from blinddraft import draft as P
-from blinddraft import proto_match_v2 as V2
+from blinddraft import engine as V2
 
 
 class MatchV2Tests(unittest.TestCase):
@@ -57,9 +57,9 @@ class MatchV2Tests(unittest.TestCase):
     def test_leadership_hits_the_win_rate_targets(self):
         """§9.2：先定胜率差再反推 Strength。这条锁的是**胜率**，不是分数。"""
         V = self.V
-        ref = V._probe("ref", 78, 60, igl_lead=65)
-        elite = V._probe("elite", 78, 60, igl_lead=96)
-        none = V._probe("none", 78, 60)
+        ref = V.probe_team("ref", 78, 60, igl_lead=65)
+        elite = V.probe_team("elite", 78, 60, igl_lead=96)
+        none = V.probe_team("none", 78, 60)
         gain = V.win_rate(elite, ref, 1, 0.0, 6000, 17) - 0.5
         loss = 0.5 - V.win_rate(none, ref, 1, 0.0, 6000, 17)
         self.assertGreater(gain, 0.03)          # 目标 4~6pt，留一点采样余量
@@ -70,7 +70,7 @@ class MatchV2Tests(unittest.TestCase):
     def test_map_residual_never_touches_player_story(self):
         """§13.4：残差不能生成 MVP，也不能改任何人的有效火力。"""
         V = self.V
-        a, b = V._probe("A", 80, 60), V._probe("B", 78, 60)
+        a, b = V.probe_team("A", 80, 60), V.probe_team("B", 78, 60)
         rng = random.Random(3)
         for _ in range(200):
             m = V.play_map(a, b, rng, 0.0)
@@ -99,7 +99,7 @@ class MatchV2Tests(unittest.TestCase):
     def test_bo3_is_safer_than_bo1_without_any_bo3_bonus(self):
         """§16：BO3 更稳必须是多掷几张图自然涌现的，引擎里没有 BO3 加成。"""
         V = self.V
-        a, b = V._probe("A", 80, 70), V._probe("B", 70, 70)
+        a, b = V.probe_team("A", 80, 70), V.probe_team("B", 70, 70)
         bo1 = V.win_rate(a, b, 1, 0.0, 6000, 11)
         bo3 = V.win_rate(a, b, 3, 0.0, 6000, 11)
         self.assertGreater(bo3, bo1)
@@ -109,7 +109,7 @@ class MatchV2Tests(unittest.TestCase):
     def test_entry_has_no_static_leadership_experience_stability(self):
         """§4.1：把这三维改成任何值，Entry 都不许动。"""
         V = self.V
-        base = [V._fake("p%d" % i, 70, 60, exp=50, lead=30) for i in range(5)]
+        base = [V.fake_card("p%d" % i, 70, 60, exp=50, lead=30) for i in range(5)]
         moved = [dict(c, stability=95, experience=95, leadership=95)
                  for c in base]
         self.assertAlmostEqual(V.Team("a", base).entry(),
@@ -124,7 +124,7 @@ class MatchV2Tests(unittest.TestCase):
         既涨分又从后排跳到主枪位。v2 的 `Team.weights` 在构造时按卡面火力排定。
         """
         V = self.V
-        ladder = [V._fake("F%d" % f, f, 60) for f in (96, 75, 68, 62, 55)]
+        ladder = [V.fake_card("F%d" % f, f, 60) for f in (96, 75, 68, 62, 55)]
         self.assertEqual(V.Team("t", ladder).weights,
                          [.35, .25, .40 / 3, .40 / 3, .40 / 3])
         # 顺序打乱后权重必须跟着人走，而不是跟着 roster 下标走
@@ -139,7 +139,7 @@ class MatchV2Tests(unittest.TestCase):
         三项——§11 退役了 Team Shared Form，Leadership 也不再逐人挽回。
         """
         V = self.V
-        a, b = V._probe("A", 80, 50), V._probe("B", 74, 90)
+        a, b = V.probe_team("A", 80, 50), V.probe_team("B", 74, 90)
         rng = random.Random(6)
         for _ in range(200):
             m = V.play_map(a, b, rng, 1.2)          # 有压力才走得到 choke 那一项
@@ -150,9 +150,9 @@ class MatchV2Tests(unittest.TestCase):
     def test_the_losing_side_can_still_hold_the_mvp(self):
         """「核心尽力了，队友带不动」必须讲得出来——v1 的旧口径永远讲不出。"""
         V = self.V
-        strong = V.Team("S", [V._fake("ACE", 99, 99)] +
-                        [V._fake("m%d" % i, 40, 99) for i in range(4)])
-        weak = V.Team("W", [V._fake("w%d" % i, 45, 99) for i in range(5)])
+        strong = V.Team("S", [V.fake_card("ACE", 99, 99)] +
+                        [V.fake_card("m%d" % i, 40, 99) for i in range(4)])
+        weak = V.Team("W", [V.fake_card("w%d" % i, 45, 99) for i in range(5)])
         rng = random.Random(1)
         seen = sum(1 for _ in range(400)
                    if (lambda m: not m.winner_a and m.mvp[1])(
@@ -162,9 +162,9 @@ class MatchV2Tests(unittest.TestCase):
     def test_life_game_and_underperform_belong_to_the_volatile_ones(self):
         """MVP 归明星，爆种和崩盘归低稳定的人——两个故事各归各的，且都要有。"""
         V = self.V
-        roster = [V._fake("F96", 96, 87), V._fake("F75", 75, 62),
-                  V._fake("F68", 68, 57), V._fake("F62", 62, 50),
-                  V._fake("F55", 55, 46)]
+        roster = [V.fake_card("F96", 96, 87), V.fake_card("F75", 75, 62),
+                  V.fake_card("F68", 68, 57), V.fake_card("F62", 62, 50),
+                  V.fake_card("F55", 55, 46)]
         team = V.Team("LADDER", roster)
         rng = random.Random(4)
         n = 8000
@@ -213,7 +213,7 @@ class MajorShellTests(unittest.TestCase):
 
     def setUp(self):
         # 每个用例重建赛场：insert_player 会就地改 team.stage，共享一份会串味。
-        from blinddraft import proto_match_v2 as V2
+        from blinddraft import engine as V2
         self.V = V2
         self.field, self.asof = V2.major_field()
 
@@ -250,7 +250,7 @@ class MajorShellTests(unittest.TestCase):
 
     def test_a_team_weaker_than_the_whole_field_fails_to_qualify(self):
         V = self.V
-        junk = [V._fake("j%d" % i, 20, 50) for i in range(5)]
+        junk = [V.fake_card("j%d" % i, 20, 50) for i in range(5)]
         stage, shove, full = V.insert_player(list(self.field),
                                              V.Team("JUNK", junk, 0.0, True))
         self.assertEqual(stage, 0)

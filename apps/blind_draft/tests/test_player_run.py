@@ -3,7 +3,7 @@
 
 这个文件原来叫 `test_match_quick.py`，盯的是 v1 的 `--quick-run`（固定三场、
 对手取 Entry 最接近的三支）。v1 已退役删除，`--quick-run` 想回答的
-「四维有没有存在感」现在由 `proto_match_v2 --lab` 的六项验收回答，胜率锚由
+「四维有没有存在感」现在由 `engine --lab` 的六项验收回答，胜率锚由
 `--duel` 实测。剩下这一条是别处都没有的：**后台这个 HTTP 入口本身**。
 """
 import json
@@ -11,7 +11,7 @@ import unittest
 
 from blinddraft import draft as P
 from blinddraft import major as M
-from blinddraft import proto_match_v2 as V2
+from blinddraft import engine as V2
 from bdserver import run as R
 
 

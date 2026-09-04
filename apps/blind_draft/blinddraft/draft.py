@@ -340,9 +340,9 @@ def score(roster, rosters, money=0):
 
     现在整段直接问引擎:`Team.entry()`(含 Carry 权重和无狙罚分)加 `tactical()`。
     这里**不留任何一份公式的副本**,所以引擎改了系数,散场那页会跟着改。
-    延迟导入是因为 proto_match_v2 反过来要用本模块取卡。
+    延迟导入是因为 engine 反过来要用本模块取卡。
     """
-    from . import proto_match_v2 as V2
+    from . import engine as V2
     boost = min(money, SAVE_CAP) * SAVE_RATE
     boosted = [dict(c, **{SAVE_ATTR: c[SAVE_ATTR] + boost}) for c in roster]
 

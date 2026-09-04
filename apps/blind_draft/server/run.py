@@ -4,8 +4,8 @@
 网页只提交五个 player page 和随机种子；选卡真值、AI 赛场、Entry、对手选择、
 Form Roll 和压力机制全部在 Python 这一侧完成。前端不复制任何比赛公式。
 
-**引擎是 v2**（`blinddraft.proto_match_v2`，实现设计稿 v0.3）。装配逻辑整个在
-`proto_match_v2.player_run`，这里只剩一层薄封装，因为赛事外壳、玩家插队和逐人
+**引擎是 v2**（`blinddraft.engine`，实现设计稿 v0.3）。装配逻辑整个在
+`engine.run.player_run`，这里只剩一层薄封装，因为赛事外壳、玩家插队和逐人
 账本在 v2 里是一体的，拆开反而要在两处维护同一套字段。
 
 和已退役的 v1 相比，前端能看见的口径差有三处（旧截图和旧文档还留着 v1 的数）：
@@ -19,7 +19,7 @@ Form Roll 和压力机制全部在 Python 这一侧完成。前端不复制任�
 v1（`blinddraft.match`）已退役删除，比赛引擎现在只有一处。
 """
 from blinddraft import draft as P
-from blinddraft import proto_match_v2 as V2
+from blinddraft import engine as V2
 
 
 def build_run(pages, seed=1):

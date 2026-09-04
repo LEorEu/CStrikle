@@ -109,7 +109,7 @@ class ViewTests(unittest.TestCase):
         # 「Maka 的 caller 身份让这支队算有 IGL」，不是旧那个 20% 加权项。
         self.assertTrue(score["has_igl"], "指挥狙没有被算成这支队的 IGL")
         self.assertGreater(score["lead"], 45, "Maka 的 caller 领导力没进 team_lead")
-        from blinddraft import proto_match_v2 as V2
+        from blinddraft import engine as V2
         self.assertGreater(score["tactical"], V2.NO_IGL_TACTICAL,
                            "有 IGL 的队不该拿到无 IGL 的战术罚分")
 
@@ -243,7 +243,7 @@ class ViewTests(unittest.TestCase):
 
 
 class OneEntryDefinitionTests(unittest.TestCase):
-    """项目里只允许有一个东西叫 Entry：`proto_match_v2.entry_of`（§4.1 纯火力）。
+    """项目里只允许有一个东西叫 Entry：`engine.entry_of`（§4.1 纯火力）。
 
     以前 `major.entry_rating` 还产出一个复合值（火力 40% + L/E/S 各 20%），
     页面用它、比赛用另一个，对同一批 32 支队的名次差到 15 位。删掉之后这一组
@@ -252,7 +252,7 @@ class OneEntryDefinitionTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from blinddraft import proto_match_v2 as V2
+        from blinddraft import engine as V2
         cls.V2 = V2
         cls.cfg = M.load_config()
         cls.cap = float(cls.cfg.get("cohesion_cap", M.COHESION_CAP))

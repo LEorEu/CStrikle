@@ -83,7 +83,7 @@ def entry_rating(roster, rosters, cohesion_cap=COHESION_CAP):
     """一支队的先天默契和封顶后的磨合度。**这里不再产出 Entry。**
 
     以前它还返回 `base`(火力 40% + L/E/S 各 20%)和 `entry = base + 默契`。
-    那是 v1 的口径、量纲 ≈65,而比赛读的是 `proto_match_v2.entry_of` 的纯火力
+    那是 v1 的口径、量纲 ≈65,而比赛读的是 `engine.entry_of` 的纯火力
     (≈80)。两个数都叫 Entry,对同一批 32 支队的名次能差 15 位——FUT 在旧尺子上
     全场第 22,在新尺子上第 7。所以复合值整个删掉,Entry 只有一个定义。
 
@@ -121,7 +121,7 @@ class Entry(object):
     @property
     def entry(self):
         """Entry 走比赛引擎那一个定义,赛场层不再自己算一份。"""
-        from . import proto_match_v2 as V2       # 延迟导入:V2 反过来要用本模块
+        from . import engine as V2               # 延迟导入:引擎反过来要用本模块
         return V2.entry_of(self.roster, self.rating["cohesion"],
                            getattr(self, "adjust", 0.0))
 
@@ -443,7 +443,7 @@ def print_field(field, event, cohesion_cap):
     """列出这届赛场的 32 支队。**只排 Entry，不判 Stage。**
 
     Stage 归属是赛事外壳的事，由区域 VRS 名额决定（v0.3 §1.2），住在
-    proto_match_v2 里。这里如果按 Entry 顺位画 Stage 分割线，就是在复述
+    engine.tournament 里。这里如果按 Entry 顺位画 Stage 分割线，就是在复述
     v1 那条已经退役的规则——所以只在 current 赛场上把真实的 VRS Stage
     当成一列印出来，major_pool 赛场没有这个字段，那一列就留空。
     """
@@ -460,7 +460,7 @@ def print_field(field, event, cohesion_cap):
               % (i, e.name, e.entry, e.rating["cohesion"], e.rating["chem_raw"],
                  ("Stage %d" % stage) if stage else "", tail))
     print()
-    print("玩家怎么插进来、每个 Stage 怎么打：python -m blinddraft.proto_match_v2 --field")
+    print("玩家怎么插进来、每个 Stage 怎么打：python -m blinddraft.engine --field")
 
 
 

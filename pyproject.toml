@@ -22,7 +22,8 @@ description = "CStrikle 猜选手 + Blind Draft，共用一份 CS 选手库"
 requires-python = ">=3.11"
 
 [tool.setuptools]
-packages = ["playerdb", "server", "gtptools", "blinddraft", "bdtools", "bdserver"]
+packages = ["playerdb", "server", "gtptools", "blinddraft", "blinddraft.engine",
+            "bdtools", "bdserver"]
 
 [tool.setuptools.package-dir]
 playerdb = "packages/playerdb"

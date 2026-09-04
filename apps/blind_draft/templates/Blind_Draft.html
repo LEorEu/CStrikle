@@ -176,7 +176,7 @@ function blueprints(picked,left){
 const gap=c=>c.g-c.price;
 const gapTag=c=>gap(c)>0?`<span class="tag steal">抄底 +${gap(c)} 档</span>`
   :gap(c)<0?`<span class="tag over">买贵 ${gap(c)} 档</span>`:`<span class="tag fair">标价合理</span>`;
-/* Entry 只有一个定义（proto_match_v2.entry_of §4.1）：火力聚合 + 无狙罚 + 磨合度。
+/* Entry 只有一个定义（blinddraft.engine.entry_of §4.1）：火力聚合 + 无狙罚 + 磨合度。
    这里的每个系数都由 export_web 从 Python 注入（ENG.*），JS 不许自己写死任何一个——
    曾经 .35/.25/.40 和那条 −4 是两边各抄一遍的，引擎一改就静默错开。
    磨合度也必须算进来：`/play` 的玩家队吃的是 player_cohesion()，不是 0。少这一项，

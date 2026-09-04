@@ -19,7 +19,7 @@ from pathlib import Path
 from playerdb.paths import ROOT
 
 from blinddraft import draft as P
-from blinddraft import proto_match_v2 as V2
+from blinddraft import engine as V2
 
 TEMPLATE = Path(__file__).resolve().parents[1] / "templates" / "Blind_Draft.html"
 DEFAULT_OUT = ROOT / ".cache" / "proto_draft_web.html"
@@ -65,7 +65,7 @@ def render_html() -> tuple[str, int, int]:
         "needBoost": P.NEED_BOOST, "mateBoost": P.MATE_BOOST,
         "quota": P.POSITION_QUOTA, "fullPenalty": P.FULL_PENALTY,
         # 比赛引擎的系数。网页的阵容分必须和 Python 逐分一致，而 Python 那份
-        # 直接问 proto_match_v2——所以这些数只有一个出处，JS 不许再抄一遍。
+        # 直接问 blinddraft.engine——所以这些数只有一个出处，JS 不许再抄一遍。
         "engine": {
             "star": list(V2.STAR_WEIGHTS), "restWeight": V2.REST_WEIGHT,
             "noAwp": V2.NO_AWP_PENALTY, "noIgl": V2.NO_IGL_TACTICAL,

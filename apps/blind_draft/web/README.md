@@ -40,7 +40,7 @@ npm run build    # vite-plugin-singlefile -> dist/index.html(单文件, ~320KB)
    比分必须收敛到后端给的那一图结果，K/D 按火力权重分配。这是表演层，
    不参与胜负判定，也不许反过来影响任何数字。
 3. Rogue Buff、淘汰赛、夺冠路径后端都没有。要么先砍掉，要么先在
-   `proto_match_v2` 里立住——那是设计工作，不是接入工作。
+   `blinddraft.engine` 里立住——那是设计工作，不是接入工作。
 
 ## 已知问题（和接入无关）
 

@@ -6,7 +6,7 @@ Python 再算一遍（`run.entry`）。两处各写一份公式，就会出现�
 ——实测过一次：揭晓页写「纸面火力 78.3」，Run 页写「你 81.8」，差的 3.5 正
 好是玩家队的磨合度，页面上没有任何东西解释这 3.5 是什么。
 
-所以系数全部由 `export_web` 从 `proto_match_v2` 注入（`D.engine`），JS 里的
+所以系数全部由 `export_web` 从 `engine` 注入（`D.engine`），JS 里的
 `entryOf()` 和 Python 的 `entry_of(roster, player_cohesion(roster))` 是同一
 条式子的两次书写，这个测试把它们对齐到小数点后 9 位。没装 node 就跳过。
 """
@@ -21,7 +21,7 @@ import tempfile
 import unittest
 
 from blinddraft import draft as P
-from blinddraft import proto_match_v2 as V2
+from blinddraft import engine as V2
 from bdtools.export_web import render_html
 
 NODE = shutil.which("node")

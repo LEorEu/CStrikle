@@ -628,7 +628,7 @@ def entry_of(team, rosters_idx, cohesion_cap):
     不知道”而把一支每天训练的真实队判成没有磨合。当前队的差异不靠这项排名，
     它只表达玩家草台班子相对真队的税。
     """
-    from . import proto_match_v2 as V2          # 延迟导入:V2 反过来要用 major
+    from . import engine as V2                  # 延迟导入:引擎反过来要用 major
     r = M.entry_rating(team["roster"], rosters_idx, cohesion_cap)
     r = dict(r, chem_raw=max(r["chem_raw"], cohesion_cap), cohesion=cohesion_cap)
     adj = team.get("adjust") or 0.0
