@@ -34,3 +34,8 @@ data/players.json.bak
 /r.json
 /t.json
 cstrikle.egg-info
+
+# 新前端(apps/blind_draft/web)的构建产物与依赖
+node_modules/
+apps/blind_draft/web/dist/
+*.tsbuildinfo
