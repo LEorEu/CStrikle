@@ -33,10 +33,35 @@ class PlayerRunTests(unittest.TestCase):
         json.dumps(data, ensure_ascii=False)       # FastAPI 必须能直接序列化
 
     def test_build_run_is_a_thin_wrapper_over_player_run(self):
-        """后台不许自己再算一遍比赛——同样的输入必须逐字段等于引擎的输出。"""
+        """后台不许自己再算一遍比赛——引擎给的每个数必须原样透出来。
+
+        唯一的例外是 `R.PRESENTATION_KEYS`(照片、国旗):它们是显示，不是比赛
+        数据，让引擎去读 `images.json` 的话，命令行跑一局也要顺带打开图片索引。
+        所以这里不比「完全相等」，比的是「引擎的字段一个都没变，且只多了白名单
+        里的那几个」——第二实现照样藏不住。
+        """
         pages = [c["page"] for c in self.roster]
-        self.assertEqual(R.build_run(pages, seed=7),
-                         V2.player_run(pages=pages, seed=7))
+        got = R.build_run(pages, seed=7)
+        want = V2.player_run(pages=pages, seed=7)
+
+        self.assertEqual({k: v for k, v in got.items() if k != "roster"},
+                         {k: v for k, v in want.items() if k != "roster"})
+        self.assertEqual(len(got["roster"]), len(want["roster"]))
+        for mine, theirs in zip(got["roster"], want["roster"]):
+            extra = set(mine) - set(theirs)
+            self.assertEqual(extra, set(R.PRESENTATION_KEYS),
+                             "后台只能往 roster 上加图片地址")
+            self.assertEqual({k: mine[k] for k in theirs}, theirs,
+                             "引擎给的字段一个都不许改")
+
+    def test_the_roster_carries_a_photo_for_almost_everyone(self):
+        """照片是揭晓那一屏的主体。缺几张可以兜底，缺一半说明索引没接上。"""
+        pages = [c["page"] for c in self.roster]
+        rows = R.build_run(pages, seed=7)["roster"]
+        self.assertTrue(any(r["photo"] for r in rows))
+        for r in rows:
+            self.assertIsInstance(r["photo"], str)
+            self.assertIsInstance(r["flag"], str)
 
     def test_a_bad_roster_is_rejected_before_the_engine_runs(self):
         pages = [c["page"] for c in self.roster]

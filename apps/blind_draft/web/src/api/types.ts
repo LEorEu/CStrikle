@@ -67,6 +67,9 @@ export interface RosterCard {
   leadership: number;
   experience: number;
   stability: number;
+  /** 相对路径，前端拼 /img/。身份翻开之后才有——盲选那条 API 一张都不发 */
+  photo: string;
+  flag: string;
 }
 
 /** 一个人在一张图上的火力账本(§8 的逐人归因)。 */

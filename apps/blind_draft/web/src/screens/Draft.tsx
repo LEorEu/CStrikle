@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LowerThird } from "../components/Broadcast";
-import { Button, Panel, PosTag, PriceBadge, Tag } from "../components/ui";
+import { BlankFace, Button, Panel, PosTag, PriceBadge, Tag } from "../components/ui";
 import type { BoardCard, DraftState } from "../api/types";
 import { cn } from "../utils/cn";
 
@@ -206,12 +206,10 @@ function BlindCard({ card, active, onClick, delay }: { card: BoardCard; active: 
         <PriceBadge price={card.price} />
         <PosTag pos={card.position} />
       </div>
-      <div className="relative flex aspect-[4/5] items-center justify-center bg-gradient-to-b from-bc-panel to-bc-bg">
+      <div className="relative flex aspect-[4/5] items-end justify-center overflow-hidden bg-gradient-to-b from-bc-panel2 to-bc-bg">
         <div className="bc-grid absolute inset-0 opacity-40" />
-        <Silhouette />
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-center pb-3">
-          <span className="font-display text-6xl font-black text-bc-line/80">?</span>
-        </div>
+        {/* 所有人共用同一个剪影:它不透露任何信息，脸要到揭晓那一屏才出现 */}
+        <BlankFace className="relative h-[86%] text-bc-line/70" />
         <div className="absolute inset-x-0 top-0 flex items-center gap-2 bg-bc-bg/70 px-2 py-1 backdrop-blur">
           {card.flag && <img src={`/img/${card.flag}`} alt="" className="h-3 w-auto" />}
           <span className="font-mono text-[11px] text-bc-muted">{card.country}</span>
@@ -228,14 +226,5 @@ function BlindCard({ card, active, onClick, delay }: { card: BoardCard; active: 
       </div>
       <div className={cn("h-1 w-full", active ? "bg-bc-accent" : "bg-bc-line group-hover:bg-bc-muted")} />
     </button>
-  );
-}
-
-function Silhouette() {
-  return (
-    <svg viewBox="0 0 120 140" className="h-3/4 w-auto text-bc-line/70" fill="currentColor">
-      <circle cx="60" cy="42" r="26" />
-      <path d="M10 140c0-34 22-56 50-56s50 22 50 56z" />
-    </svg>
   );
 }

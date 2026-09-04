@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { LowerThird } from "../components/Broadcast";
 import {
+  BlankFace,
   Button,
   GradePips,
   POS_COLOR,
@@ -91,8 +92,24 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "go
   );
 }
 
+/**
+ * 一张小头像。有照片就用照片,没有(卡库里 7 个人没有)退回位置色的缩写块。
+ *
+ * `object-top` 是必须的:证件照裁成正方形时,`object-center` 会把人脸切一半。
+ */
 export function PlayerFace({ card, size = "md" }: { card: RosterCard; size?: "sm" | "md" | "lg" }) {
   const dims = { sm: "h-10 w-10 text-base", md: "h-16 w-16 text-2xl", lg: "h-24 w-24 text-4xl" };
+  const [broken, setBroken] = useState(false);
+  if (card.photo && !broken) {
+    return (
+      <img
+        src={`/img/${card.photo}`}
+        alt={card.nickname}
+        onError={() => setBroken(true)}
+        className={cn("cut-corner shrink-0 bg-bc-panel2 object-cover object-top", dims[size])}
+      />
+    );
+  }
   return (
     <div
       className={cn("cut-corner flex shrink-0 items-center justify-center font-display font-black text-bc-bg", dims[size])}
@@ -113,8 +130,8 @@ function RevealCard({ card, blind, revealed }: { card: RosterCard; blind: BoardC
           <PriceBadge price={blind.price} />
           <PosTag pos={blind.position} />
         </div>
-        <div className="flex aspect-[4/5] items-center justify-center bg-gradient-to-b from-bc-panel to-bc-bg">
-          <span className="font-display text-7xl font-black text-bc-line">?</span>
+        <div className="flex aspect-[4/5] items-end justify-center overflow-hidden bg-gradient-to-b from-bc-panel2 to-bc-bg">
+          <BlankFace className="h-[86%] text-bc-line/70" />
         </div>
         <div className="border-t border-bc-line px-3 py-2 text-sm text-bc-muted">{blind.clue}</div>
       </div>
@@ -132,34 +149,34 @@ function RevealCard({ card, blind, revealed }: { card: RosterCard; blind: BoardC
         <PriceBadge price={blind.price} />
         <ValueTagBadge tag={tag} />
       </div>
-      <div className="relative bg-gradient-to-b from-bc-panel2 to-bc-bg p-3">
-        <div className="flex items-center gap-3">
-          <PlayerFace card={card} />
-          <div className="min-w-0">
-            <div className="truncate font-display text-2xl font-black leading-none">{card.nickname}</div>
-            <div className="mt-1 flex items-center gap-2 text-xs text-bc-muted">
-              <span>{card.country}</span>
-              {card.team && (
-                <>
-                  <span>·</span>
-                  <span className="truncate">{card.team}</span>
-                </>
-              )}
-              {card.age && (
-                <>
-                  <span>·</span>
-                  <span>{card.age}</span>
-                </>
-              )}
-            </div>
-            <div className="mt-1 flex items-center gap-2">
-              <PosTag pos={card.position} />
-              <GradePips grade={card.grade} />
-            </div>
+
+      {/* 和盲选态同一块地方、同一个比例:翻面看起来才像是同一张牌翻过来 */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-b from-bc-panel2 to-bc-bg">
+        {card.photo ? (
+          <img src={`/img/${card.photo}`} alt={card.nickname} className="h-full w-full object-cover object-top" />
+        ) : (
+          <div className="flex h-full items-end justify-center">
+            <BlankFace className="h-[86%] text-bc-line/70" />
+          </div>
+        )}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-bc-panel via-bc-panel/85 to-transparent px-3 pb-2 pt-8">
+          <div className="flex items-center gap-2">
+            {card.flag && <img src={`/img/${card.flag}`} alt="" className="h-3 w-auto" />}
+            <span className="truncate font-display text-2xl font-black leading-none">{card.nickname}</span>
+          </div>
+          <div className="mt-1 flex items-center gap-2">
+            <PosTag pos={card.position} />
+            <GradePips grade={card.grade} />
           </div>
         </div>
+      </div>
 
-        <div className="mt-3 space-y-1.5">
+      <div className="relative bg-bc-panel p-3">
+        <div className="mb-2 truncate font-mono text-[11px] text-bc-muted">
+          {[card.team, card.age ? `${card.age} 岁` : null, card.country].filter(Boolean).join(" · ")}
+        </div>
+
+        <div className="space-y-1.5">
           <StatBar label="FIRE" value={card.firepower} color="#ff8a2a" compact />
           <StatBar label="LEAD" value={card.leadership} color="#ffc53d" compact />
           <StatBar label="EXP" value={card.experience} color="#2fa8ff" compact />

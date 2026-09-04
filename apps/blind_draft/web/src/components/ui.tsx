@@ -171,3 +171,15 @@ export function NotImplemented({ title, why, children }: { title: string; why: s
     </div>
   );
 }
+
+/**
+ * 盲选卡上的通用剪影。**所有人共用同一个形状**——它不透露任何信息,身份要到
+ * 揭晓那一屏才翻开。真实照片只出现在 `/api/run` 已经给出身份的地方。
+ */
+export function BlankFace({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 140" className={cn("h-full w-auto", className)} fill="currentColor" aria-hidden>
+      <path d="M60 14c-15 0-25 11-25 28 0 11 4 21 11 27l-3 7c-10 4-33 12-33 29v35h100v-35c0-17-23-25-33-29l-3-7c7-6 11-16 11-27 0-17-10-28-25-28z" />
+    </svg>
+  );
+}

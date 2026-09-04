@@ -18,8 +18,30 @@ Form Roll 和压力机制全部在 Python 这一侧完成。前端不复制任�
 
 v1（`blinddraft.match`）已退役删除，比赛引擎现在只有一处。
 """
+import json
+
+from playerdb.paths import DATA
+
 from blinddraft import draft as P
 from blinddraft import engine as V2
+
+IMAGES_PATH = DATA / "images.json"
+
+#: 这一层唯一允许往引擎输出里加的东西:图片地址。
+#:
+#: 照片和国旗是**显示**,不是比赛数据——引擎不该为了让页面好看去读
+#: `images.json`,否则命令行跑一局也要顺带打开图片索引。反过来,比赛的每个数
+#: 都必须原样来自引擎:`test_player_run.py` 按这个白名单校验,加进来的键只能
+#: 是这两个,已有的键一个都不许动。
+PRESENTATION_KEYS = ("photo", "flag")
+
+
+def _images() -> tuple:
+    """(page -> 照片, 国籍 -> 国旗)。路径是相对的,前端自己拼 /img/。"""
+    if not IMAGES_PATH.exists():
+        return {}, {}
+    doc = json.loads(IMAGES_PATH.read_text(encoding="utf-8"))
+    return doc.get("players", {}), doc.get("flags", {})
 
 
 def build_run(pages, seed=1):
@@ -31,4 +53,11 @@ def build_run(pages, seed=1):
     missing = [p for p in pages if p not in known]
     if missing:
         raise KeyError("卡库里没有：%s" % "、".join(missing))
-    return V2.player_run(pages=pages, seed=seed)
+
+    data = V2.player_run(pages=pages, seed=seed)
+    photos, flags = _images()
+    # 身份已经翻开了才配照片——盲选期那条线在 `bdserver/draft.py`,那边一张都不发。
+    roster = [c | {"photo": photos.get(c["page"], ""),
+                   "flag": flags.get(c["country"], "")}
+              for c in data["roster"]]
+    return data | {"roster": roster}
