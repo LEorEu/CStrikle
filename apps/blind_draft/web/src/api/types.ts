@@ -22,6 +22,18 @@ export interface BoardCard {
   clue: string;
 }
 
+/**
+ * 首页橱窗里一张**已经翻开**的牌。比 `BoardCard` 多了身份。
+ *
+ * 它不属于任何一局——不受 seed 影响,也不参与任何判定,只是首页那张最大的卡
+ * 后面站着谁。盲选期的信息边界一点没松:`/api/draft` 仍然一个名字都不发。
+ */
+export interface ShowcaseCard extends BoardCard {
+  nickname: string;
+  /** 相对路径,前端拼 /img/ */
+  photo: string;
+}
+
 export interface Blueprint {
   tag: string;
   note: string;

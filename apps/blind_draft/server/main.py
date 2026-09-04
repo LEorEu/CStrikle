@@ -301,6 +301,12 @@ def api_draft(body: DraftBody):
         raise HTTPException(400, str(exc))
 
 
+@app.get("/api/showcase")
+def api_showcase():
+    """首页橱窗的几张翻开的牌。不属于任何一局,见 bdserver/draft.py。"""
+    return DRAFT.build_showcase()
+
+
 @app.post("/api/run")
 def api_run(body: RunBody):
     try:

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LowerThird } from "../components/Broadcast";
-import { BlankFace, Button, Panel, PosTag, PriceBadge, Tag } from "../components/ui";
+import { BlindCardFace, Button, Panel, PosTag, PriceBadge, Tag } from "../components/ui";
 import type { BoardCard, DraftState } from "../api/types";
 import { cn } from "../utils/cn";
 
@@ -196,34 +196,13 @@ function BlindCard({ card, active, onClick, delay }: { card: BoardCard; active: 
       onClick={onClick}
       style={{ animationDelay: `${delay}ms` }}
       className={cn(
-        "group relative flex animate-rise flex-col overflow-hidden border text-left transition-all",
+        "group relative flex animate-rise flex-col text-left transition-all",
         active
-          ? "-translate-y-1 border-bc-accent shadow-[0_0_0_2px_#ffc53d,0_20px_60px_-20px_rgba(255,180,0,0.5)]"
-          : "border-bc-line hover:-translate-y-0.5 hover:border-bc-muted",
+          ? "-translate-y-1 shadow-[0_0_0_2px_#ffc53d,0_20px_60px_-20px_rgba(255,180,0,0.5)]"
+          : "hover:-translate-y-0.5",
       )}
     >
-      <div className="flex items-center justify-between bg-bc-panel2 px-3 py-2">
-        <PriceBadge price={card.price} />
-        <PosTag pos={card.position} />
-      </div>
-      <div className="relative flex aspect-[4/5] items-end justify-center overflow-hidden bg-gradient-to-b from-bc-panel2 to-bc-bg">
-        <div className="bc-grid absolute inset-0 opacity-40" />
-        {/* 所有人共用同一个剪影:它不透露任何信息，脸要到揭晓那一屏才出现 */}
-        <BlankFace className="relative h-[86%] text-bc-line/70" />
-        <div className="absolute inset-x-0 top-0 flex items-center gap-2 bg-bc-bg/70 px-2 py-1 backdrop-blur">
-          {card.flag && <img src={`/img/${card.flag}`} alt="" className="h-3 w-auto" />}
-          <span className="font-mono text-[11px] text-bc-muted">{card.country}</span>
-        </div>
-      </div>
-      <div className="border-t border-bc-line bg-bc-panel px-3 py-2">
-        <div className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-bc-muted">{card.scout.label}</div>
-        <div className="font-display text-xl font-black leading-tight text-bc-accent">
-          {card.scout.lo}
-          <span className="text-bc-muted">–</span>
-          {card.scout.hi}
-        </div>
-        <div className="truncate text-sm text-bc-muted">{card.clue}</div>
-      </div>
+      <BlindCardFace card={card} highlight={active} className={cn(!active && "group-hover:border-bc-muted")} />
       <div className={cn("h-1 w-full", active ? "bg-bc-accent" : "bg-bc-line group-hover:bg-bc-muted")} />
     </button>
   );

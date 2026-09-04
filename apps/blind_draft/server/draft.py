@@ -62,6 +62,50 @@ def _face(card, index, flags) -> dict:
     }
 
 
+#: 首页橱窗里那三张脸。挑他们不是玩法,是为了让人一眼看出库里是真选手。
+SHOWCASE = ("S1mple", "ZywOo", "Donk")
+
+
+def build_showcase() -> dict:
+    """首页橱窗:几张**故意翻开**的牌。
+
+    和这个文件里其他东西正好相反——盲选那一层拼命不下发身份,这里主动给
+    nickname 和照片。两者不冲突,因为这几张牌**不属于任何一局**:不进 Dealer、
+    不消耗卡池、不受 seed 影响,点开也不会改变你接下来会抽到什么。它只是首页
+    最大那张卡背后站着谁。
+
+    为什么写在后端而不是前端写死三行:这三个人的每一样东西前端都猜不准。
+    `page` 和 `nickname` 大小写不一样(S1mple/s1mple、Donk/donk),照片路径只有
+    `images.json` 知道,标价要先读档位。前端猜一次就得维护一份小型选手库,而
+    选手库改个名它只会安静地碎掉——正是这个仓库删掉 `data/players.ts` 要躲的事。
+
+    标价取这个档位**最可能**被报的价(不摇骰子),球探区间用固定 rng——橱窗
+    每次刷新都换一组数字,会像页面在跳。
+    """
+    photos, flags = {}, {}
+    if IMAGES_PATH.exists():
+        doc = json.loads(IMAGES_PATH.read_text(encoding="utf-8"))
+        photos, flags = doc.get("players", {}), doc.get("flags", {})
+
+    by_page = {c["page"]: c for c in P.load_cards()}
+    rng = random.Random(0)
+    out = []
+    for page in SHOWCASE:
+        card = by_page.get(page)
+        if card is None:
+            continue                      # 选手库里没有就少一张,不编一个出来
+        dist = P.Dealer.price_dist(card["grade"])
+        price = max(dist, key=dist.get)
+        attr = P.scout_attr(card)
+        face = _face(dict(card, price=price,
+                          scout=P.scout_range(card[attr], rng)),
+                     len(out), flags)
+        face["nickname"] = card["nickname"]
+        face["photo"] = photos.get(page, "")
+        out.append(face)
+    return {"cards": out}
+
+
 def build_draft(seed: int = 1, actions=()) -> dict:
     """把一局盲选重放到当前状态并返回 JSON;不写文件,不留会话。
 

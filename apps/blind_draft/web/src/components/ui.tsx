@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cn } from "../utils/cn";
-import type { Position } from "../api/types";
+import type { BoardCard, Position } from "../api/types";
 
 export const POS_COLOR: Record<Position, string> = {
   IGL: "#ffc53d",
@@ -63,6 +63,73 @@ export function PriceBadge({ price, className, size = "md" }: { price: number; c
       <span className="text-[0.6em] opacity-70">$</span>
       {price}
     </span>
+  );
+}
+
+/**
+ * 盲选期的一张牌，选人页和首页那把扇形共用同一个牌面。
+ *
+ * 版式是从「价格标签 + 角色标签并排压在顶栏」改过来的：两个实心标签并排，
+ * 谁都不让谁，斜切的多边形又给了它们一个没有来由的方向感，看着别扭。现在
+ * **只有价格压在画面左上角**，角色退成一行有颜色的字排到下面——价格是买不买
+ * 得起的门槛，先看它；角色和球探报告是"值不值"，那是下一层的事。
+ *
+ * 剪影按价位分两张：$1-$3 银边、$4-$5 金边。这不是额外信息（价格就印在同
+ * 一张卡的左上角），只是让"这是张贵牌"在余光里也能成立。
+ */
+export function BlindCardFace({ card, highlight, compact, className, style, reveal, onDoubleClick, title }: {
+  card: BoardCard; highlight?: boolean; compact?: boolean; className?: string; style?: CSSProperties;
+  /** 翻开这张脸。**只有首页橱窗会传**——盲选期后端根本不发身份,传不进来。 */
+  reveal?: { nickname: string; photo: string } | null;
+  onDoubleClick?: () => void;
+  title?: string;
+}) {
+  return (
+    <div
+      style={style}
+      onDoubleClick={onDoubleClick}
+      title={title}
+      className={cn(
+        "flex flex-col overflow-hidden border bg-bc-panel",
+        highlight ? "border-bc-accent" : "border-bc-line",
+        className,
+      )}
+    >
+      <div className="relative aspect-[4/5] overflow-hidden bg-bc-bg">
+        <img
+          src={reveal?.photo ? `/img/${reveal.photo}` : `/img/silhouette/${card.price >= 4 ? "g" : "w"}.jpg`}
+          alt=""
+          className="h-full w-full object-cover object-top"
+        />
+        {/* 剪影底边收进面板色,免得图和下半张卡之间切出一条硬边 */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-bc-panel" />
+        <PriceBadge price={card.price} size={compact ? "sm" : "md"} className="absolute left-0 top-0" />
+        <span className={cn(
+          "absolute inset-x-0 bottom-1 truncate px-1 text-center font-display font-black",
+          reveal ? "text-bc-text drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" : "text-bc-text/25",
+          compact ? "text-xl" : "text-3xl",
+        )}>{reveal ? reveal.nickname : "???"}</span>
+      </div>
+      <div className={cn("text-center", compact ? "px-1.5 pb-1.5" : "px-2.5 pb-2.5")}>
+        <div className={cn("font-display font-black uppercase tracking-[0.2em]", compact ? "text-xs" : "text-sm")}
+             style={{ color: POS_COLOR[card.position] }}>
+          {card.position}
+        </div>
+        <div className="mt-0.5 flex items-center justify-center gap-1.5">
+          {card.flag && <img src={`/img/${card.flag}`} alt="" className="h-2.5 w-auto" />}
+          <span className={cn("truncate font-mono text-bc-muted", compact ? "text-[10px]" : "text-xs")}>{card.country}</span>
+        </div>
+        <div className={cn("mt-1.5 border border-bc-line/70 bg-bc-bg/40 text-left", compact ? "px-1.5 py-1" : "px-2 py-1.5")}>
+          <div className="font-display text-[9px] font-bold uppercase tracking-[0.25em] text-bc-muted">球探报告</div>
+          <div className={cn("font-display font-black leading-tight text-bc-accent", compact ? "text-sm" : "text-lg")}>
+            {card.scout.label} {card.scout.lo}
+            <span className="text-bc-muted">–</span>
+            {card.scout.hi}
+          </div>
+          <div className={cn("truncate text-bc-muted", compact ? "text-[10px]" : "text-xs")}>· {card.clue}</div>
+        </div>
+      </div>
+    </div>
   );
 }
 

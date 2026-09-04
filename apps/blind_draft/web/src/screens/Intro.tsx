@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { fetchDraft } from "../api/client";
-import type { BoardCard } from "../api/types";
-import { BlankFace, Button, PosTag, PriceBadge } from "../components/ui";
-import { cn } from "../utils/cn";
+import { fetchDraft, fetchShowcase } from "../api/client";
+import type { BoardCard, ShowcaseCard } from "../api/types";
+import { BlindCardFace, Button } from "../components/ui";
 
 /**
  * 三步流程。原来这里是四张带说明的卡，右边整列都被它占着；现在那一列让给了
@@ -75,11 +74,23 @@ export function Intro({ seed, busy, onStart }: { seed: number; busy: boolean; on
     };
   }, [parsed, ok]);
 
+  // 橱窗:C 位那张牌。和局号无关,一次就够,失败了首页少一张脸而已。
+  const [stars, setStars] = useState<ShowcaseCard[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetchShowcase()
+      .then((r) => alive && setStars(r.cards))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
     <div className="relative flex min-h-[calc(100vh-5.75rem)] items-center justify-center overflow-hidden py-8">
       <div className="bc-spot pointer-events-none absolute inset-0" />
       <div className="pointer-events-none absolute inset-x-0 h-24 animate-scan bg-gradient-to-b from-transparent via-white/[0.03] to-transparent" />
-      <div className="relative z-10 grid w-full max-w-7xl gap-12 px-6 lg:grid-cols-[1.05fr_1fr]">
+      <div className="relative z-10 grid w-full max-w-7xl gap-12 px-6 lg:grid-cols-[1fr_1.1fr]">
         <div className="animate-rise">
           <div className="mb-4 flex items-center gap-3">
             <span className="h-4 w-1 bg-bc-accent" />
@@ -117,7 +128,7 @@ export function Intro({ seed, busy, onStart }: { seed: number; busy: boolean; on
         </div>
 
         <div className="flex flex-col justify-center gap-10">
-          {board && <Fan board={board} />}
+          {board && <Fan board={board} star={stars.length ? stars[parsed % stars.length] : null} />}
           <div className="flex items-center justify-center gap-3 sm:gap-5">
             {FLOW.map((f, i) => (
               <div key={f.cn} className="flex items-center gap-3 sm:gap-5">
@@ -139,70 +150,84 @@ export function Intro({ seed, busy, onStart }: { seed: number; busy: boolean; on
   );
 }
 
-/** 五张牌摊开成一把。中间那张抬起来，纯粹是构图，跟牌好不好没关系。 */
-function Fan({ board }: { board: BoardCard[] }) {
+/**
+ * 五张牌摊开成一把。
+ *
+ * **中间那张是橱窗牌,不属于这一局**：它来自 `/api/showcase`，双击可以翻开看
+ * 是谁。会这么分是因为首屏要干两件事——「这游戏怎么玩」和「里面是真选手」。
+ * 边上四张来自这个局号真实的第一个市场日，所以「换一局」看得见牌在换；C 位
+ * 是橱窗，所以敢把脸露出来，而盲选的信息边界一点没动。
+ *
+ * 摆位固定：最贵的在正中，往两边递减，最便宜的在最左（价格恰好是 1..5 时就是
+ * $1 $2 $5 $4 $3）。橱窗那张是 $5，天然站得住 C 位。
+ */
+function Fan({ board, star }: { board: BoardCard[]; star: ShowcaseCard | null }) {
+  const [open, setOpen] = useState(false);
+  // 局号一换就换一张脸,同时把翻开的收回去
+  useEffect(() => setOpen(false), [star]);
+
+  const sides = [...board].sort((a, b) => a.price - b.price).slice(0, star ? 4 : 5);
+  // 便宜的两张摆左边(升序),贵的两张摆右边(降序),峰值留给中间
+  const half = Math.ceil(sides.length / 2);
+  const laid: (BoardCard | null)[] = [
+    ...sides.slice(0, half),
+    ...(star ? [null] : []),
+    ...sides.slice(half).reverse(),
+  ];
+
+  // 转过角度又往下推的牌会超出这个盒子的排版高度(transform 不影响布局),
+  // 底下那圈 padding 是给它们的,不然最外两张会压到流程图标上。
   return (
-    <div className="flex items-center justify-center pt-4">
-      {board.map((card, i) => {
-        const off = i - (board.length - 1) / 2;
-        const mid = Math.abs(off) < 0.01;
+    <div className="relative flex items-center justify-center pb-14 pt-4">
+      {/* C 位背后的一团暖光。它不属于任何一张牌,所以单独一层。 */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_26%_46%_at_50%_46%,rgba(255,190,70,0.3),transparent_70%)]"
+      />
+      {laid.map((card, i) => {
+        const off = i - (laid.length - 1) / 2;
+        const mid = card === null;
+        const shown = card ?? star!;
         return (
           // 摊开的角度放在外层,入场动画放在内层。`animate-rise` 的关键帧自己
           // 写了 transform,跟扇形摆位放在同一个元素上会把它整个盖掉——动画一
           // 结束(fill-mode: both)五张牌就回到一条直线上。
           <div
-            key={card.index}
-            className="-mx-1.5 w-[7.5rem]"
+            key={mid ? "star" : `${shown.index}-${shown.price}`}
+            className="relative -mx-4 w-[9rem]"
             style={{
               // 绕底边转,五张牌就像捏在手里摊开,而不是各转各的
               transformOrigin: "50% 100%",
-              transform: `rotate(${off * 7}deg) translateY(${Math.abs(off) ** 1.35 * 12}px) scale(${mid ? 1.1 : 1})`,
+              transform: `rotate(${off * 7}deg) translateY(${mid ? -10 : Math.abs(off) ** 1.35 * 13}px) scale(${mid ? 1.22 : 1})`,
               zIndex: mid ? 10 : 5 - Math.abs(off),
             }}
           >
             <div className="animate-rise" style={{ animationDelay: `${180 + i * 70}ms` }}>
-              <FanCard card={card} highlight={mid} />
+              <BlindCardFace
+                card={shown}
+                highlight={mid}
+                compact
+                reveal={mid && open && star ? { nickname: star.nickname, photo: star.photo } : null}
+                onDoubleClick={mid ? () => setOpen((v) => !v) : undefined}
+                title={mid ? (open ? "双击盖回去" : "双击看看他是谁") : undefined}
+                className={
+                  mid
+                    ? "cursor-pointer select-none shadow-[0_0_0_1px_#ffc53d,0_0_38px_-6px_rgba(255,190,70,0.75),0_30px_80px_-18px_rgba(0,0,0,0.95)]"
+                    : "shadow-[0_18px_50px_-24px_rgba(0,0,0,0.9)]"
+                }
+                // 边上的四张退后一点:轻微虚化 + 压暗降饱和,让 C 位自己跳出来
+                style={mid ? undefined : { filter: "blur(0.6px) brightness(0.78) saturate(0.85)" }}
+              />
             </div>
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function FanCard({ card, highlight }: { card: BoardCard; highlight: boolean }) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col overflow-hidden border bg-bc-panel",
-        highlight
-          ? "border-bc-accent shadow-[0_0_0_1px_#ffc53d,0_24px_70px_-18px_rgba(255,180,0,0.55)]"
-          : "border-bc-line shadow-[0_18px_50px_-24px_rgba(0,0,0,0.9)]",
+      {/* 不写这一行就没人会去双击它:tooltip 要先悬停才看得见,而这是首屏 */}
+      {star && (
+        <div className="absolute inset-x-0 bottom-4 text-center font-display text-xs tracking-[0.2em] text-bc-muted/70">
+          {open ? "再双击盖回去" : "双击 C 位那张 · 看看他是谁"}
+        </div>
       )}
-    >
-      <div className="flex items-center justify-between bg-bc-panel2 px-2 py-1.5">
-        <PriceBadge price={card.price} size="sm" />
-        <PosTag pos={card.position} />
-      </div>
-      <div className="relative flex aspect-[4/5] items-end justify-center overflow-hidden bg-gradient-to-b from-bc-panel2 to-bc-bg">
-        <div className="bc-grid absolute inset-0 opacity-40" />
-        {/* 所有人共用同一个剪影:它不透露任何信息，脸要到揭晓那一屏才出现 */}
-        <BlankFace className="relative h-[86%] text-bc-line/70" />
-        <span className="absolute font-display text-2xl font-black text-bc-muted/70">???</span>
-        <div className="absolute inset-x-0 top-0 flex items-center gap-1.5 bg-bc-bg/70 px-1.5 py-1 backdrop-blur">
-          {card.flag && <img src={`/img/${card.flag}`} alt="" className="h-2.5 w-auto" />}
-          <span className="truncate font-mono text-[10px] text-bc-muted">{card.country}</span>
-        </div>
-      </div>
-      <div className="border-t border-bc-line px-2 py-1.5">
-        <div className="font-display text-[9px] font-bold uppercase tracking-[0.25em] text-bc-muted">{card.scout.label}</div>
-        <div className="font-display text-base font-black leading-tight text-bc-accent">
-          {card.scout.lo}
-          <span className="text-bc-muted">–</span>
-          {card.scout.hi}
-        </div>
-        <div className="truncate text-[11px] text-bc-muted">{card.clue}</div>
-      </div>
     </div>
   );
 }

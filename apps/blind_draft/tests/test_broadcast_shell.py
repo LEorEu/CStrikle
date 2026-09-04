@@ -28,7 +28,12 @@ WEB = ROOT / "apps" / "blind_draft" / "web" / "src"
 RETIRED = ("game/engine.ts", "data/players.ts")
 
 #: 外壳允许调的接口。多一个就说明玩法在别处又开了一个口子。
-ALLOWED_ENDPOINTS = {"/api/draft", "/api/run"}
+#:
+#: `/api/showcase` 是首页橱窗那几张翻开的牌,它**不是玩法**:不属于任何一局、
+#: 不进 Dealer、不受 seed 影响,给出来的身份也不参与任何判定。它在这张名单上
+#: 是因为那三个人的 page 大小写、照片路径、标价都只有后端知道——不开这个口子,
+#: 前端就得在 TS 里写死一份小型选手库,那才是这份测试真正要拦的东西。
+ALLOWED_ENDPOINTS = {"/api/draft", "/api/run", "/api/showcase"}
 
 #: 引擎里的系数。它们只有一处出处(`blinddraft/engine/params.py`),
 #: 抄进 TS 就等于埋了个迟早对不上的第二实现。

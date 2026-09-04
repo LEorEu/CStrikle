@@ -4,7 +4,7 @@
  * dev 下 vite 把 /api 代理到 8621(见 vite.config.ts);打包成单文件之后
  * 页面由 bdserver 自己 serve,同源,相对路径照样能用。
  */
-import type { DraftState, RunResult } from "./types";
+import type { DraftState, RunResult, ShowcaseCard } from "./types";
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(path, {
@@ -35,3 +35,13 @@ export const fetchDraft = (seed: number, actions: number[]) =>
 /** 把签满的五个 page 送进真实三段 Swiss,拿回玩家的一整届。 */
 export const fetchRun = (pages: string[], seed: number) =>
   post<RunResult>("/api/run", { pages, seed });
+
+/**
+ * 首页橱窗那几张翻开的牌。**和玩法无关**——不受 seed 影响,拿不到也只是首页
+ * 少一张脸,不影响任何一局(见 bdserver/draft.py 的 build_showcase)。
+ */
+export const fetchShowcase = () =>
+  fetch("/api/showcase").then((r) => {
+    if (!r.ok) throw new Error(`/api/showcase 失败(HTTP ${r.status})`);
+    return r.json() as Promise<{ cards: ShowcaseCard[] }>;
+  });
