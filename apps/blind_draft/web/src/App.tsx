@@ -1,114 +1,140 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { PASS, fetchDraft, fetchRun } from "./api/client";
+import type { DraftState, RunResult } from "./api/types";
 import { Frame, Ticker, TopBar, type Phase } from "./components/Broadcast";
-import { BUDGET, ROSTER_SIZE, ROUNDS, deriveTraits, finalTeamStats, generateBoards, teamRating } from "./game/engine";
-import type { Buff, DraftCard, SignedCard } from "./game/types";
 import { Build } from "./screens/Build";
 import { Draft } from "./screens/Draft";
 import { Final } from "./screens/Final";
 import { Intro } from "./screens/Intro";
 import { Reveal } from "./screens/Reveal";
-import { Tournament, type TournamentResult } from "./screens/Tournament";
+import { Tournament } from "./screens/Tournament";
 
 const TEAM_NAMES = ["Blind Faith", "Paper Tigers", "Draft Dodgers", "Fog of War", "Mystery Machine", "No Scouting", "Budget Kings"];
 
 const TICKER_BASE = [
-  "Blind Draft 赛季开启：$15 预算，6 轮匿名卡，签 5 人",
-  "分析师：IGL 市场上限 $3，别指望 $5 指挥",
-  "传闻：某 G5 狙击手本周被市场低估至 $4",
-  "规则提醒：每局可 Pass 1 轮，预算死局将被系统锁定",
-  "Rogue Shop 上新：运动心理学家 $4，双周集训 $2",
-  "VRS 更新：Major 瑞士轮 3 胜晋级 3 负淘汰",
+  "Blind Draft 赛季开启：$15 预算，7 个市场日，签 5 人",
+  "分析师：卡面只给一维球探区间，其余全靠线索认人",
+  "规则提醒：预算要给后面每个空位留 $1，买不起的牌不会发到你面前",
+  "赛制：32 队三段瑞士轮，Stage 归属由区域 VRS 名额决定",
   "解说席：Stability 决定的是波动，不是另一种 Firepower",
+  "提示：同一个 seed 和命令行 python -m blinddraft.draft --seed N 是同一局",
 ];
 
+/**
+ * 前端状态机。**这里不存局面,只存「我提交过哪些动作」。**
+ *
+ * 一局盲选是 `(seed, actions)`,每次动作都把完整序列发回 `/api/draft` 重放。
+ * 好处是刷新不丢局、能把一局用一条链接发给别人,也彻底断了「前端自己算一半」
+ * 的可能——`draft` 和 `run` 两个对象里的每个数都是后端给的。
+ */
 export default function App() {
   const [phase, setPhase] = useState<Phase>("intro");
-  const [boards, setBoards] = useState<DraftCard[][]>([]);
-  const [round, setRound] = useState(1);
-  const [budget, setBudget] = useState(BUDGET);
-  const [signed, setSigned] = useState<SignedCard[]>([]);
-  const [passUsed, setPassUsed] = useState(false);
-  const [buffs, setBuffs] = useState<Buff[]>([]);
-  const [teamName] = useState(() => TEAM_NAMES[Math.floor(Math.random() * TEAM_NAMES.length)]);
-  const [result, setResult] = useState<TournamentResult | null>(null);
-  const [runKey, setRunKey] = useState(0);
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e6));
+  const [actions, setActions] = useState<number[]>([]);
+  const [draft, setDraft] = useState<DraftState | null>(null);
+  const [run, setRun] = useState<RunResult | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState(TEAM_NAMES[0]);
 
-  const roster = useMemo(() => signed.map((s) => s.player), [signed]);
-  const traits = useMemo(() => deriveTraits(roster), [roster]);
-  const stats = useMemo(() => finalTeamStats(roster, traits, buffs), [roster, traits, buffs]);
-  const buffSpent = buffs.reduce((s, b) => s + b.cost, 0);
-
-  const start = () => {
-    setBoards(generateBoards());
-    setRound(1);
-    setBudget(BUDGET);
-    setSigned([]);
-    setPassUsed(false);
-    setBuffs([]);
-    setResult(null);
-    setRunKey((k) => k + 1);
-    setPhase("draft");
-  };
-
-  const advanceRound = (nextSigned: SignedCard[]) => {
-    if (nextSigned.length >= ROSTER_SIZE || round >= ROUNDS) {
-      setPhase("reveal");
-    } else {
-      setRound((r) => r + 1);
+  const load = useCallback(async (nextSeed: number, nextActions: number[]) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const state = await fetchDraft(nextSeed, nextActions);
+      setDraft(state);
+      setActions(state.actions);
+      return state;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      return null;
+    } finally {
+      setBusy(false);
     }
+  }, []);
+
+  const start = async (nextSeed: number) => {
+    setSeed(nextSeed);
+    setRun(null);
+    setTeamName(TEAM_NAMES[nextSeed % TEAM_NAMES.length]);
+    const state = await load(nextSeed, []);
+    if (state) setPhase("draft");
   };
 
-  const onSign = (card: DraftCard) => {
-    const next = [...signed, { ...card, pickedRound: round }];
-    setSigned(next);
-    setBudget((b) => b - card.price);
-    advanceRound(next);
-  };
+  // 签满五人 -> 把 pages 交给引擎跑完一整届。揭晓要的完整卡面也从这一份来,
+  // 不为「翻开身份」单开一个接口。
+  useEffect(() => {
+    if (!draft?.done || !draft.pages || run) return;
+    let alive = true;
+    setBusy(true);
+    fetchRun(draft.pages, draft.seed)
+      .then((r) => {
+        if (!alive) return;
+        setRun(r);
+        setPhase("reveal");
+      })
+      .catch((e) => alive && setError(e instanceof Error ? e.message : String(e)))
+      .finally(() => alive && setBusy(false));
+    return () => {
+      alive = false;
+    };
+  }, [draft, run]);
 
-  const onPass = () => {
-    setPassUsed(true);
-    advanceRound(signed);
-  };
-
-  const toggleBuff = (b: Buff) => {
-    setBuffs((prev) => (prev.some((x) => x.id === b.id) ? prev.filter((x) => x.id !== b.id) : [...prev, b]));
-  };
+  const act = (a: number) => load(seed, [...actions, a]);
+  const undo = () => load(seed, actions.slice(0, -1));
 
   const ticker = useMemo(() => {
     const items = [...TICKER_BASE];
-    if (phase === "draft") items.unshift(`${teamName} 正在进行第 ${round} 轮选秀 · 剩余预算 $${budget}`);
-    if (phase === "build") items.unshift(`${teamName} 完成选秀 · 阵容触发 ${traits.length} 个 Trait`);
-    if (phase === "tournament") items.unshift(`${teamName} 进入 Major · 队伍评级 ${teamRating(stats).toFixed(1)}`);
-    if (phase === "final" && result) items.unshift(`${teamName} 最终成绩：${result.placement}`);
+    if (draft && phase === "draft")
+      items.unshift(`${teamName} 第 ${draft.turn}/${draft.turns} 个市场日 · 剩余 $${draft.left} · 还要签 ${draft.slots_left} 人`);
+    if (run && phase !== "draft" && phase !== "intro")
+      items.unshift(`${teamName} 队伍强度 ${run.entry.toFixed(1)} · 全场 Entry 第 ${run.entry_rank} · Stage ${run.stage}`);
+    if (run && phase === "final")
+      items.unshift(`${teamName} 最终 ${run.wins}-${run.losses}：${run.reached_playoffs ? "进入 Playoffs" : "止步瑞士轮"}`);
     return items;
-  }, [phase, teamName, round, budget, traits.length, stats, result]);
-
-  const displayBudget = phase === "build" || phase === "tournament" || phase === "final" ? budget - buffSpent : budget;
+  }, [phase, teamName, draft, run]);
 
   return (
     <div className="bc-vignette min-h-screen">
-      <TopBar phase={phase} budget={displayBudget} subtitle={phase === "intro" ? undefined : teamName} />
+      <TopBar phase={phase} budget={draft?.left ?? 15} subtitle={phase === "intro" ? undefined : teamName} />
       <Frame>
-        {phase === "intro" && <Intro onStart={start} />}
-        {phase === "draft" && (
-          <Draft key={`${runKey}-${round}`} boards={boards} round={round} budget={budget} signed={signed} passUsed={passUsed} onSign={onSign} onPass={onPass} />
+        {error && (
+          <div className="mb-4 border border-bc-live bg-bc-live/10 px-4 py-3">
+            <div className="font-display text-sm font-black uppercase tracking-[0.25em] text-bc-live">后端说不行</div>
+            <div className="mt-1 font-mono text-sm">{error}</div>
+            <div className="mt-1 text-xs text-bc-muted">
+              调参后台没起来的话：<span className="font-mono">uvicorn bdserver.main:app --port 8621</span>
+            </div>
+          </div>
         )}
-        {phase === "reveal" && <Reveal signed={signed} boards={boards} budget={budget} onContinue={() => setPhase("build")} />}
-        {phase === "build" && <Build roster={roster} budget={budget} buffs={buffs} onToggleBuff={toggleBuff} onContinue={() => setPhase("tournament")} />}
-        {phase === "tournament" && (
-          <Tournament
-            key={runKey}
-            roster={roster}
-            stats={stats}
-            buffs={buffs}
+
+        {phase === "intro" && <Intro seed={seed} busy={busy} onStart={start} />}
+        {phase === "draft" && draft && (
+          <Draft
+            state={draft}
+            busy={busy}
             teamName={teamName}
-            onFinish={(r) => {
-              setResult(r);
-              setPhase("final");
-            }}
+            onSign={(i) => act(i)}
+            onPass={() => act(PASS)}
+            onUndo={actions.length ? undo : undefined}
           />
         )}
-        {phase === "final" && result && <Final result={result} signed={signed} buffs={buffs} teamName={teamName} onRestart={start} />}
+        {phase === "reveal" && draft && run && (
+          <Reveal draft={draft} run={run} onContinue={() => setPhase("build")} />
+        )}
+        {phase === "build" && draft && run && (
+          <Build draft={draft} run={run} teamName={teamName} onContinue={() => setPhase("tournament")} />
+        )}
+        {phase === "tournament" && run && (
+          <Tournament run={run} teamName={teamName} onFinish={() => setPhase("final")} />
+        )}
+        {phase === "final" && draft && run && (
+          <Final draft={draft} run={run} teamName={teamName} onRestart={() => setPhase("intro")} />
+        )}
+
+        {busy && phase !== "intro" && (
+          <div className="mt-4 font-display text-xs uppercase tracking-[0.35em] text-bc-muted">Working…</div>
+        )}
       </Frame>
       <Ticker items={ticker} />
     </div>

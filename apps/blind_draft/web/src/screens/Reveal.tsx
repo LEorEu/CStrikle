@@ -1,119 +1,82 @@
 import { useMemo, useState } from "react";
 import { LowerThird } from "../components/Broadcast";
-import { Button, GradePips, Panel, PosTag, PriceBadge, StatBar, TAG_COLOR, ValueTagBadge } from "../components/ui";
-import { POS_COLOR, fairPrice, valueDelta, valueTag } from "../game/engine";
-import type { DraftCard, Player, SignedCard } from "../game/types";
+import {
+  Button,
+  GradePips,
+  POS_COLOR,
+  Panel,
+  PosTag,
+  PriceBadge,
+  StatBar,
+  TAG_COLOR,
+  TAG_LABEL,
+  ValueTagBadge,
+  valueTag,
+} from "../components/ui";
+import type { BoardCard, DraftState, RosterCard, RunResult } from "../api/types";
 import { cn } from "../utils/cn";
 
 interface Props {
-  signed: SignedCard[];
-  boards: DraftCard[][];
-  budget: number;
+  draft: DraftState;
+  run: RunResult;
   onContinue: () => void;
 }
 
-export function Reveal({ signed, boards, budget, onContinue }: Props) {
+/**
+ * 揭晓屏。两份数据在这里合上:盲选期看到的那张牌(`draft.owned`)和翻开后的
+ * 真身(`run.roster`)。两个数组同序——后端 `pages` 是按签下顺序给的,
+ * `player_run` 原样保持,`test_draft_api.py` 钉着这条。
+ */
+export function Reveal({ draft, run, onContinue }: Props) {
   const [revealed, setRevealed] = useState(0);
-  const [showMissed, setShowMissed] = useState(false);
-  const allDone = revealed >= signed.length;
+  const allDone = revealed >= run.roster.length;
 
-  const missed = useMemo(() => {
-    const ids = new Set(signed.map((s) => s.id));
-    return boards.flat().filter((c) => !ids.has(c.id));
-  }, [boards, signed]);
+  const pairs = useMemo(
+    () => run.roster.map((card, i) => ({ card, blind: draft.owned[i] })),
+    [run.roster, draft.owned],
+  );
 
-  const summary = useMemo(() => {
-    const withDelta = (cards: DraftCard[]) => cards.map((c) => ({ c, d: valueDelta(c.player, c.price) }));
-    const mine = withDelta(signed);
-    const miss = withDelta(missed);
-    const bestSteal = [...mine].sort((a, b) => b.d - a.d || b.c.player.value - a.c.player.value)[0];
-    const worstBuy = [...mine].sort((a, b) => a.d - b.d)[0];
-    const biggestMiss = [...miss].sort((a, b) => b.d - a.d || b.c.player.value - a.c.player.value)[0];
-    const dodged = [...miss].sort((a, b) => a.d - b.d)[0];
-    return { bestSteal, worstBuy, biggestMiss, dodged };
-  }, [signed, missed]);
-
-  const totalSpent = signed.reduce((s, c) => s + c.price, 0);
-  const totalFair = signed.reduce((s, c) => s + fairPrice(c.player.value), 0);
+  const spent = draft.spent;
+  const gap = pairs.reduce((s, p) => s + (p.card.grade - p.blind.price), 0);
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <LowerThird kicker="Reveal Segment" title={showMissed ? "The Ones That Got Away" : "Your Roster"} sub={showMissed ? "所有出现过但没被选中的卡" : `已揭晓 ${Math.min(revealed, signed.length)} / ${signed.length}`} color={showMissed ? "#ff2d3b" : "#ffb400"} />
+        <LowerThird
+          kicker="Reveal Segment"
+          title="Your Roster"
+          sub={`已揭晓 ${Math.min(revealed, run.roster.length)} / ${run.roster.length}`}
+        />
         <div className="flex items-center gap-2">
-          {!showMissed && !allDone && <Button onClick={() => setRevealed((r) => r + 1)}>Reveal Next ▶</Button>}
-          {!showMissed && !allDone && (
-            <Button variant="ghost" onClick={() => setRevealed(signed.length)}>
+          {!allDone && <Button onClick={() => setRevealed((r) => r + 1)}>Reveal Next ▶</Button>}
+          {!allDone && (
+            <Button variant="ghost" onClick={() => setRevealed(run.roster.length)}>
               Reveal All
             </Button>
           )}
-          {!showMissed && allDone && <Button onClick={() => setShowMissed(true)}>Show Missed Cards ▶</Button>}
-          {showMissed && <Button onClick={onContinue}>Go To Team Build ▶ (${budget})</Button>}
+          {allDone && <Button onClick={onContinue}>Team Build ▶</Button>}
         </div>
       </div>
 
-      {!showMissed && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {signed.map((card, i) => (
-            <RevealCard key={card.id} card={card} revealed={i < revealed} />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {pairs.map((p, i) => (
+          <RevealCard key={p.card.page} card={p.card} blind={p.blind} revealed={i < revealed} />
+        ))}
+      </div>
 
-      {!showMissed && allDone && (
+      {allDone && (
         <Panel className="animate-rise p-4">
           <div className="grid gap-4 md:grid-cols-4">
-            <Stat label="Total Spent" value={`$${totalSpent}`} />
-            <Stat label="Fair Value" value={`$${totalFair}`} tone={totalFair > totalSpent ? "good" : totalFair < totalSpent ? "bad" : undefined} />
-            <Stat label="Net" value={`${totalFair - totalSpent >= 0 ? "+" : ""}$${totalFair - totalSpent}`} tone={totalFair - totalSpent > 0 ? "good" : totalFair - totalSpent < 0 ? "bad" : undefined} />
-            <Stat label="Carry Into Build" value={`$${budget}`} tone="good" />
+            <Stat label="Total Spent" value={`$${spent}`} />
+            <Stat label="档位 − 标价" value={`${gap >= 0 ? "+" : ""}${gap}`} tone={gap > 0 ? "good" : gap < 0 ? "bad" : undefined} />
+            <Stat label="队伍强度 Entry" value={run.entry.toFixed(1)} tone="good" />
+            <Stat label="全场 Entry 位次" value={`#${run.entry_rank} / 32`} />
+          </div>
+          <div className="mt-3 border-t border-bc-line pt-3 text-xs text-bc-muted">
+            Entry 是<span className="text-bc-text">纯火力口径</span>（Carry 权重 + 磨合 + 无狙罚），
+            和比赛真正读的是同一个数 —— 页面显示的就是引擎打的。
           </div>
         </Panel>
-      )}
-
-      {showMissed && (
-        <>
-          <div className="grid gap-3 md:grid-cols-4">
-            <Highlight kicker="Biggest Steal (Yours)" card={summary.bestSteal?.c} color="#2fe08a" />
-            <Highlight kicker="Biggest Overpay (Yours)" card={summary.worstBuy?.c} color="#ff2d3b" />
-            <Highlight kicker="Biggest Miss" card={summary.biggestMiss?.c} color="#ffb400" />
-            <Highlight kicker="Bullet Dodged" card={summary.dodged?.c} color="#8593a6" />
-          </div>
-          <div className="space-y-3">
-            {boards.map((board, r) => (
-              <Panel key={r} title={`Round ${r + 1} Board`}>
-                <div className="grid grid-cols-1 divide-y divide-bc-line md:grid-cols-5 md:divide-x md:divide-y-0">
-                  {board.map((c) => {
-                    const mine = signed.some((s) => s.id === c.id);
-                    const tag = valueTag(c.player, c.price);
-                    return (
-                      <div key={c.id} className={cn("flex items-center gap-3 px-3 py-2.5", mine && "bg-bc-accent/10")}>
-                        <PriceBadge price={c.price} size="sm" />
-                        <div className="min-w-0 flex-1 leading-tight">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate font-display text-lg font-black">{c.player.nick}</span>
-                            <span className="text-sm">{c.player.flag}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-[10px] font-mono text-bc-muted">
-                            <span style={{ color: POS_COLOR[c.player.position] }}>{c.player.position}</span>
-                            <span>G{c.player.grade}</span>
-                            <span>VAL {c.player.value}</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-display text-[10px] font-black uppercase tracking-widest" style={{ color: TAG_COLOR[tag] }}>
-                            {tag}
-                          </div>
-                          {mine && <div className="font-display text-[10px] font-black uppercase tracking-widest text-bc-accent">Signed</div>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Panel>
-            ))}
-          </div>
-        </>
       )}
     </div>
   );
@@ -128,93 +91,94 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "go
   );
 }
 
-function Highlight({ kicker, card, color }: { kicker: string; card?: DraftCard; color: string }) {
-  if (!card) return null;
-  return (
-    <div className="flex animate-rise items-stretch border border-bc-line bg-bc-panel">
-      <div className="w-1.5" style={{ background: color }} />
-      <div className="flex-1 p-3">
-        <div className="font-display text-[10px] font-bold uppercase tracking-[0.35em]" style={{ color }}>
-          {kicker}
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-2xl font-black">{card.player.nick}</span>
-          <span>{card.player.flag}</span>
-        </div>
-        <div className="font-mono text-[11px] text-bc-muted">
-          R{card.round} · ${card.price} {card.player.position} · fair ${fairPrice(card.player.value)} · {card.clueText}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function PlayerFace({ p, size = "md" }: { p: Player; size?: "sm" | "md" | "lg" }) {
+export function PlayerFace({ card, size = "md" }: { card: RosterCard; size?: "sm" | "md" | "lg" }) {
   const dims = { sm: "h-10 w-10 text-base", md: "h-16 w-16 text-2xl", lg: "h-24 w-24 text-4xl" };
   return (
     <div
       className={cn("cut-corner flex shrink-0 items-center justify-center font-display font-black text-bc-bg", dims[size])}
-      style={{ background: `linear-gradient(135deg, ${POS_COLOR[p.position]}, ${POS_COLOR[p.position]}88)` }}
+      style={{ background: `linear-gradient(135deg, ${POS_COLOR[card.position]}, ${POS_COLOR[card.position]}88)` }}
     >
-      {p.nick.slice(0, 2).toUpperCase()}
+      {card.nickname.slice(0, 2).toUpperCase()}
     </div>
   );
 }
 
-function RevealCard({ card, revealed }: { card: SignedCard; revealed: boolean }) {
-  const p = card.player;
-  const tag = valueTag(p, card.price);
+function RevealCard({ card, blind, revealed }: { card: RosterCard; blind: BoardCard; revealed: boolean }) {
+  const tag = valueTag(card.grade, blind.price);
+
   if (!revealed) {
     return (
       <div className="flex flex-col overflow-hidden border border-bc-line bg-bc-panel">
         <div className="flex items-center justify-between bg-bc-panel2 px-3 py-2">
-          <PriceBadge price={card.price} />
-          <PosTag pos={p.position} />
+          <PriceBadge price={blind.price} />
+          <PosTag pos={blind.position} />
         </div>
         <div className="flex aspect-[4/5] items-center justify-center bg-gradient-to-b from-bc-panel to-bc-bg">
           <span className="font-display text-7xl font-black text-bc-line">?</span>
         </div>
-        <div className="border-t border-bc-line px-3 py-2 text-sm text-bc-muted">{card.clueText}</div>
+        <div className="border-t border-bc-line px-3 py-2 text-sm text-bc-muted">{blind.clue}</div>
       </div>
     );
   }
+
+  // 球探区间给对了没有:真值落在区间里的哪一段
+  const truth = (card as unknown as Record<string, number>)[blind.scout.attr];
+  const span = Math.max(1, blind.scout.hi - blind.scout.lo);
+  const at = Math.min(100, Math.max(0, ((truth - blind.scout.lo) / span) * 100));
+
   return (
     <div className="flex animate-flip flex-col overflow-hidden border bg-bc-panel" style={{ borderColor: TAG_COLOR[tag] }}>
       <div className="flex items-center justify-between bg-bc-panel2 px-3 py-2">
-        <PriceBadge price={card.price} />
+        <PriceBadge price={blind.price} />
         <ValueTagBadge tag={tag} />
       </div>
       <div className="relative bg-gradient-to-b from-bc-panel2 to-bc-bg p-3">
-        <div className="absolute right-2 top-2 font-display text-5xl font-black text-white/5">{card.clueText.replace(/^[^\w$]+/, "").slice(0, 3)}</div>
         <div className="flex items-center gap-3">
-          <PlayerFace p={p} />
+          <PlayerFace card={card} />
           <div className="min-w-0">
-            <div className="truncate font-display text-2xl font-black leading-none">{p.nick}</div>
+            <div className="truncate font-display text-2xl font-black leading-none">{card.nickname}</div>
             <div className="mt-1 flex items-center gap-2 text-xs text-bc-muted">
-              <span>{p.flag}</span>
-              <span className="truncate">{p.club}</span>
-              <span>·</span>
-              <span>{p.age}</span>
+              <span>{card.country}</span>
+              {card.team && (
+                <>
+                  <span>·</span>
+                  <span className="truncate">{card.team}</span>
+                </>
+              )}
+              {card.age && (
+                <>
+                  <span>·</span>
+                  <span>{card.age}</span>
+                </>
+              )}
             </div>
             <div className="mt-1 flex items-center gap-2">
-              <PosTag pos={p.position} />
-              <GradePips grade={p.grade} />
+              <PosTag pos={card.position} />
+              <GradePips grade={card.grade} />
             </div>
           </div>
         </div>
+
         <div className="mt-3 space-y-1.5">
-          <StatBar label="FIRE" value={p.attrs.firepower} color="#ff8a2a" compact />
-          <StatBar label="LEAD" value={p.attrs.leadership} color="#ffb400" compact />
-          <StatBar label="EXP" value={p.attrs.experience} color="#2fa8ff" compact />
-          <StatBar label="STAB" value={p.attrs.stability} color="#2fe08a" compact />
+          <StatBar label="FIRE" value={card.firepower} color="#ff8a2a" compact />
+          <StatBar label="LEAD" value={card.leadership} color="#ffb400" compact />
+          <StatBar label="EXP" value={card.experience} color="#2fa8ff" compact />
+          <StatBar label="STAB" value={card.stability} color="#2fe08a" compact />
         </div>
-        <div className="mt-3 flex items-center justify-between border-t border-bc-line pt-2 font-mono text-[11px] text-bc-muted">
-          <span>
-            Major ×{p.majors} · 🏆 ×{p.champs}
-          </span>
-          <span>
-            VAL <span className="text-bc-text">{p.value}</span> · fair ${fairPrice(p.value)}
-          </span>
+
+        <div className="mt-3 border-t border-bc-line pt-2">
+          <div className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-bc-muted">
+            球探报告 {blind.scout.label} {blind.scout.lo}–{blind.scout.hi}
+          </div>
+          <div className="relative mt-1 h-2 bg-bc-line/60">
+            <div className="absolute inset-y-0 w-0.5 bg-bc-accent" style={{ left: `${at}%` }} />
+          </div>
+          <div className="mt-1 flex justify-between font-mono text-[11px] text-bc-muted">
+            <span>真值 {truth}</span>
+            <span style={{ color: TAG_COLOR[tag] }}>
+              {TAG_LABEL[tag]} · G{card.grade} / ${blind.price}
+            </span>
+          </div>
         </div>
       </div>
     </div>

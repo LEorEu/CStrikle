@@ -20,7 +20,7 @@ export function TopBar({ phase, budget, subtitle, right }: { phase: Phase; budge
           <div className="cut-corner flex h-9 w-9 items-center justify-center bg-bc-accent font-display text-lg font-black text-bc-bg">F</div>
           <div className="leading-none">
             <div className="font-display text-lg font-black uppercase tracking-wider">
-              Friberg<span className="text-bc-accent">CS2</span>
+              ROAD TO <span className="text-bc-accent">MAJOR</span>
             </div>
             <div className="font-display text-[10px] font-semibold uppercase tracking-[0.35em] text-bc-muted">Blind Draft Broadcast</div>
           </div>

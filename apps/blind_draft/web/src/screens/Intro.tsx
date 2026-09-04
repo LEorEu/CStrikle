@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Button, LiveDot } from "../components/ui";
-import { PLAYERS } from "../data/players";
 
-export function Intro({ onStart }: { onStart: () => void }) {
-  const counts = [1, 2, 3, 4, 5].map((g) => PLAYERS.filter((p) => p.grade === g).length);
+export function Intro({ seed, busy, onStart }: { seed: number; busy: boolean; onStart: (seed: number) => void }) {
+  const [value, setValue] = useState(String(seed));
+  const parsed = Number.parseInt(value, 10);
+  const ok = Number.isFinite(parsed) && parsed >= 0;
+
   return (
     <div className="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,180,0,0.16),transparent_55%)]" />
@@ -19,30 +22,46 @@ export function Intro({ onStart }: { onStart: () => void }) {
             <span className="text-bc-accent">Draft</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-bc-muted">
-            $15 预算、6 轮匿名卡、签下 5 名职业选手。你只能看到价格、位置和一条线索。
-            揭晓之后，用剩下的钱构筑队伍，然后把这支队带进 Major。
+            $15 预算、7 个市场日、签下 5 名真实职业选手。你只能看到标价、位置、国籍，
+            一条球探区间和一条身份线索。签满之后这支队会去打一届真实的 Major。
           </p>
+
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Button onClick={onStart} className="text-xl px-10 py-3">
-              Go Live ▶
+            <Button onClick={() => ok && onStart(parsed)} disabled={!ok || busy} className="text-xl px-10 py-3">
+              {busy ? "Connecting…" : "Go Live ▶"}
             </Button>
-            <div className="font-mono text-xs text-bc-muted">
-              POOL {PLAYERS.length} CARDS · G5 {counts[4]} / G4 {counts[3]} / G3 {counts[2]} / G2 {counts[1]} / G1 {counts[0]}
-            </div>
+            <label className="flex items-center gap-2 border border-bc-line bg-bc-panel px-3 py-2">
+              <span className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-bc-muted">Seed</span>
+              <input
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="w-28 bg-transparent font-mono text-lg text-bc-accent outline-none"
+              />
+            </label>
+            <Button variant="ghost" onClick={() => setValue(String(Math.floor(Math.random() * 1e6)))} className="px-4 py-2 text-sm">
+              Reroll
+            </Button>
           </div>
         </div>
 
         <div className="animate-rise space-y-3 [animation-delay:150ms]">
           {[
-            ["01", "Blind Draft", "每轮 5 张匿名卡：$5 / $4 / $3 / $2 / $1。每轮最多签一人，可 Pass 一轮。"],
-            ["02", "Reveal", "揭晓真实身份与四维。STEAL / FAIR / OVERPAY —— 还有你错过的那些人。"],
-            ["03", "Team Build", "剩余预算不清零：买 Rogue Buff、看阵容 Trait，决定这支队是什么类型。"],
-            ["04", "Major", "瑞士轮 → 淘汰赛，逐回合直播。Firepower 决定中心值，Stability 决定波动。"],
-          ].map(([n, t, d]) => (
-            <div key={n} className="flex gap-4 border border-bc-line bg-bc-panel/80 p-4 backdrop-blur">
+            ["01", "Blind Draft", "每个市场日 5 张匿名卡。买不起的牌不会发到你面前，所以不存在预算死局。", true],
+            ["02", "Reveal", "翻开身份、完整四维，以及这五张牌的档位和标价差在哪。", true],
+            ["03", "Team Build", "看这支队的强度、缺口和构筑方向。Rogue Buff 商店尚未实现。", false],
+            ["04", "Major", "32 队三段瑞士轮，逐图播报。进 Playoffs 即终止，淘汰赛尚未实现。", false],
+          ].map(([n, t, d, full]) => (
+            <div key={n as string} className="flex gap-4 border border-bc-line bg-bc-panel/80 p-4 backdrop-blur">
               <div className="font-display text-4xl font-black leading-none text-bc-accent/70">{n}</div>
               <div>
-                <div className="font-display text-xl font-bold uppercase tracking-wider">{t}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-xl font-bold uppercase tracking-wider">{t}</span>
+                  {!full && (
+                    <span className="border border-bc-muted/50 px-1.5 py-0.5 font-display text-[9px] font-bold uppercase tracking-[0.2em] text-bc-muted">
+                      部分未实现
+                    </span>
+                  )}
+                </div>
                 <div className="text-sm text-bc-muted">{d}</div>
               </div>
             </div>

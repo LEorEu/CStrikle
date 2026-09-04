@@ -1,7 +1,27 @@
 import type { ReactNode } from "react";
 import { cn } from "../utils/cn";
-import type { Position, ValueTag } from "../game/types";
-import { POS_COLOR } from "../game/engine";
+import type { Position } from "../api/types";
+
+export const POS_COLOR: Record<Position, string> = {
+  IGL: "#ffb400",
+  AWPER: "#2fa8ff",
+  RIFLER: "#8593a6",
+};
+
+/**
+ * 标价和档位的关系。**这不是一个公式**——`grade` 和 `price` 都是后端给的,
+ * 这里只是把两个数相减后换个说法(和 `/play` 那页的「抄底 / 买贵」同一套话术)。
+ */
+export type ValueTag = "STEAL" | "FAIR" | "OVERPAY";
+
+export const valueTag = (grade: number, price: number): ValueTag =>
+  grade > price ? "STEAL" : grade < price ? "OVERPAY" : "FAIR";
+
+export const TAG_LABEL: Record<ValueTag, string> = {
+  STEAL: "抄底",
+  FAIR: "标价合理",
+  OVERPAY: "买贵",
+};
 
 export function Panel({ children, className, title, right }: { children: ReactNode; className?: string; title?: string; right?: ReactNode }) {
   return (
@@ -127,5 +147,27 @@ export function GradePips({ grade }: { grade: number }) {
         <span key={i} className={cn("h-1.5 w-3", i <= grade ? "bg-bc-accent" : "bg-bc-line")} />
       ))}
     </span>
+  );
+}
+
+/**
+ * 后端还没有的功能。**故意保留入口并写清楚「未实现」**——把屏藏掉会让人
+ * 以为这块做完了,用前端逻辑补上则等于把玩法拆成两份实现。
+ */
+export function NotImplemented({ title, why, children }: { title: string; why: string; children?: ReactNode }) {
+  return (
+    <div className="relative overflow-hidden border border-dashed border-bc-muted/50 bg-bc-panel/50 p-5">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background:repeating-linear-gradient(45deg,#8593a6_0_10px,transparent_10px_20px)]" />
+      <div className="relative">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="skew-tag bg-bc-muted px-2.5 py-0.5 font-display text-xs font-extrabold uppercase tracking-widest text-bc-bg">
+            未实现
+          </span>
+          <span className="font-display text-xl font-black uppercase tracking-wider text-bc-muted">{title}</span>
+        </div>
+        <div className="mt-2 max-w-2xl text-sm text-bc-muted">{why}</div>
+        {children && <div className="mt-3">{children}</div>}
+      </div>
+    </div>
   );
 }

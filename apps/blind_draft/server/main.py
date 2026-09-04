@@ -47,6 +47,9 @@ from . import draft as DRAFT
 from . import run as RUN
 
 STATIC = Path(__file__).resolve().parents[1] / "static"
+#: 转播外壳打包出来的单文件页面(`cd web && npm run build`)。**不进仓库**——
+#: 它是生成物,而且 300 KB 的 diff 没有任何人读得动。
+BROADCAST = Path(__file__).resolve().parents[1] / "web" / "dist" / "index.html"
 IMAGES_PATH = DATA / "images.json"
 
 #: 可选口令。本地工具默认不开;要在局域网里开给别人看就设上。
@@ -245,6 +248,19 @@ def ai_page():
 def play_page():
     """可玩的选人页；卡数据嵌入页面，比赛由 `/api/run` 调 Python 引擎。"""
     return HTMLResponse(WEB.render_html()[0])
+
+
+@app.get("/broadcast", response_class=HTMLResponse)
+def broadcast_page():
+    """转播风格的前端外壳。玩法全走 `/api/draft` 和 `/api/run`,这里只发页面。
+
+    dev 的时候不用这条路由:`cd web && npm run dev`,vite 把 /api 和 /img 代理
+    到本进程(见 web/vite.config.ts)。
+    """
+    if not BROADCAST.exists():
+        raise HTTPException(
+            404, "还没打包:cd apps/blind_draft/web && npm install && npm run build")
+    return HTMLResponse(BROADCAST.read_text(encoding="utf-8"))
 
 
 @app.get("/anchor")

@@ -16,4 +16,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  // 玩法、数值、选手照片全部来自本地调参后台。打包成单文件之后页面由
+  // bdserver 自己 serve（同源），所以代理只在 dev 下需要。
+  server: {
+    proxy: {
+      "/api": { target: "http://127.0.0.1:8621", changeOrigin: true },
+      "/img": { target: "http://127.0.0.1:8621", changeOrigin: true },
+    },
+  },
 });

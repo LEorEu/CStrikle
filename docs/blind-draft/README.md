@@ -52,6 +52,7 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 | `bdtools.export_web` | 把卡和常量注进网页模板 | `.cache/proto_draft_web.html` |
 | `bdserver.main` | **调参后台**：卡牌页（改人工层、看推导、发布） | 写 `draft_overrides.json` |
 | `bdserver.draft` | **`/api/draft`**：盲选的唯一权威入口。一局 = `seed` + 一串动作，无会话、可重放；板面只下发球探区间和线索，不下发真值 | — |
+| `web/`（TS，非 Python 包） | **转播外壳**（`/broadcast`）：六屏，玩法全走 `/api/draft` + `/api/run`，自己不算任何数 | `dist/index.html`（生成物，不进仓库） |
 | `bdserver.ai` | 后台的 AI 对手页装配：卡面 / 现况 / 5E 实测三列并排 | 只读 |
 | `bdserver.anchor` | **火力打锚台**：人工给可信的现役选手定 1–99 这把尺子 | 写 `firepower_anchors.json` |
 | `playerdb.build_db` | 重建选手库（共享层，`--refresh-existing` 只刷新当前队/角色） | `data/players.json` |
@@ -79,7 +80,7 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 权重、阵容、磨合度上限）、`5e_aliases.json`（卡库昵称 → 5eplay 名字/id）、
 `team_roles.json`、`draft_overrides.json`、`firepower_anchors.json`（火力锚点）。
 
-测试在 `apps/blind_draft/tests/`（101 项，仓库共 214 项）：
+测试在 `apps/blind_draft/tests/`（105 项，仓库共 218 项）：
 
 | 文件 | 项 | 盯着什么 |
 |---|---:|---|
@@ -90,6 +91,7 @@ AI 页面、Major 与 Match 现已统一使用队伍快照和同一份逐维 AI 
 | `test_tuning_console.py` | 11 | 后台展示的推导和卡上的数不许对不上 |
 | `test_player_run.py` | 7 | `/play` 的 HTTP 入口逐字段等于引擎输出；散场页和比赛读同一把尺子 |
 | `test_draft_api.py` | 13 | `/api/draft` 和命令行 `Dealer` 是同一局；板面不泄露 page/昵称/档位/四维；越界动作报错而不是被忽略 |
+| `test_broadcast_shell.py` | 4 | `/broadcast` 那个前端只是外壳：退役的第二份引擎不许复活、只许调 /api/draft 和 /api/run、引擎系数不许抄进 TS |
 | `test_web_matches_python.py` | 2 | 网页里的 JS 和 Python 算出同一个 Entry（node 实跑），且不许把系数抄成常量 |
 
 ## 调参后台
@@ -101,7 +103,13 @@ uvicorn bdserver.main:app --host 127.0.0.1 --port 8621
 本地工具，不上线。地址栏支持两个快捷入口：卡牌页 `#<page>` 直接定位到那张卡
 （选中时会写回地址栏，可以把链接发给别人）；AI 页 `#all` 一次展开候选池全部 45 支队。
 
-玩家体验入口是 `http://127.0.0.1:8621/play`：选满五人后进入真实三段 Swiss Run。
+玩家入口有两个，玩的是同一份 Python：`/play`（老的自包含单页）和
+`/broadcast`（转播外壳，先 `cd web && npm run build`）。区别只在选人那一层
+——`/broadcast` 走 `/api/draft`，`/play` 那份 JS 自己发牌；比赛两边都是
+`/api/run`。外壳里后端没有的东西（Rogue Shop、淘汰赛、Swiss 积分榜、后悔值）
+一律明写「未实现」，不用前端逻辑补。
+
+`http://127.0.0.1:8621/play`：选满五人后进入真实三段 Swiss Run。
 **这一页已经切到 Match Engine v2**（`blinddraft.engine`，设计稿 v0.3）——
 Entry 是纯火力口径、Stage 由区域 VRS 名额决定、没有「赛前胜率」这一项
 （胜率只能实测，不能解析算）。

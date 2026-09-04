@@ -1,55 +1,45 @@
-import { useMemo } from "react";
 import { LowerThird } from "../components/Broadcast";
-import { Button, Panel, PosTag, StatBar, GradePips } from "../components/ui";
-import { BUFFS, baseTeamStats, deriveTraits, finalTeamStats, teamRating } from "../game/engine";
-import type { Buff, Player } from "../game/types";
-import { cn } from "../utils/cn";
+import { Button, GradePips, NotImplemented, Panel, PosTag, StatBar } from "../components/ui";
+import type { DraftState, RunResult } from "../api/types";
 import { PlayerFace } from "./Reveal";
 
 interface Props {
-  roster: Player[];
-  budget: number;
-  buffs: Buff[];
-  onToggleBuff: (b: Buff) => void;
+  draft: DraftState;
+  run: RunResult;
+  teamName: string;
   onContinue: () => void;
 }
 
-const TONE = { good: "#2fe08a", bad: "#ff2d3b", neutral: "#ffb400" };
-
-export function Build({ roster, budget, buffs, onToggleBuff, onContinue }: Props) {
-  const traits = useMemo(() => deriveTraits(roster), [roster]);
-  const base = useMemo(() => baseTeamStats(roster), [roster]);
-  const final = useMemo(() => finalTeamStats(roster, traits, buffs), [roster, traits, buffs]);
-  const spent = buffs.reduce((s, b) => s + b.cost, 0);
-  const left = budget - spent;
-
-  const rows: [string, keyof typeof base, string][] = [
-    ["Firepower", "firepower", "#ff8a2a"],
-    ["Tactics", "tactics", "#ffb400"],
-    ["Consistency", "consistency", "#2fe08a"],
-    ["Experience", "experience", "#2fa8ff"],
-    ["Chemistry", "chemistry", "#d946ef"],
-    ["Clutch", "clutch", "#f43f5e"],
-  ];
+/**
+ * 构筑屏。左边那半是真的(阵容、四维、Entry、这一届的入场结果),
+ * 右边那半是 Rogue Buff 商店——**后端没有这套东西,所以明写未实现**。
+ */
+export function Build({ draft, run, teamName, onContinue }: Props) {
+  const spent = draft.spent;
+  const left = draft.left;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <LowerThird kicker="Team Build" title="Rogue Shop" sub={`剩余 $${left} · 已购 ${buffs.length} 项 · 队伍评级 ${teamRating(final).toFixed(1)}`} color="#d946ef" />
-        <Button onClick={onContinue}>Lock Roster & Enter Major ▶</Button>
+        <LowerThird
+          kicker="Team Build"
+          title={teamName}
+          sub={`队伍强度 ${run.entry.toFixed(1)} · 全场第 ${run.entry_rank} · 从 Stage ${run.stage} 打起`}
+          color="#d946ef"
+        />
+        <Button onClick={onContinue}>进入 Major ▶</Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr_360px]">
-        {/* Roster */}
+      <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
         <Panel title="Starting Five">
           <div className="divide-y divide-bc-line">
-            {roster.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 px-3 py-2.5">
-                <PlayerFace p={p} size="sm" />
+            {run.roster.map((p, i) => (
+              <div key={p.page} className="flex items-center gap-3 px-3 py-2.5">
+                <PlayerFace card={p} size="sm" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate font-display text-lg font-black leading-none">{p.nick}</span>
-                    <span className="text-xs">{p.flag}</span>
+                    <span className="truncate font-display text-lg font-black leading-none">{p.nickname}</span>
+                    <span className="font-mono text-[10px] text-bc-muted">${draft.owned[i].price}</span>
                   </div>
                   <div className="mt-1 flex items-center gap-2">
                     <PosTag pos={p.position} />
@@ -58,104 +48,89 @@ export function Build({ roster, budget, buffs, onToggleBuff, onContinue }: Props
                 </div>
                 <div className="text-right font-mono text-[10px] leading-tight text-bc-muted">
                   <div>
-                    F<span className="text-bc-text">{p.attrs.firepower}</span> L<span className="text-bc-text">{p.attrs.leadership}</span>
+                    F<span className="text-bc-text">{p.firepower}</span> L<span className="text-bc-text">{p.leadership}</span>
                   </div>
                   <div>
-                    E<span className="text-bc-text">{p.attrs.experience}</span> S<span className="text-bc-text">{p.attrs.stability}</span>
+                    E<span className="text-bc-text">{p.experience}</span> S<span className="text-bc-text">{p.stability}</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="border-t border-bc-line bg-bc-panel2 px-3 py-2">
-            <div className="font-display text-[10px] font-bold uppercase tracking-[0.35em] text-bc-muted">Free Traits</div>
-            <div className="mt-2 space-y-2">
-              {traits.length === 0 && <div className="text-xs text-bc-muted">这套阵容没有触发任何 Trait。</div>}
-              {traits.map((t) => (
-                <div key={t.id} className="flex items-start gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0" style={{ background: TONE[t.tone] }} />
-                  <div>
-                    <div className="font-display text-sm font-bold uppercase tracking-wider" style={{ color: TONE[t.tone] }}>
-                      {t.name}
-                    </div>
-                    <div className="text-xs text-bc-muted">{t.desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="border-t border-bc-line bg-bc-panel2 px-3 py-2 font-mono text-xs text-bc-muted">
+            选手花掉 ${spent} · 剩余 ${left} · 阵容快照 {run.snapshot}
           </div>
         </Panel>
 
-        {/* Shop */}
-        <Panel title="Rogue Buffs" right={<span className="font-mono text-xs text-bc-muted">Budget ${left}</span>}>
-          <div className="grid gap-2 p-3 sm:grid-cols-2">
-            {BUFFS.map((b) => {
-              const owned = buffs.some((x) => x.id === b.id);
-              const affordable = owned || b.cost <= left;
-              return (
-                <button
-                  key={b.id}
-                  disabled={!affordable}
-                  onClick={() => onToggleBuff(b)}
-                  className={cn(
-                    "flex items-start gap-3 border p-3 text-left transition-all",
-                    owned ? "border-bc-accent bg-bc-accent/10" : "border-bc-line bg-bc-panel2 hover:border-bc-muted",
-                    !affordable && "cursor-not-allowed opacity-35",
-                  )}
-                >
-                  <div className="text-2xl">{b.icon}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="truncate font-display text-base font-bold uppercase tracking-wider">{b.name}</div>
-                      <div className="cut-corner shrink-0 bg-bc-accent px-2 font-display text-sm font-black text-bc-bg">${b.cost}</div>
-                    </div>
-                    <div className="text-xs text-bc-muted">{b.desc}</div>
-                    {owned && <div className="mt-1 font-display text-[10px] font-black uppercase tracking-[0.3em] text-bc-accent">Equipped · click to refund</div>}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </Panel>
-
-        {/* Derived */}
-        <Panel title="Team Profile">
-          <div className="space-y-3 p-3">
-            {rows.map(([label, key, color]) => {
-              const b = base[key] as number;
-              const f = final[key] as number;
-              const d = f - b;
-              return (
-                <div key={key}>
-                  <div className="flex items-center justify-between font-display text-xs font-bold uppercase tracking-[0.25em] text-bc-muted">
-                    <span>{label}</span>
-                    <span className={cn("font-mono", d > 0.05 && "text-bc-green", d < -0.05 && "text-bc-live")}>
-                      {d > 0.05 ? `+${d.toFixed(1)}` : d < -0.05 ? d.toFixed(1) : "—"}
-                    </span>
-                  </div>
-                  <StatBar label="" value={f} color={color} compact />
+        <div className="space-y-4">
+          <Panel title="这支队的样子">
+            <div className="grid gap-4 p-4 sm:grid-cols-2">
+              <div>
+                <div className="font-display text-[10px] font-bold uppercase tracking-[0.35em] text-bc-muted">Entry（纯火力口径）</div>
+                <div className="font-display text-6xl font-black text-bc-accent">{run.entry.toFixed(1)}</div>
+                <div className="mt-1 text-xs text-bc-muted">
+                  32 支正赛队里排第 {run.entry_rank}。这就是比赛真正读的那个数，页面上没有第二份。
                 </div>
-              );
-            })}
-            <div className="border-t border-bc-line pt-3">
-              <div className="font-display text-[10px] font-bold uppercase tracking-[0.35em] text-bc-muted">Map Pool Bonus</div>
-              <div className="mt-1 flex flex-wrap gap-1">
-                {Object.keys(final.mapBonus).length === 0 && <span className="text-xs text-bc-muted">无地图特化</span>}
-                {Object.entries(final.mapBonus).map(([m, v]) => (
-                  <span key={m} className="border border-bc-line px-2 py-0.5 font-mono text-xs">
-                    {m} <span className="text-bc-green">+{v}</span>
-                  </span>
-                ))}
+              </div>
+              <div className="space-y-2">
+                <StatBar label="FIRE" value={avg(run, "firepower")} color="#ff8a2a" />
+                <StatBar label="LEAD" value={avg(run, "leadership")} color="#ffb400" />
+                <StatBar label="EXP" value={avg(run, "experience")} color="#2fa8ff" />
+                <StatBar label="STAB" value={avg(run, "stability")} color="#2fe08a" />
+                <div className="pt-1 text-[11px] text-bc-muted">
+                  四条是五个人的均值，只用来看形状 —— Entry 走的是 Carry 权重，不是平均。
+                </div>
               </div>
             </div>
-            <div className="border-t border-bc-line pt-3">
-              <div className="font-display text-[10px] font-bold uppercase tracking-[0.35em] text-bc-muted">Projected Team Rating</div>
-              <div className="font-display text-5xl font-black text-bc-accent">{teamRating(final).toFixed(1)}</div>
-              <div className="text-xs text-bc-muted">Major 参赛队评级区间约 53 ~ 73。淘汰赛中 Experience 额外加权。</div>
+            <div className="border-t border-bc-line px-4 py-3 text-sm">
+              {draft.missing.length === 0 ? (
+                <span className="text-bc-green">位置齐全：有狙有指挥。</span>
+              ) : (
+                <span className="text-bc-live">
+                  缺 {draft.missing.join(" / ")} —— {draft.missing.includes("AWPER") && "无狙已经从 Entry 里扣过分；"}
+                  {draft.missing.includes("IGL") && "没有指挥，每张图都拿不到战术执行分。"}
+                </span>
+              )}
             </div>
-          </div>
-        </Panel>
+          </Panel>
+
+          <Panel title="入场：你挤掉了谁">
+            <div className="p-4 text-sm">
+              <div className="text-bc-muted">
+                Stage 归属由区域 VRS 名额决定，你是按 Entry 位次插进去的，名额守恒 —— 所以一定有人被往下挤。
+              </div>
+              <div className="mt-3 space-y-1.5">
+                {run.demoted.length === 0 && <div className="text-bc-muted">没有人被降段。</div>}
+                {run.demoted.map((d) => (
+                  <div key={d.team} className="flex items-center gap-3 font-mono text-xs">
+                    <span className="w-40 truncate font-display text-sm font-bold">{d.team}</span>
+                    <span className="text-bc-muted">
+                      Stage {d.from_stage} → {d.to_stage}
+                    </span>
+                  </div>
+                ))}
+                {run.dropped && (
+                  <div className="mt-2 border-l-2 border-bc-live pl-3 font-mono text-xs text-bc-live">
+                    {run.dropped} 被挤出了这一届正赛
+                  </div>
+                )}
+              </div>
+            </div>
+          </Panel>
+
+          <NotImplemented
+            title="Rogue Shop"
+            why="剩余预算买道具（运动心理学家、双周集训之类）这套系统后端没有：比赛引擎里没有对应的修正项，前端自己加等于凭空造一份数值。要做得先在 blinddraft/ 里立住，那是设计工作。"
+          >
+            <div className="font-mono text-xs text-bc-muted">
+              剩余的 ${left} 目前不进入比赛，也不折算成任何加成。
+            </div>
+          </NotImplemented>
+        </div>
       </div>
     </div>
   );
 }
+
+const avg = (run: RunResult, key: "firepower" | "leadership" | "experience" | "stability") =>
+  run.roster.reduce((s, p) => s + p[key], 0) / (run.roster.length || 1);
