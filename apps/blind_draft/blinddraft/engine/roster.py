@@ -56,7 +56,8 @@ def roster_team(spec, label=None):
 
 
 # ------------------------------------------------------ 固定测试阵容
-# 1.txt 结尾点名要的三支。存成常量，任何系数改动都对着同一批人跑。
+# 1.txt（`docs/blind-draft/archive/讨论/`）结尾点名要的三支。
+# 存成常量，任何系数改动都对着同一批人跑。
 FIXTURES = {
     "donk carry": ["donk", "molodoy", "tN1R", "Kvem", "spaze"],
     "ZywOo carry": ["ZywOo", "Kvem", "spaze", "tN1R", "molodoy"],

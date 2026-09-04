@@ -97,7 +97,7 @@ def stats(runs=200, seed=20260828):
 
 
 def lab(runs=4000):
-    """1.txt 结尾列的六项验收，一次跑完。"""
+    """1.txt（`docs/blind-draft/archive/讨论/`）结尾列的六项验收，一次跑完。"""
     cards = {c["nickname"]: c for c in P.load_cards()}
     field = {t.name: t for t in major_field(1)[0]}
     top5 = sorted(field.values(), key=lambda t: -t.entry())[:5]

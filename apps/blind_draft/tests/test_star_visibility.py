@@ -2,7 +2,7 @@
 """§17 明星可见度 + Match Engine v0.3 的验收闸门。
 
 明星可见度盯的不是胜负平衡，是**观感**。玩家花 $5 签下 donk，如果引擎系统性地
-让 F50 的队友抢走 MVP，那这笔钱就白花了——`docs/blind-draft/1.txt` 把它定成
+让 F50 的队友抢走 MVP，那这笔钱就白花了——`docs/blind-draft/archive/讨论/1.txt` 把它定成
 一条硬验收：F50 和 F96 的 MVP 率差不多，就判引擎坏了。
 
 这个文件曾经分 v1 / v2 两组，同一条不变量各写一遍。v1（`blinddraft.match`）

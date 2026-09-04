@@ -18,9 +18,13 @@ CStrikle，blast.tv 那个 Counter-Strikle 的自建版：猜一名神秘 CS 职
 
 用 $15 预算、在身份不完全公开的情况下签 5 名职业选手，组一支临时战队，
 再让它去打一届真实的 Major。选人、网页 Run 和 32 队三段瑞士轮都已跑通；当前
-开发主线是比赛数值层的第二轮重构——让四维各做一件事、每张图能逐人解释火力
-为什么变。见 **[blind-draft/开发主线.md](blind-draft/开发主线.md)**，
+重点是把玩家卡 → AI 当前卡 → 极简 Run → Reveal 接成同一条可解释的体验。
+见 **[blind-draft/开发主线.md](blind-draft/开发主线.md)**，
 数值口径见 **[blind-draft/比赛引擎_v0.3.md](blind-draft/比赛引擎_v0.3.md)**。
+
+那个目录**根下只放当前状态**（上面两份，加卡牌与落地记录、数据快照）；
+被取代的设计稿和原始讨论在 [blind-draft/archive/](blind-draft/archive/)，
+想清楚了但没接进流程的在 [blind-draft/future/](blind-draft/future/)。
 
 ## 两边共用的
 
@@ -33,15 +37,15 @@ CStrikle，blast.tv 那个 Counter-Strikle 的自建版：猜一名神秘 CS 职
 ## 关于文档里的路径
 
 代码在 2026-09-01 拆成了三个包（见 [架构.md](架构.md)）。「照着做」的那几份
-文档已经改成新路径；**历史记录类的没改**——`原型实测记录.md`、
-`玩法蓝图_v0.2.md`、`原始讨论_ChatGPT.md`、`guess-the-player/项目记忆.md`
-里写的是当时跑过什么，把路径改成今天的等于篡改记录。读到 `scripts/proto_*.py`
-这类旧路径，对照下表换算：
+文档已经改成新路径；**历史记录类的没改**——`blind-draft/archive/` 下的那些
+和 `guess-the-player/项目记忆.md` 里写的是当时跑过什么，把路径改成今天的等于
+篡改记录。读到 `scripts/proto_*.py` 这类旧路径，对照下表换算：
 
 | 旧 | 新 |
 |---|---|
 | `scripts/proto_draft.py` | `python -m blinddraft.draft` |
-| `scripts/proto_major.py` / `proto_match.py` / `proto_ai_teams.py` | `python -m blinddraft.major` / `.match` / `.ai_teams` |
+| `scripts/proto_major.py` / `proto_ai_teams.py` | `python -m blinddraft.major` / `.ai_teams` |
+| `scripts/proto_match.py` → `blinddraft/match.py`（v1） | 已退役删除；比赛引擎现在是 `python -m blinddraft.engine`，量纲不同不可对读 |
 | `scripts/gen_draft_cards.py` | `python -m blinddraft.cards` |
 | `scraper/build_db.py` / `fetch_images.py` | `python -m playerdb.build_db` / `.fetch_images` |
 | `scraper/fetch_rankings.py` | `python -m bdtools.fetch_rankings` |

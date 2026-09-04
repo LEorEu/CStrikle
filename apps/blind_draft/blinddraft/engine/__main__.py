@@ -17,7 +17,7 @@ def main():
     ap = argparse.ArgumentParser(
         prog="python -m blinddraft.engine",
         description="Blind Draft 比赛引擎（设计稿 v0.3）")
-    ap.add_argument("--lab", action="store_true", help="1.txt 结尾的六项验收")
+    ap.add_argument("--lab", action="store_true", help="设计稿收敛稿结尾列的六项验收")
     ap.add_argument("--compare", action="store_true", help="§9 删胜负骰的代价")
     ap.add_argument("--tune", action="store_true",
                     help="扫 SIGMA_SCALE / TEAM_RHO，看爆冷能不能撑住")

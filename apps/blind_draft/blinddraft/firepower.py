@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Firepower v7 —— 把火力从 Grade 模板里解耦出来。
 
-按《Draft 四维重构工作指南 v0.1》Phase 1:**这一轮只重算 firepower**,
+按《四维重构 v0.1》(docs/blind-draft/archive/) Phase 1:**这一轮只重算 firepower**,
 只处理现役 G1/G2/G3,输出预览文件供人工审核,不写 draft_cards.json。
 
     python -m blinddraft.firepower              # 打印 diff 报告
